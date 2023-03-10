@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "*.css": "tailwindcss"
+    },
+    "files.eol": "\n",
+    "editor.tabSize": 2,
+    "editor.indentSize": "tabSize",
+    "editor.quickSuggestions": {
+        "strings": "on"
+    },
+    "eslint.workingDirectories": [
+        "server",
+        "client"
+    ]
+}
