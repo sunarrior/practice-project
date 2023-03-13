@@ -25,5 +25,6 @@ module.exports = {
       "@typescript-eslint/ban-types": "off",
       "object-shorthand": "off",
       "import/no-extraneous-dependencies": "off",
+      "import/no-cycle": "off",
     },
   }
