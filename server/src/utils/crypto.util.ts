@@ -10,7 +10,7 @@ const encryptPassword = async (password: string): Promise<string> => {
   return hashPassword;
 };
 
-const tokenValidation = async (length: number): Promise<string> => {
+const randomToken = async (length: number): Promise<string> => {
   const token = await randomBytesPromise(length);
   return token.toString("hex");
 };
@@ -23,4 +23,4 @@ const validatePassword = async (
   return result;
 };
 
-export { encryptPassword, tokenValidation, validatePassword };
+export { encryptPassword, randomToken, validatePassword };

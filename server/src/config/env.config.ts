@@ -15,6 +15,8 @@ interface ENV {
   GMAIL_USER: string | undefined;
   GMAIL_PASSWORD: string | undefined;
   SESSION_SECRET: string | undefined;
+  ACCESS_TOKEN_SECRET: string | undefined;
+  ACCESS_TOKEN_LIFE: string | undefined;
 }
 
 interface Config {
@@ -28,6 +30,8 @@ interface Config {
   GMAIL_USER: string;
   GMAIL_PASSWORD: string;
   SESSION_SECRET: string;
+  ACCESS_TOKEN_SECRET: string;
+  ACCESS_TOKEN_LIFE: string;
 }
 
 const getEnvConfig = (): ENV => {
@@ -42,6 +46,8 @@ const getEnvConfig = (): ENV => {
     GMAIL_USER: process.env.GMAIL_USER,
     GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
     SESSION_SECRET: process.env.SESSION_SECRET,
+    ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
+    ACCESS_TOKEN_LIFE: process.env.ACCESS_TOKEN_LIFE,
   };
 };
 
