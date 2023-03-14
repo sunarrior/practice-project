@@ -26,5 +26,7 @@ module.exports = {
       "object-shorthand": "off",
       "import/no-extraneous-dependencies": "off",
       "import/no-cycle": "off",
+      "consistent-return": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   }

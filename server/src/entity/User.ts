@@ -36,8 +36,11 @@ export default class User {
   @Column({ name: "avatar_url", nullable: true })
   public avatarUrl: string;
 
-  @Column()
-  public status: number;
+  @Column({ default: "active" })
+  public status: string;
+
+  @Column({ name: "is_verify", default: false })
+  public isVerify: boolean;
 
   @OneToMany(() => Order, (order) => order.user, {
     onDelete: "CASCADE",

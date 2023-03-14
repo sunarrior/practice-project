@@ -12,6 +12,9 @@ interface ENV {
   DB_PASSWORD: string | undefined;
   DB_DATABASE: string | undefined;
   PORT: number | undefined;
+  GMAIL_USER: string | undefined;
+  GMAIL_PASSWORD: string | undefined;
+  SESSION_SECRET: string | undefined;
 }
 
 interface Config {
@@ -22,6 +25,9 @@ interface Config {
   DB_PASSWORD: string;
   DB_DATABASE: string;
   PORT: number;
+  GMAIL_USER: string;
+  GMAIL_PASSWORD: string;
+  SESSION_SECRET: string;
 }
 
 const getEnvConfig = (): ENV => {
@@ -33,6 +39,9 @@ const getEnvConfig = (): ENV => {
     DB_PASSWORD: process.env.DB_PASSWORD,
     DB_DATABASE: process.env.DB_DATABASE,
     PORT: process.env.PORT ? Number(process.env.PORT) : 4000,
+    GMAIL_USER: process.env.GMAIL_USER,
+    GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
+    SESSION_SECRET: process.env.SESSION_SECRET,
   };
 };
 
