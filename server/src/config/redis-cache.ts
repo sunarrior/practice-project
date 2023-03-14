@@ -1,6 +1,3 @@
-import { RedisClientType } from "@redis/client";
-import * as redis from "redis";
+import { createClient, RedisClientType } from "redis";
 
-export const redisClient: RedisClientType = redis.createClient({
-  legacyMode: true,
-});
+export const redisClient: RedisClientType = createClient();

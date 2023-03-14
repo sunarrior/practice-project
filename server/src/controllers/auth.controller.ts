@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import User from "../entity/User";
 import userDB from "../db/user.db";
-import { crypto, mail, redis } from "../utils";
+import { crypto, mail, redis, jwt, rateLimit } from "../utils";
 
 const createUser = async (req: Request, res: Response) => {
   try {
@@ -30,7 +30,7 @@ const createUser = async (req: Request, res: Response) => {
     });
 
     // create confirm token, save to redis and send to user's email
-    const token = await crypto.tokenValidation(128);
+    const token = await crypto.randomToken(128);
     await redis.setCache(token, userData.username, 300);
     mail.sendVerifyMail(userData.email, token);
     res.status(201).json({
@@ -73,7 +73,64 @@ const verifyUser = async (req: Request, res: Response) => {
   }
 };
 
+const loginUser = async (req: Request, res: Response) => {
+  try {
+    const { account, password } = req.body;
+
+    // check if user is exists
+    const user: User | null = /@/.test(account)
+      ? await userDB.getUserByAttrb({ email: account })
+      : await userDB.getUserByAttrb({ username: account });
+    if (!user) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "Account or password incorrect" });
+    }
+
+    // check if user has verify account yet
+    if (!user.isVerify) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "User has not verify account yet" });
+    }
+
+    // check passsword attempts
+    await rateLimit.loginAttemps.consume(req.ip);
+
+    // validate password
+    const compareResult = await crypto.validatePassword(
+      password,
+      user.password
+    );
+    if (!compareResult) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "Account or password incorrect" });
+    }
+
+    // remove login attemps
+    await rateLimit.loginAttemps.delete(req.ip);
+
+    // process jwt
+    const accessToken = jwt.generateAccessToken({ username: user.username });
+
+    // process session
+    req.session.username = user.username;
+    req.session.userip = req.ip;
+    req.session.useragent = req.get("User-Agent");
+
+    // process login
+    return res
+      .status(200)
+      .json({ status: "success", msg: "Login ok", token: accessToken });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server error" });
+  }
+};
+
 export default {
   createUser,
   verifyUser,
+  loginUser,
 };

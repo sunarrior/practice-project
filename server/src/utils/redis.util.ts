@@ -10,10 +10,7 @@ const setCache = async (
 };
 
 const getCache = async (key: string): Promise<any> => {
-  // return new Promise((resolve, reject) => {
-  //   redisClient.v4.get(key);
-  // });
-  const result = redisClient.v4.get(key);
+  const result = await redisClient.get(key);
   return result;
 };
 
