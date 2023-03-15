@@ -129,8 +129,93 @@ const loginUser = async (req: Request, res: Response) => {
   }
 };
 
+const changePassword = async (req: Request, res: Response) => {
+  try {
+    if (req.query.findaccount) {
+      const { account } = req.body;
+
+      // check if user exists
+      const user: User | null = /@/.test(account)
+        ? await userDB.getUserByAttrb({ email: account })
+        : await userDB.getUserByAttrb({ username: account });
+      if (!user) {
+        return res
+          .status(200)
+          .json({ status: "failed", msg: "Account or password incorrect" });
+      }
+
+      // check if user already have recovery token in db
+      // take that token and remove it in redis cache
+      if (user.recoveryToken) {
+        redis.clearCache(user.recoveryToken);
+      }
+
+      // create token, save db and redis, send mail
+      const token: string = await crypto.randomToken(16);
+      await userDB.updateUserData(user.id, {
+        recoveryToken: token,
+      });
+      await redis.setCache(token, user.username, 180);
+      mail.sendRecoveryLink(user.username, user.email, token);
+      res.status(200).json({
+        status: "success",
+        msg: "Check your email to get change passsword link",
+      });
+    }
+
+    if (req.query.checktoken) {
+      // check if token exists in redis
+      const { token } = req.body;
+      const result = await redis.getCache(token);
+      if (!result) {
+        return res.status(200).json({
+          status: "failed",
+          msg: "Recovery link invalid",
+        });
+      }
+    }
+
+    if (req.query.changepass) {
+      // check if token exists in redis
+      const { token, password } = req.body;
+      const result = await redis.getCache(token);
+      if (!result) {
+        return res.status(200).json({
+          status: "failed",
+          msg: "Recovery link invalid",
+        });
+      }
+
+      // check if user store in token exsist
+      const user: User | null = await userDB.getUserByAttrb({
+        username: result,
+      });
+      if (!user) {
+        return res
+          .status(200)
+          .json({ status: "failed", msg: "Account or password incorrect" });
+      }
+
+      // change passowrd
+      await userDB.updateUserData(user.id, {
+        password: password,
+        recoveryToken: null,
+      });
+      redis.clearCache(token);
+      res.status(200).json({
+        status: "success",
+        msg: "Change password successfully",
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server error" });
+  }
+};
+
 export default {
   createUser,
   verifyUser,
   loginUser,
+  changePassword,
 };

@@ -31,7 +31,7 @@ const getUserByAttrb = async (data: {
 const updateUserData = async (
   userid: number,
   data: {
-    [index: string]: string | number | boolean;
+    [index: string]: string | number | boolean | null;
   }
 ): Promise<void> => {
   await userRepos.update(userid, data);
