@@ -41,4 +41,21 @@ const sendVerifyMail = (email: string, token: string) => {
   }
 };
 
-export { sendVerifyMail };
+const sendRecoveryLink = (username: string, email: string, token: string) => {
+  try {
+    const timeSended = new Date();
+    const mailData = {
+      to: email,
+      subject: `Recovery link ${timeSended.toLocaleTimeString()}`,
+      htmlContent: `<b>
+        Recovery link for account ${username}: 
+        <a href="http://localhost:3000/recovery/${token}">Recovery Link</a>
+      </b>`,
+    };
+    sendMailFromGmail(mailData);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
+export { sendVerifyMail, sendRecoveryLink };
