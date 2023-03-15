@@ -42,8 +42,8 @@ export default class User {
   @Column({ name: "is_verify", default: false })
   public isVerify: boolean;
 
-  @Column({ name: "recovery_token", nullable: true })
-  public recoveryToken: string;
+  @Column({ name: "token_store", type: "text", nullable: true })
+  public tokenStore: string;
 
   @OneToMany(() => Order, (order) => order.user, {
     onDelete: "CASCADE",

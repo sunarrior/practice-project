@@ -15,11 +15,14 @@ const createUser = async (req: Request, res: Response) => {
     const userEmail: User | null = await userDB.getUserByAttrb({
       email: userData.email,
     });
-    if (userUsername && userEmail) {
+    if (userUsername || userEmail) {
       return res
         .status(200)
         .json({ status: "failed", msg: "Username or email is already in use" });
     }
+
+    // create confirm token
+    const token = await crypto.randomToken(128);
 
     // hash password and save user to database
     const hashPassword = await crypto.encryptPassword(userData.password);
@@ -27,10 +30,10 @@ const createUser = async (req: Request, res: Response) => {
       ...userData,
       role: "user",
       password: hashPassword,
+      tokenStore: token,
     });
 
-    // create confirm token, save to redis and send to user's email
-    const token = await crypto.randomToken(128);
+    // save token to redis and send to user's email
     await redis.setCache(token, userData.username, 300);
     mail.sendVerifyMail(userData.email, token);
     res.status(201).json({
@@ -63,7 +66,7 @@ const verifyUser = async (req: Request, res: Response) => {
 
     // update user's verify status
     redis.clearCache(token);
-    await userDB.updateUserData(user.id, { isVerify: true });
+    await userDB.updateUserData(user.id, { isVerify: true, tokenStore: null });
     res
       .status(200)
       .json({ status: "success", msg: "User verified successfully" });
@@ -144,16 +147,23 @@ const changePassword = async (req: Request, res: Response) => {
           .json({ status: "failed", msg: "Account or password incorrect" });
       }
 
+      // check if user has already verify
+      if (!user.isVerify) {
+        return res
+          .status(200)
+          .json({ status: "failed", msg: "Account need to be verify first" });
+      }
+
       // check if user already have recovery token in db
       // take that token and remove it in redis cache
-      if (user.recoveryToken) {
-        redis.clearCache(user.recoveryToken);
+      if (user.tokenStore) {
+        redis.clearCache(user.tokenStore);
       }
 
       // create token, save db and redis, send mail
-      const token: string = await crypto.randomToken(16);
+      const token: string = await crypto.randomToken(128);
       await userDB.updateUserData(user.id, {
-        recoveryToken: token,
+        tokenStore: token,
       });
       await redis.setCache(token, user.username, 180);
       mail.sendRecoveryLink(user.username, user.email, token);
@@ -199,7 +209,7 @@ const changePassword = async (req: Request, res: Response) => {
       // change passowrd
       await userDB.updateUserData(user.id, {
         password: password,
-        recoveryToken: null,
+        tokenStore: null,
       });
       redis.clearCache(token);
       res.status(200).json({

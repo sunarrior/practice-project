@@ -1,6 +1,7 @@
 import { useState } from "react";
+import Link from "next/link";
 import Notify from "@/components/notify";
-// import { redirect } from "next/navigation";
+
 import API from "../config/axios.config";
 
 const registerInfoDefault = {
@@ -70,20 +71,10 @@ export default function Register() {
       setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
       return setNotify({ isFailed: true, msg: error.message });
     }
-    // redirect("/");
   }
 
-  // function handleNotify() {
-  //   // if (notify.isFailed) {
-  //   //   return <Notify color="red" msg={notify.msg} />;
-  //   // }
-  //   // if (!notify.isFailed && notify.msg !== "") {
-  //   //   return <Notify color="green" msg={notify.msg} />;
-  //   // }
-  // }
-
   return (
-    <div className="py-20 container max-h-screen max-w-2xl mx-auto">
+    <div className="py-14 container max-h-screen max-w-2xl mx-auto">
       <div className="box-border h-auto w-auto p-4 border-4 rounded-xl bg-orange-400">
         <p className="text-center text-4xl font-bold text-neutral-500 mt-4 mb-8">
           Register
@@ -122,7 +113,7 @@ export default function Register() {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <input
               className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
               id="inline-password"
@@ -133,7 +124,18 @@ export default function Register() {
               required
             />
           </div>
-          <div className="mb-5">
+          <div className="mb-4 italic">
+            <ul className="ml-5 list-disc text-neutral-700">
+              <li>Password must at least 8 character</li>
+              <li>Password must contain at least one uppercase character</li>
+              <li>Password must contain at least one number</li>
+              <li>
+                Password must contain at least one special character{" "}
+                {"(!, @, #, $, %, ^, &)"}
+              </li>
+            </ul>
+          </div>
+          <div className="mb-3">
             <input
               className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
               id="inline-repeat-password"
@@ -148,14 +150,14 @@ export default function Register() {
           {!notify.isFailed && notify.msg !== "" ? (
             <Notify color={"green"} msg={notify.msg} />
           ) : null}
-          <div className="flex px-4 mb-4 items-center">
-            <input
-              className="w-4 h-4 leading-tight rounded-lg"
-              type="checkbox"
-            />
-            <label className="ml-2 text-gray-500 text-sm font-medium">
-              Remenber me
-            </label>
+          <div className="flex ml-1 mb-6 text-neutral-600">
+            Already have account?
+            <Link href="/login" className="ml-2 link">
+              Login now.
+            </Link>
+            <Link href="/recovery" className="ml-16 link">
+              Forgot password?
+            </Link>
           </div>
           <div className="grid justify-items-center">
             <button
