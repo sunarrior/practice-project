@@ -22,7 +22,7 @@ const authValidate = async (obj: {
     if (error.details[0].context.key === "account") {
       return {
         status: "failed",
-        msg: "account must be only username or email",
+        msg: "invalid username or email",
       };
     }
     if (error.details[0].context.key === "username") {
