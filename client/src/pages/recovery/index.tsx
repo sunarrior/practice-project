@@ -22,12 +22,11 @@ export default function FindAccount(): React.ReactElement {
       const result = await API.post("/auth/recovery?findaccount=1", {
         account,
       });
-      if (result.data.status === "success") {
-        setAccount(accountInfoDefault);
-        setNotify({ ...notifyDefault, msg: result.data.msg });
-      } else {
-        setNotify({ isFailed: true, msg: result.data.msg });
+      if (result.data.status === "failed") {
+        return setNotify({ isFailed: true, msg: result.data.msg });
       }
+      setAccount(accountInfoDefault);
+      setNotify({ ...notifyDefault, msg: result.data.msg });
     } catch (error: any) {
       setNotify({ isFailed: true, msg: error.response.data.msg });
     }

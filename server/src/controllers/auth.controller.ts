@@ -144,7 +144,7 @@ const changePassword = async (req: Request, res: Response) => {
       if (!user) {
         return res
           .status(200)
-          .json({ status: "failed", msg: "Account or password incorrect" });
+          .json({ status: "failed", msg: "Account or email incorrect" });
       }
 
       // check if user has already verify
