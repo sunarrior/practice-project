@@ -98,7 +98,7 @@ const loginUser = async (req: Request, res: Response) => {
     }
 
     // check passsword attempts
-    await rateLimit.loginAttemps.consume(req.ip);
+    // await rateLimit.loginAttemps.consume(req.ip);
 
     // validate password
     const compareResult = await crypto.validatePassword(
@@ -112,7 +112,7 @@ const loginUser = async (req: Request, res: Response) => {
     }
 
     // remove login attemps
-    await rateLimit.loginAttemps.delete(req.ip);
+    // await rateLimit.loginAttemps.delete(req.ip);
 
     // process jwt
     const accessToken = jwt.generateAccessToken({ username: user.username });
@@ -206,9 +206,10 @@ const changePassword = async (req: Request, res: Response) => {
           .json({ status: "failed", msg: "Account or password incorrect" });
       }
 
-      // change passowrd
+      // hash and change passowrd
+      const hashPassword = await crypto.encryptPassword(password);
       await userDB.updateUserData(user.id, {
-        password: password,
+        password: hashPassword,
         tokenStore: null,
       });
       redis.clearCache(token);
