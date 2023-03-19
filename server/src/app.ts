@@ -10,8 +10,8 @@ import router from "./routes/index";
 const redisStore: any = new (RedisStore as any)({ client: redisClient });
 const app = express();
 app.use(cors({ credentials: true, origin: true }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
 app.use(
   session({
@@ -24,7 +24,7 @@ app.use(
       secure: false,
       httpOnly: true,
       sameSite: false,
-      maxAge: 50 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     },
   })
 );

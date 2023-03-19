@@ -21,7 +21,7 @@ export default class User {
   @Column({ name: "full_name", nullable: true })
   public fullName: string;
 
-  @Column({ type: "timestamp", nullable: true })
+  @Column({ type: "date", nullable: true })
   public dob: Date;
 
   @Column({ nullable: true })

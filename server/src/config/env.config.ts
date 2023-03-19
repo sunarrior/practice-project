@@ -17,6 +17,9 @@ interface ENV {
   SESSION_SECRET: string | undefined;
   ACCESS_TOKEN_SECRET: string | undefined;
   ACCESS_TOKEN_LIFE: string | undefined;
+  CLOUD_NAME: string | undefined;
+  API_KEY: string | undefined;
+  API_SECRET: string | undefined;
 }
 
 interface Config {
@@ -32,6 +35,9 @@ interface Config {
   SESSION_SECRET: string;
   ACCESS_TOKEN_SECRET: string;
   ACCESS_TOKEN_LIFE: string;
+  CLOUD_NAME: string;
+  API_KEY: string;
+  API_SECRET: string;
 }
 
 const getEnvConfig = (): ENV => {
@@ -48,6 +54,9 @@ const getEnvConfig = (): ENV => {
     SESSION_SECRET: process.env.SESSION_SECRET,
     ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
     ACCESS_TOKEN_LIFE: process.env.ACCESS_TOKEN_LIFE,
+    CLOUD_NAME: process.env.CLOUD_NAME,
+    API_KEY: process.env.API_KEY,
+    API_SECRET: process.env.API_SECRET,
   };
 };
 
