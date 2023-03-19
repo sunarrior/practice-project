@@ -153,6 +153,7 @@ export default function Profile(): React.ReactElement {
       // do something
       return router.push("/profile");
     }
+    setProfile({ ...profile, avatarUrl: avatarPreview });
     setAvatarPreview("");
     setIsUploadAvatar(false);
     setUploadProgess(0);

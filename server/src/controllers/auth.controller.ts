@@ -2,7 +2,7 @@
 import { Request, Response } from "express";
 import User from "../entity/User";
 import userDB from "../db/user.db";
-import { crypto, mail, redis, jwt, rateLimit } from "../utils";
+import { crypto, mail, redis, jwt } from "../utils";
 
 const createUser = async (req: Request, res: Response) => {
   try {
