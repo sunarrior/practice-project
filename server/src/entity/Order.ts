@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   OneToMany,
+  UpdateDateColumn,
 } from "typeorm";
 import OrderItem from "./OrderItem";
 import User from "./User";
@@ -15,13 +16,14 @@ export default class Order {
   public id: number;
 
   @CreateDateColumn({
-    name: "create_at",
-    type: "timestamp",
-    default: () => {
-      "CURRENT_TIMESTAMP()";
-    },
+    name: "created_at",
   })
-  public createAt: Date;
+  public createdAt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  public updatedAt: Date;
 
   @Column({ name: "payment_method" })
   public paymentMethod: string;
@@ -35,7 +37,7 @@ export default class Order {
   @Column({ name: "delivery_address" })
   public deliveryAddress: string;
 
-  @Column()
+  @Column({ nullable: true })
   public status: string;
 
   @ManyToOne(() => User, (user) => user.orders)
