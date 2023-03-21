@@ -51,7 +51,7 @@ export default function OrderHistory(): React.ReactElement {
         });
         setOrderList(sortOrderList);
       } catch (error) {
-        console.log(error);
+        // do something
       }
     })();
   }, [sortOption]);
