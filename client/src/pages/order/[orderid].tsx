@@ -73,7 +73,7 @@ export default function OrderDetail() {
 
   return (
     <>
-      <div className="relative overflow-x-auto shadow-md mx-10 rounded-md">
+      <div className="my-10 relative overflow-x-auto shadow-md mx-10 rounded-md">
         <table className="w-full text-sm text-left">
           <thead className="text-xs text-gray-700 uppercase bg-orange-500">
             <tr>
