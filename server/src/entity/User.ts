@@ -1,10 +1,27 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
 import Order from "./Order";
 
 @Entity()
 export default class User {
   @PrimaryGeneratedColumn()
   public id: number;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  public createdAtt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  public updatedAt: Date;
 
   @Column()
   public role: string;

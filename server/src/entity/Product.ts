@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from "typeorm";
+import OrderItem from "./OrderItem";
 import ProductCategory from "./ProductCategory";
 import ProductImage from "./ProductImage";
 
@@ -6,6 +14,16 @@ import ProductImage from "./ProductImage";
 export default class Product {
   @PrimaryGeneratedColumn()
   public id: number;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  public createdAtt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  public updatedAt: Date;
 
   @Column()
   public name: string;
@@ -31,4 +49,7 @@ export default class Product {
     onUpdate: "NO ACTION",
   })
   public productImages: ProductImage[];
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
+  public orderItems: OrderItem[];
 }

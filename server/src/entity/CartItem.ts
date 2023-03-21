@@ -5,6 +5,8 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import Cart from "./Cart";
 import Product from "./Product";
@@ -13,6 +15,16 @@ import Product from "./Product";
 export default class CartItem {
   @PrimaryGeneratedColumn()
   public id: number;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  public createdAtt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  public updatedAt: Date;
 
   @Column()
   public quantity: number;
