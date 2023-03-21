@@ -19,7 +19,7 @@ export default class CartItem {
   @CreateDateColumn({
     name: "created_at",
   })
-  public createdAtt: Date;
+  public createdAt: Date;
 
   @UpdateDateColumn({
     name: "updated_at",

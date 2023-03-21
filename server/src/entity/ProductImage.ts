@@ -16,7 +16,7 @@ export default class ProductImage {
   @CreateDateColumn({
     name: "created_at",
   })
-  public createdAtt: Date;
+  public createdAt: Date;
 
   @UpdateDateColumn({
     name: "updated_at",

@@ -16,7 +16,7 @@ export default class Category {
   @CreateDateColumn({
     name: "created_at",
   })
-  public createdAtt: Date;
+  public createdAt: Date;
 
   @UpdateDateColumn({
     name: "updated_at",
@@ -25,9 +25,6 @@ export default class Category {
 
   @Column()
   public name: string;
-
-  @Column({ name: "product_quantity" })
-  public productQuantity: number;
 
   @Column()
   public description: string;

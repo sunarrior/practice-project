@@ -22,7 +22,7 @@ function OrderList({ data }: { data: any }): React.ReactElement {
 
 export default function OrderHistory(): React.ReactElement {
   const [orderList, setOrderList] = useState("");
-  const [sortOption, setSortOption] = useState("orderDay");
+  const [sortOption, setSortOption] = useState("AscOrderDay");
 
   useEffect(() => {
     (async () => {
@@ -62,7 +62,7 @@ export default function OrderHistory(): React.ReactElement {
 
   return (
     <>
-      <div className="py-14">
+      <div className="my-14">
         <div className="mx-10 mb-2 w-1/4">
           <select
             id="sort-option"
