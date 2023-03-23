@@ -1,7 +1,10 @@
 /* eslint-disable consistent-return */
 import { Request, Response } from "express";
-import User from "../entity/User";
+
 import userDB from "../db/user.db";
+import cartDB from "../db/cart.db";
+import User from "../entity/User";
+import Cart from "../entity/Cart";
 import { crypto, mail, redis, jwt } from "../utils";
 
 const createUser = async (req: Request, res: Response) => {
@@ -32,6 +35,14 @@ const createUser = async (req: Request, res: Response) => {
       password: hashPassword,
       tokenStore: token,
     });
+
+    // create cart for user after create user
+    const user: User | null = await userDB.getUserByAttrb({
+      username: userData.username,
+    });
+    const cart: Cart = new Cart();
+    cart.user.id = user?.id as number;
+    await cartDB.createCart(cart);
 
     // save token to redis and send to user's email
     await redis.setCache(token, userData.username, 300);

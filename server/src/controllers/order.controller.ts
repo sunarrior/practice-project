@@ -5,6 +5,7 @@ import orderDB from "../db/order.db";
 import userDB from "../db/user.db";
 import productDB from "../db/product.db";
 import OrderItem from "../entity/OrderItem";
+import ProductImage from "../entity/ProductImage";
 
 const getOrderList = async (req: Request, res: Response) => {
   try {
@@ -19,23 +20,19 @@ const getOrderList = async (req: Request, res: Response) => {
     }
 
     const result: Order[] = await orderDB.getOrderList(user.id);
-    const orderList = await Promise.all(
-      result.map(async (order: any) => {
-        const orderItemsInfo: OrderItem[] = await orderDB.getOrderItems(
-          order.id
-        );
-        return {
-          id: order.id,
-          orderDay: order.createdAt,
-          completeDay: order.completeDay,
-          firstItem: orderItemsInfo[0].product.name,
-          totalItems: order.orderItems.length,
-          cost: order.orderItems.reduce((acc: number, item: any) => {
-            return acc + item.quantity * item.price;
-          }, 0),
-        };
-      })
-    );
+    const orderList = result.map((order: Order) => {
+      order.orderItems.sort((i1, i2) => i1.id - i2.id);
+      return {
+        id: order.id,
+        orderDay: order.createdAt,
+        completeDay: order.completeDay,
+        firstItem: order.orderItems[0].product.name,
+        totalItems: order.orderItems.length,
+        cost: order.orderItems.reduce((acc: number, item: any) => {
+          return acc + item.quantity * item.price;
+        }, 0),
+      };
+    });
     res.status(200).json({ status: "success", orderList: orderList });
   } catch (error) {
     console.log(error);
@@ -46,8 +43,12 @@ const getOrderList = async (req: Request, res: Response) => {
 const getOrderItems = async (req: Request, res: Response) => {
   try {
     const { id: orderid } = req.params;
-    const result = await orderDB.getOrderItems(orderid as unknown as number);
-    const order = await orderDB.getOrderByAttrb({ id: orderid });
+    const result: OrderItem[] = await orderDB.getOrderItems(
+      orderid as unknown as number
+    );
+    const order: Order | null = await orderDB.getOrderById(
+      orderid as unknown as number
+    );
     const orderInfo = {
       orderDay: order?.createdAt,
       paymentDay: order?.paymentDay,
@@ -57,21 +58,24 @@ const getOrderItems = async (req: Request, res: Response) => {
       }, 0),
     };
     const orderItems = await Promise.all(
-      result.map(async (item) => {
-        const thumbnail = await productDB.getProductThumbnail(item.product.id);
+      result.map(async (item: OrderItem) => {
+        const thumbnail: ProductImage = await productDB.getProductThumbnail(
+          item.product.id
+        );
         return {
-          id: item.id,
+          id: item?.id,
           url: thumbnail?.url,
-          productName: item.product.name,
-          quantity: item.quantity,
-          price: item.price,
+          productName: item?.product?.name,
+          quantity: item?.quantity,
+          price: item?.price,
         };
       })
     );
+    orderItems.sort((i1, i2) => i1.id - i2.id);
     res.status(200).json({
       status: "success",
-      orderItems: orderItems,
       orderInfo: orderInfo,
+      orderItems: orderItems,
     });
   } catch (error) {
     console.log(error);

@@ -25,7 +25,7 @@ const getUserProfile = async (req: Request, res: Response) => {
       deliveryAddress: user.deliveryAddress,
       avatarUrl: user.avatarUrl,
     };
-    res.status(200).json(userData);
+    res.status(200).json({ status: "success", userData: userData });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server Error" });

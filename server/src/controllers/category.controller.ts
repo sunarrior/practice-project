@@ -14,14 +14,14 @@ const getAllCategories = async (req: Request, res: Response) => {
         url: category?.thumbnailUrl,
       };
     });
-    res.status(200).json({ status: "failed", categoryList: categoryList });
+    res.status(200).json({ status: "success", categoryList: categoryList });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server Error" });
   }
 };
 
-const getCategory = async (req: Request, res: Response) => {
+const getCategoryById = async (req: Request, res: Response) => {
   try {
     const { id: categoryid } = req.params;
     const result = await categoryDB.getCategoryById(
@@ -33,7 +33,7 @@ const getCategory = async (req: Request, res: Response) => {
       productQuantity: result?.productCategories?.length,
       description: result?.description,
     };
-    res.status(200).json({ status: "failed", categoryInfo: categoryInfo });
+    res.status(200).json({ status: "success", categoryInfo: categoryInfo });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server Error" });
@@ -42,5 +42,5 @@ const getCategory = async (req: Request, res: Response) => {
 
 export default {
   getAllCategories,
-  getCategory,
+  getCategoryById,
 };

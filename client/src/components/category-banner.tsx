@@ -18,7 +18,7 @@ export default function Banner({
         className="flex max-w-full mx-52 py-3 px-4 bg-orange-400 border border-b border-gray-200 rounded-md"
       >
         <Image
-          className="w-1/4 h-52"
+          className="w-1/4 h-52 object-cover"
           src={url}
           alt={categoryName}
           width={500}

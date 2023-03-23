@@ -47,17 +47,21 @@ export default function Profile(): React.ReactElement {
       };
       const result = await API.get("/user", config);
       setProfile({
-        fullName: result.data.fullName ? result.data.fullName : "",
-        phone: result.data.phone ? result.data.phone : "",
-        dob: result.data.dob
-          ? result.data.dob.substring(0, 10)
-          : getYYYYMMDDString(),
-        gender: result.data.gender ? result.data.gender : "",
-        email: result.data.email ? result.data.email : "",
-        deliveryAddress: result.data.deliveryAddress
-          ? result.data.deliveryAddress
+        fullName: result.data.userData.fullName
+          ? result.data.userData.fullName
           : "",
-        avatarUrl: result.data.avatarUrl ? result.data.avatarUrl : "",
+        phone: result.data.userData.phone ? result.data.userData.phone : "",
+        dob: result.data.userData.dob
+          ? result.data.userData.dob.substring(0, 10)
+          : getYYYYMMDDString(),
+        gender: result.data.userData.gender ? result.data.userData.gender : "",
+        email: result.data.userData.email ? result.data.userData.email : "",
+        deliveryAddress: result.data.userData.deliveryAddress
+          ? result.data.userData.deliveryAddress
+          : "",
+        avatarUrl: result.data.userData.avatarUrl
+          ? result.data.userData.avatarUrl
+          : "",
       });
     })();
   }, [isUploadAvatar]);

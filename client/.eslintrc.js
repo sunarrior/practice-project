@@ -35,6 +35,7 @@ module.exports = {
       "@typescript-eslint/default-param-last": "off",
       "no-restricted-syntax": "off",
       "consistent-return": "off",
+
     }
   }
   
