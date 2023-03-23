@@ -8,7 +8,9 @@ const orderItemRepos = dataSource.getRepository(OrderItem);
 const getOrderList = async (userid: number): Promise<Order[]> => {
   const result: Order[] = await orderRepos.find({
     relations: {
-      orderItems: true,
+      orderItems: {
+        product: true,
+      },
     },
     where: {
       user: {
@@ -19,13 +21,13 @@ const getOrderList = async (userid: number): Promise<Order[]> => {
   return result;
 };
 
-const getOrderByAttrb = async (data: any): Promise<Order | null> => {
+const getOrderById = async (orderid: number): Promise<Order | null> => {
   const result: Order | null = await orderRepos.findOne({
     relations: {
       orderItems: true,
     },
     where: {
-      id: data?.id,
+      id: orderid,
     },
   });
   return result;
@@ -47,6 +49,6 @@ const getOrderItems = async (orderid: number): Promise<OrderItem[]> => {
 
 export default {
   getOrderList,
-  getOrderByAttrb,
+  getOrderById,
   getOrderItems,
 };
