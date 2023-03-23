@@ -123,12 +123,6 @@ export default function Index(): React.ReactElement {
   return (
     <>
       <div className="mx-10 my-10">
-        {/* <CategoryBanner
-          url={categoryInfo.url || "/blank-image.jpg"}
-          categoryName={categoryInfo.name}
-          productQuantity={categoryInfo.productQuantity}
-          description={categoryInfo.description}
-        /> */}
         <div className="flex mt-5">
           <CategoryListCheckbox
             data={categoryList}
