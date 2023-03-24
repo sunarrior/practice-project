@@ -1,9 +1,12 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable import/no-extraneous-dependencies */
-import React from "react";
+import React, { useContext } from "react";
 import Link from "next/link";
 import { Menu } from "@headlessui/react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { HiOutlineUserCircle } from "react-icons/hi";
+
+import { SessionContext } from "@/context/session.context";
 
 function IsLoggedIn({
   isLoggedIn,
@@ -13,7 +16,7 @@ function IsLoggedIn({
   const userMenus = [
     { name: "Profile", url: "/profile" },
     { name: "Order History", url: "/order" },
-    { name: "Logout", url: "#" },
+    { name: "Logout", url: "/logout" },
   ];
   if (isLoggedIn) {
     return (
@@ -73,6 +76,8 @@ export default function NavBar({
 }: {
   children: React.ReactElement;
 }): React.ReactElement {
+  const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
+
   return (
     <>
       {/* <!-- component --> */}
@@ -116,7 +121,7 @@ export default function NavBar({
           </div>
 
           <div className="flex items-center">
-            <IsLoggedIn isLoggedIn={true} />
+            <IsLoggedIn isLoggedIn={isLoggedIn as boolean} />
           </div>
         </div>
       </nav>

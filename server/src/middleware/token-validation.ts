@@ -10,7 +10,9 @@ export const tokenValidation = (
   const bearerToken: string | undefined = req.header("Authorization");
   // check if jwt token exists
   if (!bearerToken) {
-    return res.status(403).json({ status: "failed", msg: "Token not found" });
+    return res
+      .status(403)
+      .json({ status: "failed", msg: "Token not found-to", isLoggedIn: false });
   }
 
   // get and decode jwt token
@@ -20,9 +22,11 @@ export const tokenValidation = (
   // get user info and check if exists in session
   const { username } = (result as any).data;
   if (username !== req.session.username) {
-    return res
-      .status(403)
-      .json({ status: "failed", msg: "User session invalid" });
+    return res.status(403).json({
+      status: "failed",
+      msg: "User session invalid-to",
+      isLoggedIn: false,
+    });
   }
   next();
 };
