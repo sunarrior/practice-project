@@ -18,12 +18,20 @@ module.exports = {
     },
     plugins: ["@typescript-eslint", "prettier"],
     rules: {
-      "prettier/prettier": "error",
+      "prettier/prettier": [
+        "error",
+        {
+          "endOfLine": "auto"
+        }
+      ],
       "import/prefer-default-export": "off",
       "no-restricted-syntax": "off",
       "no-console": "off",
       "@typescript-eslint/ban-types": "off",
       "object-shorthand": "off",
       "import/no-extraneous-dependencies": "off",
+      "import/no-cycle": "off",
+      "consistent-return": "off",
+      "@typescript-eslint/no-explicit-any": "off",
     },
   }
