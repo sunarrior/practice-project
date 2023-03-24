@@ -1,17 +1,21 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable import/no-extraneous-dependencies */
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu } from "@headlessui/react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { HiOutlineUserCircle } from "react-icons/hi";
 
 import { SessionContext } from "@/context/session.context";
+import { CartContext } from "@/context/cart.context";
+import API from "@/config/axios.config";
 
 function IsLoggedIn({
   isLoggedIn,
+  cartState,
 }: {
   isLoggedIn: boolean;
+  cartState: number;
 }): React.ReactElement {
   const userMenus = [
     { name: "Profile", url: "/profile" },
@@ -27,7 +31,9 @@ function IsLoggedIn({
             href="#"
           >
             <AiOutlineShoppingCart size={20} />
-            {/* <span className="absolute top-0 left-0 rounded-full bg-indigo-500 text-white p-1 text-xs"></span> */}
+            <span className="absolute -top-2 -right-3 rounded-full bg-indigo-500 px-[4px] text-white text-xs">
+              {cartState}
+            </span>
           </Link>
         </div>
         <div className="my-1 text-sm text-gray-700 font-medium mx-6 md:my-0">
@@ -77,6 +83,27 @@ export default function NavBar({
   children: React.ReactElement;
 }): React.ReactElement {
   const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
+  const [cartState, setCartState] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          return;
+        }
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        const result = await API.get("/cart/state", config);
+        setCartState(result.data.cartState);
+      } catch (error) {
+        //
+      }
+    })();
+  }, []);
 
   return (
     <>
@@ -121,11 +148,16 @@ export default function NavBar({
           </div>
 
           <div className="flex items-center">
-            <IsLoggedIn isLoggedIn={isLoggedIn as boolean} />
+            <IsLoggedIn
+              isLoggedIn={isLoggedIn as boolean}
+              cartState={cartState}
+            />
           </div>
         </div>
       </nav>
-      {children}
+      <CartContext.Provider value={{ cartState, setCartState }}>
+        {children}
+      </CartContext.Provider>
     </>
   );
 }

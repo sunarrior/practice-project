@@ -61,11 +61,11 @@ export default function App({ Component, pageProps }: AppProps) {
         };
         const result = await API.get("/auth/session", config);
         setIsLoggedIn(result.data.isLoggedIn);
-        routerCheck(url, isLoggedIn, router);
+        // routerCheck(url, isLoggedIn, router);
       } catch (error: any) {
         // console.log(error);
         setIsLoggedIn(false);
-        routerCheck(url, error.response.data.isLoggedIn, router);
+        // routerCheck(url, error.response.data.isLoggedIn, router);
       }
     })();
   }, [isLoggedIn, router, url]);
