@@ -143,6 +143,43 @@ const loginUser = async (req: Request, res: Response) => {
   }
 };
 
+const sessionAuthentication = async (req: Request, res: Response) => {
+  try {
+    const { username, userip, useragent } = req.session;
+
+    // check if user exists
+    const user: User | null = await userDB.getUserByAttrb({
+      username: username as string,
+    });
+    if (!user) {
+      return res
+        .status(403)
+        .json({ status: "failed", msg: "User not exist-a", isLoggedIn: false });
+    }
+
+    // check if user-agent and ip is valid with sesison
+    if (userip !== req.ip || useragent !== req.get("User-Agent")) {
+      return res.status(403).json({
+        status: "failed",
+        msg: "User session invalid-a",
+        isLoggedIn: false,
+      });
+    }
+
+    // return authentication successfully
+    res.status(200).json({
+      status: "success",
+      msg: "Session authentication successfully",
+      isLoggedIn: true,
+    });
+  } catch (error) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ status: "failed", msg: "Server error", isLoggedIn: false });
+  }
+};
+
 const changePassword = async (req: Request, res: Response) => {
   try {
     if (req.query.findaccount) {
@@ -235,9 +272,23 @@ const changePassword = async (req: Request, res: Response) => {
   }
 };
 
+const logoutUser = (req: Request, res: Response) => {
+  try {
+    req.session.destroy(() => {});
+    res.clearCookie("_rsi");
+    res.status(200).json({ status: "success", msg: "User logged out" });
+  } catch (error) {
+    console.log(error);
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server error" });
+  }
+};
+
 export default {
   createUser,
   verifyUser,
   loginUser,
+  sessionAuthentication,
   changePassword,
+  logoutUser,
 };

@@ -1,5 +1,7 @@
-import { useState } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useContext } from "react";
 import { useRouter } from "next/router";
+import { SessionContext } from "@/context/session.context";
 import Notify from "@/components/notify";
 import API from "../config/axios.config";
 
@@ -8,8 +10,13 @@ const notifyDefault = { isFailed: false, msg: "" };
 
 export default function LoginForm() {
   const router = useRouter();
+  const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
   const [loginInfo, setLoginInfo] = useState(loginInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
+
+  // if (isLoggedIn) {
+  //   return router.push("/");
+  // }
 
   function handleAccountChange(e: any) {
     setLoginInfo({ ...loginInfo, account: e.target.value });
@@ -23,14 +30,14 @@ export default function LoginForm() {
     e.preventDefault();
     const data = { ...loginInfo };
     const result = await API.post("/auth/login", data);
-    if (result.data.status === "success") {
-      setLoginInfo(loginInfoDefault);
-      setNotify(notifyDefault);
-      localStorage.setItem("token", result.data.token);
-      router.push("/");
-    } else {
-      setNotify({ isFailed: true, msg: result.data.msg });
+    if (result.data.status === "failed") {
+      return setNotify({ isFailed: true, msg: result.data.msg });
     }
+    (setIsLoggedIn as any)(true);
+    setLoginInfo(loginInfoDefault);
+    setNotify(notifyDefault);
+    localStorage.setItem("token", result.data.token);
+    router.push("/");
   }
 
   return (
