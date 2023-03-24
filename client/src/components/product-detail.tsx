@@ -75,10 +75,10 @@ export default function ProductDetail({
               width={500}
               height={500}
             />
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] left-5 text-xl rounded-full p2 bg-black/20 text-white cursor-pointer">
+            <div className="hidden group-hover:block absolute top-[30%] -translate-x-0 translate-y-[-50%] left-5 text-xl rounded-full p2 bg-black/20 text-white cursor-pointer">
               <BsChevronCompactLeft onClick={prevImage} size={25} />
             </div>
-            <div className="hidden group-hover:block absolute top-[50%] -translate-x-0 translate-y-[-50%] right-5 text-xl rounded-full p2 bg-black/20 text-white cursor-pointer">
+            <div className="hidden group-hover:block absolute top-[30%] -translate-x-0 translate-y-[-50%] right-5 text-xl rounded-full p2 bg-black/20 text-white cursor-pointer">
               <BsChevronCompactRight onClick={nextImage} size={25} />
             </div>
             <div className="flex top-4 justify-center py-2">
@@ -101,13 +101,11 @@ export default function ProductDetail({
             </p>
             <p className="text-md font-bold mb-3">PRICE: {price}$</p>
             <p className="flex text-md font-bold mb-3 uppercase">
-              CATEGORY:
-              <div className="text-gray-700 ml-1">
-                {categories.reduce(
-                  (result: any, category: any) => `${result} [${category}]`,
-                  ""
-                )}
-              </div>
+              CATEGORY:{" "}
+              {categories.reduce(
+                (result: any, category: any) => `${result} [${category}]`,
+                ""
+              )}
             </p>
             <p className="text-md text-justify mb-5">{description}</p>
             <div className="h-10 w-32 mb-3">

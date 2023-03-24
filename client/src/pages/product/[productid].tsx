@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 
+import { CartContext } from "@/context/cart.context";
 import ProductDetail from "@/components/product-detail";
 import API from "@/config/axios.config";
 
@@ -22,6 +23,7 @@ const productDetailDefault: {
 
 export default function ProductPage(): React.ReactElement {
   const router = useRouter();
+  const { cartState, setCartState } = useContext(CartContext);
   const [productDetail, setProductDetail] = useState(productDetailDefault);
   const [purchaseAmount, setPurchaseAmount] = useState(1);
 
@@ -82,8 +84,11 @@ export default function ProductPage(): React.ReactElement {
       productid,
       quantity: purchaseAmount,
     };
-    await API.post("/cart?additem=1", data, config);
-    router.back();
+    const result = await API.post("/cart?additem=1", data, config);
+    if (result.data.productState === "new") {
+      (setCartState as any)(Number(cartState) + 1);
+    }
+    // router.back();
   }
 
   return (

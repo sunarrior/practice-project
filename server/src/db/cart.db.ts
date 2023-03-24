@@ -25,6 +25,20 @@ const getCartByUsername = async (username: string): Promise<Cart | null> => {
   return result;
 };
 
+const getCartState = async (userid: number): Promise<Cart | null> => {
+  const result: Cart | null = await cartRepos.findOne({
+    relations: {
+      cartItems: true,
+    },
+    where: {
+      user: {
+        id: userid,
+      },
+    },
+  });
+  return result;
+};
+
 const addCartItem = async (cartItem: CartItem): Promise<void> => {
   await cartItemRepos.save(cartItem);
 };
@@ -36,6 +50,7 @@ const updateCartItem = async (cartItem: CartItem): Promise<void> => {
 export default {
   createCart,
   getCartByUsername,
+  getCartState,
   addCartItem,
   updateCartItem,
 };
