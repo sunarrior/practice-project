@@ -7,6 +7,7 @@ import User from "../entity/User";
 import Cart from "../entity/Cart";
 import CartItem from "../entity/CartItem";
 import Product from "../entity/Product";
+import ProductImage from "../entity/ProductImage";
 
 const addCartItem = async (req: Request, res: Response) => {
   try {
@@ -96,7 +97,65 @@ const getCartState = async (req: Request, res: Response) => {
   }
 };
 
+const getAllCartItems = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.session;
+
+    // check if user is exists
+    const user: User | null = await userDB.getUserByAttrb({
+      username: username as string,
+    });
+    if (!user) {
+      return res.status(200).json({ status: "failed", msg: "User not found" });
+    }
+
+    const result: CartItem[] = await cartDB.getAllCartItems(user.id);
+    const cartItems: any[] = await Promise.all(
+      result.map(async (item: CartItem) => {
+        const thumbnail: ProductImage = await productDB.getProductThumbnail(
+          item.product.id
+        );
+        return {
+          id: item?.id,
+          name: item?.product?.name,
+          quantity: item?.quantity,
+          price: item?.product?.price,
+          url: thumbnail?.url,
+        };
+      })
+    );
+
+    res.status(200).json({ status: "success", cartItems: cartItems });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
+const removeItems = async (req: Request, res: Response) => {
+  try {
+    const ids: number[] = req.body;
+    const items = await Promise.all(
+      ids.map(async (id: number) => {
+        const result = await cartDB.getCartItemById(id);
+        return result;
+      })
+    );
+    const filterItems = items.filter((item: CartItem | null) => item !== null);
+    await cartDB.removeItem(filterItems as CartItem[]);
+    res.status(200).json({
+      status: "success",
+      msg: "Items removed successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   addCartItem,
   getCartState,
+  getAllCartItems,
+  removeItems,
 };

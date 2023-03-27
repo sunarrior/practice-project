@@ -39,18 +39,48 @@ const getCartState = async (userid: number): Promise<Cart | null> => {
   return result;
 };
 
+const getAllCartItems = async (userid: number): Promise<CartItem[]> => {
+  const result: CartItem[] = await cartItemRepos.find({
+    relations: {
+      product: {
+        productImages: true,
+      },
+    },
+    where: {
+      cart: {
+        user: {
+          id: userid,
+        },
+      },
+    },
+  });
+  return result;
+};
+
 const addCartItem = async (cartItem: CartItem): Promise<void> => {
   await cartItemRepos.save(cartItem);
+};
+
+const getCartItemById = async (itemid: number): Promise<CartItem | null> => {
+  const result: CartItem | null = await cartItemRepos.findOneBy({ id: itemid });
+  return result;
 };
 
 const updateCartItem = async (cartItem: CartItem): Promise<void> => {
   await cartItemRepos.update(cartItem.id, cartItem);
 };
 
+const removeItem = async (cartItem: CartItem[]): Promise<void> => {
+  await cartItemRepos.remove(cartItem);
+};
+
 export default {
   createCart,
   getCartByUsername,
   getCartState,
+  getAllCartItems,
   addCartItem,
+  getCartItemById,
   updateCartItem,
+  removeItem,
 };

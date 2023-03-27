@@ -28,7 +28,7 @@ function IsLoggedIn({
         <div className="justify-center md:block px-1 py-1 rounded-full bg-red-100 group-hover:bg-red-50 cursor-pointer group">
           <Link
             className="relative text-gray-700 group-hover:text-gray-500"
-            href="#"
+            href="/cart"
           >
             <AiOutlineShoppingCart size={20} />
             <span className="absolute -top-2 -right-3 rounded-full bg-indigo-500 px-[4px] text-white text-xs">
@@ -36,12 +36,12 @@ function IsLoggedIn({
             </span>
           </Link>
         </div>
-        <div className="my-1 text-sm text-gray-700 font-medium mx-6 md:my-0">
+        <div className="z-50 my-1 text-sm text-gray-700 font-medium mx-6 md:my-0">
           <Menu>
             <Menu.Button className="hover:text-indigo-500">
               <HiOutlineUserCircle size={30} />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 w-28 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 w-28 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               {userMenus.map((item: any) => (
                 <Menu.Item key={item.name}>
                   <Link href={item.url}>
@@ -134,13 +134,13 @@ export default function NavBar({
               </Link>
               <Link
                 className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
-                href="#"
+                href="/"
               >
                 Contact
               </Link>
               <Link
                 className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
-                href="#"
+                href="/"
               >
                 About
               </Link>
