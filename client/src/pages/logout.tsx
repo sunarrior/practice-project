@@ -24,11 +24,12 @@ export default function Logout() {
         if (result.data.status === "success") {
           localStorage.removeItem("token");
           (setIsLoggedIn as any)(false);
-          router.push("/");
         }
       } catch (error) {
         // console.log(error);
       }
     })();
-  }, [router, setIsLoggedIn]);
+  }, [setIsLoggedIn]);
+
+  router.push("/");
 }

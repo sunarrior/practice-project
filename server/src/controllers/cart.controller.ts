@@ -141,7 +141,9 @@ const removeItems = async (req: Request, res: Response) => {
         return result;
       })
     );
-    const filterItems = items.filter((item: CartItem | null) => item !== null);
+    const filterItems = items.filter(
+      (item: CartItem | null) => item !== null || item !== undefined
+    );
     await cartDB.removeItem(filterItems as CartItem[]);
     res.status(200).json({
       status: "success",

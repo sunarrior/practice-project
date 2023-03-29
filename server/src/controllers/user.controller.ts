@@ -8,11 +8,18 @@ const getUserProfile = async (req: Request, res: Response) => {
   try {
     // get user info and check if exists
     const { username } = req.session;
+    const { option } = req.query;
     const user: User | null = await userDB.getUserByAttrb({
       username: username as string,
     });
     if (!user) {
       return res.status(200).json({ status: "failed", msg: "User not found" });
+    }
+
+    if ((option as string)?.localeCompare("delivery-address") === 0) {
+      return res
+        .status(200)
+        .json({ status: "success", deliveryAddress: user.deliveryAddress });
     }
 
     // return user info

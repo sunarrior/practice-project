@@ -6,6 +6,7 @@ import session from "express-session";
 import EnvConfig from "./config/env.config";
 import { redisClient } from "./config/redis-cache";
 import router from "./routes/index";
+import cartReminder from "./cronjobs/cart-reminder";
 
 const redisStore: any = new (RedisStore as any)({ client: redisClient });
 const app = express();
@@ -28,6 +29,8 @@ app.use(
     },
   })
 );
+
+// cartReminder.cartReminderCronJob().start();
 
 app.use("/api/v1", router);
 

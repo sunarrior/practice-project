@@ -6,5 +6,6 @@ const router: Router = Router();
 
 router.get("/", order.getOrderList);
 router.get("/:id", order.getOrderItems);
+router.post("/create", order.createOrder);
 
 export default router;

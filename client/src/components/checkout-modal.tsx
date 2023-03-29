@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaCcVisa } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
 
 import CheckoutItem from "@/components/checkout-item";
+import API from "@/config/axios.config";
 
 function CheckoutItemList({ data }: { data: any }) {
   const checkoutItemList = data.map((item: any) => {
@@ -21,17 +22,41 @@ function CheckoutItemList({ data }: { data: any }) {
 
 const paymentOptionDefault = {
   deliveryAddress: "",
-  paymentMethod: "",
+  paymentMethod: "visa",
 };
 
 export default function CheckoutModal({
   data,
   handleShowModal,
+  onPlaceOrder,
 }: {
   data: any;
   handleShowModal: (isShow: boolean) => void;
+  onPlaceOrder: () => void;
 }): React.ReactElement {
   const [paymentOption, setPaymentOption] = useState(paymentOptionDefault);
+  const [warning, setWarning] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const result = await API.get("/user?option=delivery-address", config);
+      setPaymentOption((curPaymentOption: any) => {
+        return {
+          ...curPaymentOption,
+          deliveryAddress: result.data.deliveryAddress || "",
+        };
+      });
+    })();
+  }, []);
 
   function handleDeliveryAddressChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPaymentOption({ ...paymentOption, deliveryAddress: e.target.value });
@@ -42,7 +67,24 @@ export default function CheckoutModal({
   }
 
   async function handlePlaceOrder() {
-    handleShowModal(false);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return;
+    }
+    if (paymentOption.deliveryAddress.localeCompare("") === 0) {
+      return setWarning(true);
+    }
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const orderData = {
+      items: data,
+      paymentOption,
+    };
+    await API.post("/order/create", orderData, config);
+    onPlaceOrder();
   }
 
   return (
@@ -62,6 +104,17 @@ export default function CheckoutModal({
             {/* footer */}
             <div className="border-t border-solid border-slate-200 rounded-b">
               <div className="mx-10 mt-4">
+                <div className="ml-1 mb-1">
+                  <p>
+                    <span className="font-bold">Total: </span>
+                    {data.reduce(
+                      (total: number, item: any) =>
+                        total + item.price * item.quantity,
+                      0
+                    )}
+                    {"$"}
+                  </p>
+                </div>
                 <input
                   type="text"
                   className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50"
@@ -71,7 +124,7 @@ export default function CheckoutModal({
                   required
                 />
                 <div className="flex">
-                  <div className="flex items-center pl-3">
+                  <div className="flex items-center pl-1">
                     <input
                       id="visa"
                       type="radio"
@@ -110,6 +163,14 @@ export default function CheckoutModal({
                     </label>
                   </div>
                 </div>
+                {warning && (
+                  <div
+                    className="bg-orange-100 border border-orange-500 text-orange-700 p-3"
+                    role="alert"
+                  >
+                    <p>Delivey Address Cannot Be Empty</p>
+                  </div>
+                )}
               </div>
               <div className="flex items-center justify-end p-4">
                 <button

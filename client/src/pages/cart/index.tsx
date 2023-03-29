@@ -77,7 +77,18 @@ export default function Index(): React.ReactElement {
   }
 
   function handleShowModal(state: boolean) {
-    setShowModal(state);
+    if (checkedItems.length > 0) {
+      setShowModal(state);
+    }
+  }
+
+  function handlePlaceOrder() {
+    (setCartState as any)(cartItemList.length - checkedItems.length);
+    setCartItemList(
+      cartItemList.filter((item: any) => !checkedItems.includes(item.id))
+    );
+    setCheckedItems([]);
+    handleShowModal(false);
   }
 
   async function handleRemoveItem() {
@@ -135,6 +146,7 @@ export default function Index(): React.ReactElement {
                 checkedItems.includes(item.id)
               )}
               handleShowModal={handleShowModal}
+              onPlaceOrder={handlePlaceOrder}
             />
           </>
         )}
