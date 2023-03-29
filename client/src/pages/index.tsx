@@ -65,8 +65,8 @@ export default function Index(): React.ReactElement {
       // if (!categoryid) {
       //   return;
       // }
-      const categories = await API.get(`/category`);
-      const products = await API.get(`/product`);
+      const categories = await API.get("/category");
+      const products = await API.get("/product");
       const sortCategories = categories.data.categoryList.sort(
         (c1: any, c2: any) => c1.name.localeCompare(c2.name)
       );

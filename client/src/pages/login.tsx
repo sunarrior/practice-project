@@ -41,7 +41,7 @@ export default function LoginForm() {
   }
 
   return (
-    <div className="py-44 container max-h-screen max-w-2xl mx-auto">
+    <div className="py-32 container max-h-screen max-w-2xl mx-auto">
       <div className="box-border h-auto w-auto p-4 border-4 rounded-xl bg-orange-400">
         <p className="text-center text-4xl font-bold text-neutral-500 mt-4 mb-8">
           Login Form

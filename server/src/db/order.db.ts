@@ -47,8 +47,18 @@ const getOrderItems = async (orderid: number): Promise<OrderItem[]> => {
   return result;
 };
 
+const createOrder = async (order: Order): Promise<void> => {
+  await orderRepos.save(order);
+};
+
+const addOrderItem = async (orderItems: OrderItem[]): Promise<void> => {
+  await orderItemRepos.save(orderItems);
+};
+
 export default {
   getOrderList,
   getOrderById,
   getOrderItems,
+  createOrder,
+  addOrderItem,
 };

@@ -33,6 +33,15 @@ const getProductByCategory = async (categoryid: number): Promise<Product[]> => {
   return result;
 };
 
+const getProductByName = async (name: string): Promise<Product | null> => {
+  const result: Product | null = await productRepos.findOne({
+    where: {
+      name: name,
+    },
+  });
+  return result;
+};
+
 const getProductThumbnail = async (
   productid: number
 ): Promise<ProductImage> => {
@@ -75,6 +84,7 @@ const updateProduct = async (
 export default {
   getAllProducts,
   getProductByCategory,
+  getProductByName,
   getProductThumbnail,
   getProductDetail,
   updateProduct,

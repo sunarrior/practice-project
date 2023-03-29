@@ -29,9 +29,11 @@ export default function Order({
         <td className="px-6 py-4">{totalItem}</td>
         <td className="px-6 py-4">{cost}$</td>
         <td className="px-1 py-4">
-          <button className="px-4 py-2 bg-purple-500 hover:bg-purple-400 rounded-md text-white font-bold">
-            <Link href={url}>DETAIL</Link>
-          </button>
+          <Link href={url}>
+            <button className="px-4 py-2 bg-purple-500 hover:bg-purple-400 rounded-md text-white font-bold">
+              DETAIL
+            </button>
+          </Link>
         </td>
       </tr>
     </>

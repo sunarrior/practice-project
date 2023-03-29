@@ -14,7 +14,7 @@ export default function Product({
 }) {
   return (
     <>
-      <div className="mr-4 my-5 bg-orange-400 w-64 max-w-sm rounded-md overflow-hidden shadow-md">
+      <div className="mr-4 my-5 bg-orange-400 w-60 max-w-sm rounded-md overflow-hidden shadow-md">
         <Image
           className="w-full h-44 object-cover"
           src={url}

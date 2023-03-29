@@ -3,9 +3,13 @@ import Order from "../entity/Order";
 import User from "../entity/User";
 import orderDB from "../db/order.db";
 import userDB from "../db/user.db";
+import cartDB from "../db/cart.db";
 import productDB from "../db/product.db";
 import OrderItem from "../entity/OrderItem";
 import ProductImage from "../entity/ProductImage";
+import Product from "../entity/Product";
+import CartItem from "../entity/CartItem";
+import { mail } from "../utils";
 
 const getOrderList = async (req: Request, res: Response) => {
   try {
@@ -83,7 +87,97 @@ const getOrderItems = async (req: Request, res: Response) => {
   }
 };
 
+const createOrder = async (req: Request, res: Response) => {
+  try {
+    const { username } = req.session;
+    const { items, paymentOption } = req.body;
+
+    // check if user exists
+    const user: User | null = await userDB.getUserByAttrb({
+      username: username as string,
+    });
+    if (!user) {
+      return res.status(200).json({ status: "failed", msg: "User not found" });
+    }
+
+    // check item in cart
+    const cartItems: CartItem[] = await cartDB.getAllCartItems(user.id);
+    const cartItemIds: number[] = cartItems.map((item: CartItem) => item.id);
+
+    // create order
+    const order: Order = new Order();
+    order.paymentMethod = paymentOption.paymentMethod;
+    if (paymentOption.paymentMethod.localeCompare("visa") === 0) {
+      order.paymentDay = new Date();
+    }
+    order.deliveryAddress = paymentOption.deliveryAddress;
+    order.status = "pending";
+    order.user = user;
+    orderDB.createOrder(order);
+
+    // add order item
+    let orderItems: OrderItem[] = await Promise.all(
+      items.map(async (item: any) => {
+        // check if item not in cart
+        if (!cartItemIds.includes(Number(item.id))) {
+          return;
+        }
+
+        // check if product is valid
+        const product: Product | null = await productDB.getProductByName(
+          item.name
+        );
+        if (!product) {
+          return;
+        }
+
+        // add order item
+        const orderItem = new OrderItem();
+        orderItem.quantity = item.quantity;
+        orderItem.price = item.price;
+        orderItem.order = order;
+        orderItem.product = product;
+
+        // update product quantity
+        const newProductState = {
+          ...product,
+          quantity: product.quantity - item.quantity,
+        };
+        await productDB.updateProduct(product.id, newProductState);
+
+        return orderItem;
+      })
+    );
+    orderItems = orderItems.filter(
+      (item: OrderItem) => item !== null || item !== undefined
+    );
+    await orderDB.addOrderItem(orderItems);
+
+    // remove item in cart
+    const cartItemsCheckout: CartItem[] = cartItems.filter((item: CartItem) => {
+      for (const i of items) {
+        if (i.id === item.id) {
+          return true;
+        }
+      }
+      return false;
+    });
+    await cartDB.removeItem(cartItemsCheckout);
+
+    // send mail to user
+    mail.sendPlaceOrderMail(user.email, items, paymentOption);
+
+    res
+      .status(200)
+      .json({ status: "success", msg: "Place Order Successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   getOrderList,
   getOrderItems,
+  createOrder,
 };
