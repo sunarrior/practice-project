@@ -25,7 +25,7 @@ function routerCheck(route: string): string {
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isAllowUrl, setIsAllowUrl] = useState(false);
+  const [isAllowUrl, setIsAllowUrl] = useState(true);
 
   useEffect(() => {
     const authCheck = async (): Promise<any> => {
@@ -37,8 +37,8 @@ export default function App({ Component, pageProps }: AppProps) {
         // }
         const token = localStorage.getItem("token");
         if (!token) {
-          setIsLoggedIn(false);
-          setIsAllowUrl(true);
+          // setIsLoggedIn(false);
+          // setIsAllowUrl(true);
           // router.push("/login");
           return;
         }
@@ -58,13 +58,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
     authCheck();
 
-    const preventAccess = () => setIsAllowUrl(false);
+    // const preventAccess = () => setIsAllowUrl(false);
 
-    router.events.on("routeChangeStart", preventAccess);
+    // router.events.on("routeChangeStart", preventAccess);
     router.events.on("routeChangeComplete", authCheck);
 
     return () => {
-      router.events.off("routeChangeStart", preventAccess);
+      // router.events.off("routeChangeStart", preventAccess);
       router.events.off("routeChangeComplete", authCheck);
     };
   }, [router, router.events]);
