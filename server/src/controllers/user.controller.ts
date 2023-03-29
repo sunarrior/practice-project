@@ -4,6 +4,25 @@ import userDB from "../db/user.db";
 import User from "../entity/User";
 import cloudinary from "../config/cloudinary.config";
 
+const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users: User[] = await userDB.getAllUsers();
+    const userList: any[] = users.map((user: User) => {
+      return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        createdAt: user.createdAt,
+        role: user.role,
+      };
+    });
+    res.status(200).json({ status: "success", userList: userList });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 const getUserProfile = async (req: Request, res: Response) => {
   try {
     // get user info and check if exists
@@ -94,6 +113,7 @@ const uploadImageProfile = async (req: Request, res: Response) => {
 };
 
 export default {
+  getAllUsers,
   getUserProfile,
   updateUserProfile,
   uploadImageProfile,
