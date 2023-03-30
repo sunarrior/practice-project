@@ -41,13 +41,13 @@ export default function OrderDetail() {
 
   useEffect(() => {
     (async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
         return;
       }
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
 

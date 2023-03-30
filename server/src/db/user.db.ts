@@ -37,9 +37,14 @@ const updateUserData = async (
   await userRepos.update(userid, data);
 };
 
+const deleteUser = async (user: User): Promise<void> => {
+  await userRepos.remove(user);
+};
+
 export default {
   createUser,
   getAllUsers,
   getUserByAttrb,
   updateUserData,
+  deleteUser,
 };

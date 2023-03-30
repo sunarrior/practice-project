@@ -1,5 +1,8 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useState, useEffect } from "react";
 import { NextRouter, useRouter } from "next/router";
 
@@ -35,16 +38,13 @@ export default function App({ Component, pageProps }: AppProps) {
         //   setIsAllowUrl(true);
         //   return;
         // }
-        const token = localStorage.getItem("token");
-        if (!token) {
-          // setIsLoggedIn(false);
-          // setIsAllowUrl(true);
-          // router.push("/login");
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
           return;
         }
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
         const result = await API.get("/auth/session", config);
@@ -76,6 +76,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
         </NavBar>
       </SessionContext.Provider>
+      <ToastContainer />
     </>
   ) : (
     <h1>haha</h1>

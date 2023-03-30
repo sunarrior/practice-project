@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 /* eslint-disable consistent-return */
 import { Request, Response } from "express";
 
@@ -41,7 +42,7 @@ const createUser = async (req: Request, res: Response) => {
       username: userData.username,
     });
     const cart: Cart = new Cart();
-    cart.user.id = user?.id as number;
+    cart.user = user as User;
     await cartDB.createCart(cart);
 
     // save token to redis and send to user's email
@@ -125,18 +126,27 @@ const loginUser = async (req: Request, res: Response) => {
     // remove login attemps
     // await rateLimit.loginAttemps.delete(req.ip);
 
-    // process jwt
-    const accessToken = jwt.generateAccessToken({ username: user.username });
+    // update user status
+    await userDB.updateUserData(user.id, { status: "active" });
 
-    // process session
-    req.session.username = user.username;
-    req.session.userip = req.ip;
-    req.session.useragent = req.get("User-Agent");
+    // process jwt
+    const accessToken = jwt.generateAccessToken({
+      username: user.username,
+      userip: req.ip,
+      useragent: req.get("User-Agent"),
+      role: user.role,
+    });
 
     // process login
-    return res
-      .status(200)
-      .json({ status: "success", msg: "Login ok", token: accessToken });
+    return res.status(200).json({
+      status: "success",
+      msg: "Login ok",
+      user_obj: {
+        access_token: accessToken,
+        username: user.username,
+        role: user.role,
+      },
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server error" });
@@ -145,7 +155,7 @@ const loginUser = async (req: Request, res: Response) => {
 
 const sessionAuthentication = async (req: Request, res: Response) => {
   try {
-    const { username, userip, useragent } = req.session;
+    const username: string | undefined = req.username;
 
     // check if user exists
     const user: User | null = await userDB.getUserByAttrb({
@@ -155,15 +165,6 @@ const sessionAuthentication = async (req: Request, res: Response) => {
       return res
         .status(403)
         .json({ status: "failed", msg: "User not exist-a", isLoggedIn: false });
-    }
-
-    // check if user-agent and ip is valid with sesison
-    if (userip !== req.ip || useragent !== req.get("User-Agent")) {
-      return res.status(403).json({
-        status: "failed",
-        msg: "User session invalid-a",
-        isLoggedIn: false,
-      });
     }
 
     // return authentication successfully
@@ -272,13 +273,23 @@ const changePassword = async (req: Request, res: Response) => {
   }
 };
 
-const logoutUser = (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
   try {
-    req.session.destroy(() => {});
-    res.clearCookie("_rsi");
+    const username: string | undefined = req.username;
+
+    // check if user exists
+    const user: User | null = await userDB.getUserByAttrb({
+      username: username as string,
+    });
+    if (!user) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "Account or email incorrect" });
+    }
+
+    await userDB.updateUserData(user.id, { status: "inactive" });
     res.status(200).json({ status: "success", msg: "User logged out" });
   } catch (error) {
-    console.log(error);
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server error" });
   }

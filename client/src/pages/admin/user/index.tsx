@@ -1,10 +1,18 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 import User from "@/components/user";
 import UserTable from "@/components/user-table";
 import API from "@/config/axios.config";
 
-function UserList({ data }: { data: any }): React.ReactElement {
+function UserList({
+  data,
+  handleDeleteUser,
+}: {
+  data: any;
+  handleDeleteUser: (userid: number) => Promise<void>;
+}): React.ReactElement {
   const userList = data.map((user: any) => (
     <User
       key={user.id}
@@ -13,26 +21,28 @@ function UserList({ data }: { data: any }): React.ReactElement {
       email={user.email}
       createdAt={new Date(user.createdAt).toLocaleString()}
       role={user.role}
-      url={`http://localhost:3000/admin/user/${user.id}`}
+      status={user.status}
+      url={`http://localhost:3000/admin/user/${user.username}`}
+      handleDeleteUser={handleDeleteUser}
     />
   ));
   return <>{userList}</>;
 }
 
 export default function UserListManager(): React.ReactElement {
-  const [userList, setUserList] = useState("");
+  const [userList, setUserList] = useState([]);
   const [sortOption, setSortOption] = useState("AscCreatedDay");
 
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
           return;
         }
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
         const result = await API.get("/user/all", config);
@@ -53,6 +63,25 @@ export default function UserListManager(): React.ReactElement {
     setSortOption(e.target.value);
   }
 
+  async function handleDeleteUser(userid: number): Promise<any> {
+    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+    if (!userObj) {
+      return;
+    }
+    const config = {
+      headers: {
+        Authorization: `Bearer ${userObj?.access_token}`,
+      },
+    };
+    const result = await API.delete(`/user/${userid}`, config);
+    if (result.data.status.localeCompare("failed") === 0) {
+      return toast(result.data.msg, { autoClose: 3000, type: "error" });
+    }
+    const newUserList = userList.filter((user: any) => user.id !== userid);
+    toast(result.data.msg, { autoClose: 3000, type: "success" });
+    setUserList(newUserList);
+  }
+
   return (
     <>
       <div className="my-14">
@@ -68,7 +97,11 @@ export default function UserListManager(): React.ReactElement {
             <option value="DescOrderDay">Descending by created day</option>
           </select>
         </div>
-        <UserTable>{userList ? <UserList data={userList} /> : null}</UserTable>
+        <UserTable>
+          {userList ? (
+            <UserList data={userList} handleDeleteUser={handleDeleteUser} />
+          ) : null}
+        </UserTable>
       </div>
     </>
   );

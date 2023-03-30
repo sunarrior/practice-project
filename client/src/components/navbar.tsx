@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu } from "@headlessui/react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { HiOutlineUserCircle } from "react-icons/hi";
+import { ToastContainer } from "react-toastify";
 
 import { SessionContext } from "@/context/session.context";
 import { CartContext } from "@/context/cart.context";
@@ -88,13 +89,13 @@ export default function NavBar({
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
           return;
         }
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
         const result = await API.get("/cart/state", config);

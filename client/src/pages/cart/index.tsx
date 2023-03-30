@@ -93,13 +93,13 @@ export default function Index(): React.ReactElement {
 
   async function handleRemoveItem() {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
         return;
       }
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userObj?.access_token}`,
         },
         data: checkedItems,
       };
@@ -151,7 +151,7 @@ export default function Index(): React.ReactElement {
           </>
         )}
         <div className="w-3/4 mx-44">
-          <div className="max-w-full my-2">
+          <div className="max-w-full mx-6 my-2">
             <div className="flex flex-wrap">
               {cartItemList ? (
                 <CartItemList

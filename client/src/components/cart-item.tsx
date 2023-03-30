@@ -21,7 +21,7 @@ export default function ProductCart({
 }) {
   return (
     <>
-      <div className="relative mr-4 my-5 bg-orange-400 w-64 max-w-sm rounded-md overflow-hidden shadow-md">
+      <div className="relative mr-4 my-5 bg-orange-400 w-60 max-w-sm rounded-md overflow-hidden shadow-md">
         <input
           className="absolute top-2 left-2 w-4 h-4 rounded-md"
           type="checkbox"
