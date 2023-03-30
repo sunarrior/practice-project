@@ -20,13 +20,18 @@ export const tokenValidation = (
   const result = jwt.verifyAccessToken(token);
 
   // get user info and check if exists in session
-  const { username } = (result as any).data;
-  if (username !== req.session.username) {
+  const { username, userip, useragent, role } = (result as any).data;
+
+  // check if user-agent and ip is valid with sesison
+  if (userip !== req.ip || useragent !== req.get("User-Agent")) {
     return res.status(403).json({
       status: "failed",
-      msg: "User session invalid-to",
+      msg: "User session invalid-a",
       isLoggedIn: false,
     });
   }
+
+  req.username = username;
+  req.role = role;
   next();
 };

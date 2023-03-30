@@ -36,7 +36,7 @@ export default function LoginForm() {
     (setIsLoggedIn as any)(true);
     setLoginInfo(loginInfoDefault);
     setNotify(notifyDefault);
-    localStorage.setItem("token", result.data.token);
+    localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
     router.push("/");
   }
 

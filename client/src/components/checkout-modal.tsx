@@ -39,13 +39,13 @@ export default function CheckoutModal({
 
   useEffect(() => {
     (async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
         return;
       }
       const config = {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
       const result = await API.get("/user?option=delivery-address", config);

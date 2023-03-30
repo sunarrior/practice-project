@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 import { Request, Response } from "express";
 
 import userDB from "../db/user.db";
@@ -12,7 +13,7 @@ import ProductImage from "../entity/ProductImage";
 const addCartItem = async (req: Request, res: Response) => {
   try {
     if (req.query.additem) {
-      const { username } = req.session;
+      const username: string | undefined = req.username;
       const { productid, quantity } = req.body;
 
       // get cart info
@@ -72,7 +73,7 @@ const addCartItem = async (req: Request, res: Response) => {
 
 const getCartState = async (req: Request, res: Response) => {
   try {
-    const { username } = req.session;
+    const username: string | undefined = req.username;
 
     // check if user is exists
     const user: User | null = await userDB.getUserByAttrb({
@@ -99,7 +100,7 @@ const getCartState = async (req: Request, res: Response) => {
 
 const getAllCartItems = async (req: Request, res: Response) => {
   try {
-    const { username } = req.session;
+    const username: string | undefined = req.username;
 
     // check if user is exists
     const user: User | null = await userDB.getUserByAttrb({

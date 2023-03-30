@@ -7,26 +7,38 @@ import ButtonEdit from "@/components/button-edit";
 import { getYYYYMMDDString } from "@/utils/format.util";
 
 type ProfileType = {
+  username?: string;
+  email: string;
+  createdAt?: string;
+  role?: string;
+  status?: string;
   fullName: string;
   phone: string;
   dob: string;
   gender: boolean;
-  email: string;
   deliveryAddress: string;
   avatarUrl: string;
 };
 
 const profileDefault: ProfileType = {
+  username: "",
+  email: "",
+  createdAt: getYYYYMMDDString(),
+  role: "",
+  status: "",
   fullName: "",
   phone: "",
   dob: getYYYYMMDDString(),
   gender: true,
-  email: "",
   deliveryAddress: "",
   avatarUrl: "",
 };
 
-export default function Profile(): React.ReactElement {
+export default function Profile({
+  username,
+}: {
+  username: string;
+}): React.ReactElement {
   const router = useRouter();
   const [profile, setProfile] = useState(profileDefault);
   const [isEdit, setIsEdit] = useState(false);
@@ -45,8 +57,14 @@ export default function Profile(): React.ReactElement {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
-      const result = await API.get(`/user/${userObj?.username}`, config);
+      const result = await API.get(`/user/${username}`, config);
       setProfile({
+        username: result.data.userData.username || "",
+        email: result.data.userData.email ? result.data.userData.email : "",
+        createdAt:
+          new Date(result.data.userData.createdAt).toLocaleString() || "",
+        role: result.data.userData.role || "",
+        status: result.data.userData.status || "",
         fullName: result.data.userData.fullName
           ? result.data.userData.fullName
           : "",
@@ -55,7 +73,6 @@ export default function Profile(): React.ReactElement {
           ? result.data.userData.dob.substring(0, 10)
           : getYYYYMMDDString(),
         gender: result.data.userData.gender ? result.data.userData.gender : "",
-        email: result.data.userData.email ? result.data.userData.email : "",
         deliveryAddress: result.data.userData.deliveryAddress
           ? result.data.userData.deliveryAddress
           : "",
@@ -64,7 +81,11 @@ export default function Profile(): React.ReactElement {
           : "",
       });
     })();
-  }, [isUploadAvatar]);
+  }, [isUploadAvatar, username]);
+
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    setProfile({ ...profile, email: e.target.value });
+  }
 
   function handleFullnameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setProfile({ ...profile, fullName: e.target.value });
@@ -83,10 +104,6 @@ export default function Profile(): React.ReactElement {
       return setProfile({ ...profile, gender: true });
     }
     setProfile({ ...profile, gender: false });
-  }
-
-  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    setProfile({ ...profile, email: e.target.value });
   }
 
   function handleDeliveryAddressChange(
@@ -108,6 +125,11 @@ export default function Profile(): React.ReactElement {
   ): Promise<any> {
     e.preventDefault();
     const data: ProfileType = { ...profile };
+    delete data.username;
+    delete data.createdAt;
+    delete data.role;
+    delete data.status;
+
     const userObj = JSON.parse(localStorage.getItem("_uob") as any);
     if (!userObj) {
       return;
@@ -117,10 +139,10 @@ export default function Profile(): React.ReactElement {
         Authorization: `Bearer ${userObj?.access_token}`,
       },
     };
-    const result = await API.post(`/user/${userObj?.username}`, data, config);
+    const result = await API.post(`/user/${username}`, data, config);
     if (result.data.status === "failed") {
       // do something
-      return router.push("/profile");
+      return router.reload();
     }
     setIsEdit(false);
   }
@@ -165,7 +187,7 @@ export default function Profile(): React.ReactElement {
     );
     if (result.data.status === "failed") {
       // do something
-      return router.push("/profile");
+      return router.reload();
     }
     setProfile({ ...profile, avatarUrl: avatarPreview });
     setAvatarPreview("");
@@ -276,6 +298,76 @@ export default function Profile(): React.ReactElement {
               >
                 <div className="mb-2">
                   <label className="font-bold" htmlFor="inline-full-name">
+                    - Username -
+                  </label>
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
+                    id="inline-full-name"
+                    type="text"
+                    placeholder="username"
+                    value={profile.username}
+                    disabled={true}
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="font-bold" htmlFor="inline-full-name">
+                    - Email -
+                  </label>
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
+                    id="inline-email"
+                    type="email"
+                    placeholder="email"
+                    value={profile.email}
+                    onChange={handleEmailChange}
+                    required
+                    disabled={!isEdit}
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="font-bold" htmlFor="inline-full-name">
+                    - Created At -
+                  </label>
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
+                    id="inline-email"
+                    type="text"
+                    placeholder="created at"
+                    value={profile.createdAt}
+                    required
+                    disabled={true}
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="font-bold" htmlFor="inline-full-name">
+                    - Role -
+                  </label>
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
+                    id="inline-email"
+                    type="text"
+                    placeholder="role"
+                    value={profile.role}
+                    required
+                    disabled={true}
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="font-bold" htmlFor="inline-full-name">
+                    - Status -
+                  </label>
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
+                    id="inline-email"
+                    type="text"
+                    placeholder="status"
+                    value={profile.status}
+                    required
+                    disabled={true}
+                  />
+                </div>
+                <div className="mb-2">
+                  <label className="font-bold" htmlFor="inline-full-name">
                     - Full Name -
                   </label>
                   <input
@@ -354,21 +446,6 @@ export default function Profile(): React.ReactElement {
                       Female
                     </label>
                   </div>
-                </div>
-                <div className="mb-2">
-                  <label className="font-bold" htmlFor="inline-full-name">
-                    - Email -
-                  </label>
-                  <input
-                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500 disabled:bg-gray-300"
-                    id="inline-email"
-                    type="email"
-                    placeholder="email"
-                    value={profile.email}
-                    onChange={handleEmailChange}
-                    required
-                    disabled={!isEdit}
-                  />
                 </div>
                 <div className="mb-2">
                   <label className="font-bold" htmlFor="inline-full-name">

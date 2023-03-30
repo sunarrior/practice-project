@@ -11,13 +11,13 @@ export default function Logout() {
   useEffect(() => {
     (async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
           return;
         }
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
         const result = await API.get("/auth/logout", config);
@@ -31,5 +31,6 @@ export default function Logout() {
     })();
   }, [setIsLoggedIn]);
 
+  // router.reload();
   router.push("/");
 }

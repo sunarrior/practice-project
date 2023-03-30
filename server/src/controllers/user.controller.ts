@@ -1,4 +1,6 @@
+/* eslint-disable prefer-destructuring */
 import { Request, Response } from "express";
+// import { AuthRequest } from "../interface/AuthRequest";
 
 import userDB from "../db/user.db";
 import User from "../entity/User";
@@ -6,6 +8,10 @@ import cloudinary from "../config/cloudinary.config";
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
+    if (req.role?.localeCompare("admin")) {
+      return res.status(403).json({ status: "failed", msg: "Access denied" });
+    }
+
     const users: User[] = await userDB.getAllUsers();
     const userList: any[] = users.map((user: User) => {
       return {
@@ -14,6 +20,7 @@ const getAllUsers = async (req: Request, res: Response) => {
         email: user.email,
         createdAt: user.createdAt,
         role: user.role,
+        status: user.status,
       };
     });
     res.status(200).json({ status: "success", userList: userList });
@@ -26,8 +33,26 @@ const getAllUsers = async (req: Request, res: Response) => {
 const getUserProfile = async (req: Request, res: Response) => {
   try {
     // get user info and check if exists
-    const { username } = req.session;
+    const role: string | undefined = req.role;
     const { option } = req.query;
+
+    if ((role as string)?.localeCompare("admin") === 0) {
+      const { username } = req.params;
+      const user: User | null = await userDB.getUserByAttrb({
+        username: username as string,
+      });
+
+      // check if user exists
+      if (!user) {
+        return res
+          .status(200)
+          .json({ status: "failed", msg: "User not found" });
+      }
+      // return user info as admin
+      return res.status(200).json({ status: "success", userData: user });
+    }
+
+    const username: string | undefined = req.username;
     const user: User | null = await userDB.getUserByAttrb({
       username: username as string,
     });
@@ -61,11 +86,22 @@ const getUserProfile = async (req: Request, res: Response) => {
 const updateUserProfile = async (req: Request, res: Response) => {
   try {
     // get user info and check if exists
-    const { username } = req.session;
+    const role: string | undefined = req.role;
     const userProfile = req.body;
-    const user: User | null = await userDB.getUserByAttrb({
-      username: username as string,
-    });
+    let user: User | null;
+
+    if ((role as string).localeCompare("admin") === 0) {
+      const { username } = req.params;
+      user = await userDB.getUserByAttrb({
+        username: username as string,
+      });
+    } else {
+      const username: string | undefined = req.username;
+      user = await userDB.getUserByAttrb({
+        username: username as string,
+      });
+    }
+
     if (!user) {
       return res.status(200).json({ status: "failed", msg: "User not found" });
     }
@@ -84,11 +120,20 @@ const updateUserProfile = async (req: Request, res: Response) => {
 const uploadImageProfile = async (req: Request, res: Response) => {
   try {
     const { filePath } = req.body;
-    // get user info and check if exists
-    const { username } = req.session;
-    const user: User | null = await userDB.getUserByAttrb({
-      username: username as string,
-    });
+    const role: string | undefined = req.role;
+    let user: User | null;
+    if ((role as string).localeCompare("admin") === 0) {
+      const { username } = req.params;
+      user = await userDB.getUserByAttrb({
+        username: username as string,
+      });
+    } else {
+      const username: string | undefined = req.username;
+      user = await userDB.getUserByAttrb({
+        username: username as string,
+      });
+    }
+
     if (!user) {
       return res.status(200).json({ status: "failed", msg: "User not found" });
     }
@@ -100,7 +145,9 @@ const uploadImageProfile = async (req: Request, res: Response) => {
       filePath,
       { folder: "user_avatar" },
       async (error: any, result: any) => {
-        await userDB.updateUserData(user.id, { avatarUrl: result.secure_url });
+        await userDB.updateUserData(user?.id as number, {
+          avatarUrl: result.secure_url,
+        });
         res
           .status(200)
           .json({ status: "success", msg: "Upload avatar successfully" });
@@ -112,9 +159,44 @@ const uploadImageProfile = async (req: Request, res: Response) => {
   }
 };
 
+const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const role: string | undefined = req.role;
+    if ((role as string).localeCompare("admin")) {
+      return res.status(403).json({ status: "failed", msg: "Access denied" });
+    }
+    const { id: userid } = req.params;
+
+    // check if user exists
+    const user: User | null = await userDB.getUserByAttrb({
+      id: userid as unknown as number,
+    });
+    if (!user) {
+      return res.status(200).json({ status: "failed", msg: "User not found" });
+    }
+
+    if (user.status.localeCompare("active") === 0) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "Cannot delete active user" });
+    }
+
+    if (user.status.localeCompare("inactive") === 0) {
+      await userDB.deleteUser(user);
+    }
+    res
+      .status(200)
+      .json({ status: "success", msg: "User deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   getAllUsers,
   getUserProfile,
   updateUserProfile,
   uploadImageProfile,
+  deleteUser,
 };

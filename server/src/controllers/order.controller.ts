@@ -1,3 +1,4 @@
+/* eslint-disable prefer-destructuring */
 import { Request, Response } from "express";
 import Order from "../entity/Order";
 import User from "../entity/User";
@@ -13,7 +14,7 @@ import { mail } from "../utils";
 
 const getOrderList = async (req: Request, res: Response) => {
   try {
-    const { username } = req.session;
+    const username: string | undefined = req.username;
 
     // check if user exists
     const user: User | null = await userDB.getUserByAttrb({
@@ -89,7 +90,7 @@ const getOrderItems = async (req: Request, res: Response) => {
 
 const createOrder = async (req: Request, res: Response) => {
   try {
-    const { username } = req.session;
+    const username: string | undefined = req.username;
     const { items, paymentOption } = req.body;
 
     // check if user exists
