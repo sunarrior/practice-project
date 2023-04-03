@@ -34,8 +34,13 @@ const addCategory = async (category: Category): Promise<void> => {
   await categoryRepos.save(category);
 };
 
+const updateCategory = async (category: Category): Promise<void> => {
+  await categoryRepos.update(category.id, category);
+};
+
 export default {
   getAllCategories,
   getCategoryById,
   addCategory,
+  updateCategory,
 };
