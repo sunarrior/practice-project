@@ -1,7 +1,11 @@
-import { useState, useEffect } from "react";
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
 import Link from "next/link";
 
+import { AdminContext } from "@/context/admin.context";
 import Category from "@/components/category";
+import NewCategory from "@/components/new-category";
 import API from "@/config/axios.config";
 
 function CategoryList({ data }: { data: any }) {
@@ -20,21 +24,15 @@ function CategoryList({ data }: { data: any }) {
 }
 
 export default function CategoryPage() {
+  const router = useRouter();
+  const { isAdmin, setIsAdmin } = useContext(AdminContext);
   const [categoryInfo, setCategoryInfo] = useState();
   const [sortOption, setSortOption] = useState("name");
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     (async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        return;
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
-      const result = await API.get("/category", config);
+      const result = await API.get("/category");
       const sortCategoryList = result.data.categoryList.sort(
         (c1: any, c2: any) => {
           if (sortOption === "DescName") {
@@ -57,28 +55,59 @@ export default function CategoryPage() {
     setSortOption(e.target.value);
   }
 
+  function handleShowModal(state: boolean) {
+    setShowModal(state);
+  }
+
+  function handleAddCategory() {
+    router.reload();
+  }
+
   return (
     <>
-      <div className="mx-52 my-14">
-        <div className="w-1/4">
-          <select
-            id="sort-option"
-            className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-            onChange={handleSortOptionChange}
-          >
-            <option value="AscName" defaultValue="AscName">
-              Ascending by name
-            </option>
-            <option value="DescName">Descending by name</option>
-            <option value="AscProductQuantity">
-              Ascending by product quantity
-            </option>
-            <option value="DescProductQuantity">
-              Descending by product quantity
-            </option>
-          </select>
+      {showModal && (
+        <NewCategory
+          handleShowModal={handleShowModal}
+          onAddCategory={handleAddCategory}
+        />
+      )}
+      <div className="mx-52 my-14 overflow-y-auto">
+        <div className="flex">
+          <div className="w-1/4">
+            <select
+              id="sort-option"
+              className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+              onChange={handleSortOptionChange}
+            >
+              <option value="AscName" defaultValue="AscName">
+                Ascending by name
+              </option>
+              <option value="DescName">Descending by name</option>
+              <option value="AscProductQuantity">
+                Ascending by product quantity
+              </option>
+              <option value="DescProductQuantity">
+                Descending by product quantity
+              </option>
+            </select>
+          </div>
+          {isAdmin && (
+            <div className="flex w-3/4 justify-end">
+              <button
+                className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md"
+                onClick={() => {
+                  handleShowModal(true);
+                }}
+              >
+                Add
+              </button>
+              <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+                Detele
+              </button>
+            </div>
+          )}
         </div>
-        <div className="container max-w-full my-2 px-4">
+        <div className="container max-w-full my-2 px-2">
           <div className="flex flex-wrap">
             {categoryInfo ? <CategoryList data={categoryInfo} /> : null}
           </div>

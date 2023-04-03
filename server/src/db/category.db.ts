@@ -30,7 +30,12 @@ const getCategoryById = async (
   return result;
 };
 
+const addCategory = async (category: Category): Promise<void> => {
+  await categoryRepos.save(category);
+};
+
 export default {
   getAllCategories,
   getCategoryById,
+  addCategory,
 };

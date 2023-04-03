@@ -143,8 +143,6 @@ const loginUser = async (req: Request, res: Response) => {
       msg: "Login ok",
       user_obj: {
         access_token: accessToken,
-        username: user.username,
-        role: user.role,
       },
     });
   } catch (error) {

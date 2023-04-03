@@ -3,11 +3,13 @@ import { useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 
 import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
 import API from "@/config/axios.config";
 
 export default function Logout() {
   const router = useRouter();
   const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
+  const { isAdmin, setIsAdmin } = useContext(AdminContext);
   useEffect(() => {
     (async () => {
       try {
@@ -22,14 +24,15 @@ export default function Logout() {
         };
         const result = await API.get("/auth/logout", config);
         if (result.data.status === "success") {
-          localStorage.removeItem("token");
+          localStorage.removeItem("_uob");
+          (setIsAdmin as any)(false);
           (setIsLoggedIn as any)(false);
         }
       } catch (error) {
         // console.log(error);
       }
     })();
-  }, [setIsLoggedIn]);
+  }, [setIsAdmin, setIsLoggedIn]);
 
   // router.reload();
   router.push("/");
