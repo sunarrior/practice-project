@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 
 import CategoryBanner from "@/components/category-banner";
 import Product from "@/components/product";
+import CategoryModalForm from "@/components/category-modal-form";
 import API from "@/config/axios.config";
 
 const categoryInfoDefault: {
@@ -37,6 +38,7 @@ export default function CategoryDetail(): React.ReactElement {
   const [categoryInfo, setCategoryInfo] = useState(categoryInfoDefault);
   const [productList, setProductList] = useState();
   const [sortOption, setSortOption] = useState("name");
+  const [showModal, setShowModal] = useState(false);
 
   const { categoryid } = router.query;
 
@@ -70,14 +72,35 @@ export default function CategoryDetail(): React.ReactElement {
     setSortOption(e.target.value);
   }
 
+  function handleShowModal(state: boolean) {
+    setShowModal(state);
+  }
+
+  function handleCategoryEdit() {
+    router.reload();
+  }
+
   return (
     <>
+      {showModal && (
+        <CategoryModalForm
+          isEdit={true}
+          currentData={{
+            imagePreview: categoryInfo.url || "/blank-image.jpg",
+            categoryName: categoryInfo.name,
+            description: categoryInfo.description,
+          }}
+          handleShowModal={handleShowModal}
+          onCategoryAction={handleCategoryEdit}
+        />
+      )}
       <div className="my-10">
         <CategoryBanner
           url={categoryInfo.url || "/blank-image.jpg"}
           categoryName={categoryInfo.name}
           productQuantity={categoryInfo.productQuantity}
           description={categoryInfo.description}
+          handleShowModal={handleShowModal}
         />
         <div className="mx-52 mt-5">
           <div className="w-1/4">
