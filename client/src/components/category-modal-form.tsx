@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
 import API from "@/config/axios.config";
 
-const newCategoryDefault = {
+const categoryDataDefault = {
   categoryName: "",
   description: "",
 };
@@ -14,23 +14,42 @@ const warningDefault = {
 };
 
 export default function CheckoutModal({
+  isEdit,
+  currentData,
   handleShowModal,
-  onAddCategory,
+  onCategoryAction,
 }: {
+  isEdit?: boolean;
+  currentData?: {
+    imagePreview: string;
+    categoryName: string;
+    description: string;
+  };
   handleShowModal: (isShow: boolean) => void;
-  onAddCategory: () => void;
+  onCategoryAction: () => void;
 }): React.ReactElement {
-  const [newCategory, setNewCategory] = useState(newCategoryDefault);
+  const [categoryData, setCategoryData] = useState(categoryDataDefault);
   const [warning, setWarning] = useState(warningDefault);
   const [imagePreview, setImagePreview] = useState("");
   const [uploadProgess, setUploadProgess] = useState(0);
 
+  useEffect(() => {
+    if (!currentData) {
+      return;
+    }
+    setCategoryData({
+      categoryName: currentData.categoryName,
+      description: currentData.description,
+    });
+    setImagePreview(currentData.imagePreview);
+  }, [currentData]);
+
   function handleCategoryNameChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setNewCategory({ ...newCategory, categoryName: e.target.value });
+    setCategoryData({ ...categoryData, categoryName: e.target.value });
   }
 
   function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    setNewCategory({ ...newCategory, description: e.target.value });
+    setCategoryData({ ...categoryData, description: e.target.value });
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -46,11 +65,11 @@ export default function CheckoutModal({
     e.target.value = "";
   }
 
-  async function handleAddCategory() {
+  async function handleCategoryAction() {
     setWarning({ ...warning, isWarning: false });
     if (
-      newCategory.categoryName.localeCompare("") === 0 ||
-      newCategory.description.localeCompare("") === 0
+      categoryData.categoryName.localeCompare("") === 0 ||
+      categoryData.description.localeCompare("") === 0
     ) {
       return setWarning({
         isWarning: true,
@@ -72,12 +91,17 @@ export default function CheckoutModal({
       },
     };
     const data = {
-      name: newCategory.categoryName,
-      description: newCategory.description,
+      name: categoryData.categoryName,
+      description: categoryData.description,
       filePath: imagePreview,
     };
-    await API.post("/category", data, config);
-    onAddCategory();
+    if (!isEdit) {
+      await API.post("/category", data, config);
+    } else {
+      // await API.put("/category", data, config);
+      console.log("work");
+    }
+    onCategoryAction();
   }
 
   return (
@@ -118,7 +142,7 @@ export default function CheckoutModal({
                   <input
                     type="text"
                     className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
-                    value={newCategory.categoryName}
+                    value={categoryData.categoryName}
                     placeholder="Category name"
                     onChange={handleCategoryNameChange}
                     required
@@ -128,7 +152,7 @@ export default function CheckoutModal({
                   <textarea
                     rows={6}
                     className="w-full border-2 px-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
-                    value={newCategory.description}
+                    value={categoryData.description}
                     placeholder="Description"
                     onChange={handleDescriptionChange}
                     required
@@ -165,7 +189,7 @@ export default function CheckoutModal({
                 <button
                   className="bg-green-500 hover:bg-green-400 text-white active:bg-green-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                   type="button"
-                  onClick={handleAddCategory}
+                  onClick={handleCategoryAction}
                 >
                   Add
                 </button>

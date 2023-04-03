@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { AdminContext } from "@/context/admin.context";
 import Category from "@/components/category";
-import NewCategory from "@/components/new-category";
+import CategoryModalForm from "@/components/category-modal-form";
 import API from "@/config/axios.config";
 
 function CategoryList({ data }: { data: any }) {
@@ -66,9 +66,9 @@ export default function CategoryPage() {
   return (
     <>
       {showModal && (
-        <NewCategory
+        <CategoryModalForm
           handleShowModal={handleShowModal}
-          onAddCategory={handleAddCategory}
+          onCategoryAction={handleAddCategory}
         />
       )}
       <div className="mx-52 my-14 overflow-y-auto">
