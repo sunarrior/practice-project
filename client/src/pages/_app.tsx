@@ -5,10 +5,12 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useState, useEffect } from "react";
 import { NextRouter, useRouter } from "next/router";
+import jwtDecode from "jwt-decode";
 
 import NavBar from "@/components/navbar";
 import API from "@/config/axios.config";
 import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
 
 function routerCheck(route: string): string {
   const redirectIfLoggedIn: string[] = [
@@ -27,6 +29,7 @@ function routerCheck(route: string): string {
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAllowUrl, setIsAllowUrl] = useState(true);
 
@@ -49,6 +52,10 @@ export default function App({ Component, pageProps }: AppProps) {
         };
         const result = await API.get("/auth/session", config);
         setIsLoggedIn(result.data.isLoggedIn);
+        const userObjDecode: any = jwtDecode(userObj?.access_token);
+        if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
+          setIsAdmin(true);
+        }
         // router.push("/login");
       } catch (error: any) {
         // console.log(error);
@@ -72,9 +79,11 @@ export default function App({ Component, pageProps }: AppProps) {
   return isAllowUrl ? (
     <>
       <SessionContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
-        <NavBar>
-          <Component {...pageProps} />
-        </NavBar>
+        <AdminContext.Provider value={{ isAdmin, setIsAdmin }}>
+          <NavBar>
+            <Component {...pageProps} />
+          </NavBar>
+        </AdminContext.Provider>
       </SessionContext.Provider>
       <ToastContainer />
     </>

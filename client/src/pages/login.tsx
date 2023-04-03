@@ -1,7 +1,11 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useContext } from "react";
 import { useRouter } from "next/router";
 import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
+import jwtDecode from "jwt-decode";
+
 import Notify from "@/components/notify";
 import API from "../config/axios.config";
 
@@ -11,6 +15,7 @@ const notifyDefault = { isFailed: false, msg: "" };
 export default function LoginForm() {
   const router = useRouter();
   const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
+  const { isAdmin, setIsAdmin } = useContext(AdminContext);
   const [loginInfo, setLoginInfo] = useState(loginInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 
@@ -36,6 +41,10 @@ export default function LoginForm() {
     (setIsLoggedIn as any)(true);
     setLoginInfo(loginInfoDefault);
     setNotify(notifyDefault);
+    const userObjDecode: any = jwtDecode(result.data.user_obj.access_token);
+    if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
+      (setIsAdmin as any)(true);
+    }
     localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
     router.push("/");
   }
