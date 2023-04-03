@@ -12,59 +12,75 @@ import ProductImage from "../entity/ProductImage";
 
 const addCartItem = async (req: Request, res: Response) => {
   try {
-    if (req.query.additem) {
-      const username: string | undefined = req.username;
-      const { productid, quantity } = req.body;
+    if (!req.query.additem) {
+      return res.status(200).json({ status: "failed", msg: "Invalid action" });
+    }
 
-      // get cart info
-      const cart: Cart | null = await cartDB.getCartByUsername(
-        username as string
-      );
+    const username: string | undefined = req.username;
+    const { productid, quantity } = req.body;
 
-      // get product info
-      const product: Product | null = await productDB.getProductDetail(
-        productid,
-        false
-      );
+    const user: User | null = await userDB.getUserByAttrb({
+      username: username as string,
+    });
+    if (!user) {
+      return res.status(200).json({ status: "failed", msg: "User not found" });
+    }
 
-      if (!cart || !product) {
-        return res
-          .status(200)
-          .json({ status: "failed", msg: "something went wrong" });
-      }
-
-      if (cart.cartItems.length) {
-        // check if item already in cart
-        const cartItemFromCart: CartItem[] | undefined = cart?.cartItems.filter(
-          (item: CartItem) => item.product.id === Number(productid)
-        );
-
-        if (cartItemFromCart.length) {
-          await cartDB.updateCartItem({
-            ...cartItemFromCart[0],
-            quantity: cartItemFromCart[0].quantity + quantity,
-          });
-
-          return res.status(200).json({
-            status: "success",
-            msg: "Cart added successfully.",
-            productState: "old",
-          });
-        }
-      }
-
-      const cartItem: CartItem = new CartItem();
-      cartItem.cart = cart;
-      cartItem.product = product;
-      cartItem.quantity = quantity;
-      await cartDB.addCartItem(cartItem);
-
-      res.status(200).json({
-        status: "success",
-        msg: "Cart added successfully.",
-        productState: "new",
+    if (user.isBlocked) {
+      return res.status(200).json({
+        status: "failed",
+        msg: "User is blocked from doing this action",
       });
     }
+
+    // get cart info
+    const cart: Cart | null = await cartDB.getCartByUsername(
+      username as string
+    );
+
+    // get product info
+    const product: Product | null = await productDB.getProductDetail(
+      productid,
+      false
+    );
+
+    if (!cart || !product) {
+      return res
+        .status(200)
+        .json({ status: "failed", msg: "something went wrong" });
+    }
+
+    if (cart.cartItems.length) {
+      // check if item already in cart
+      const cartItemFromCart: CartItem[] | undefined = cart?.cartItems.filter(
+        (item: CartItem) => item.product.id === Number(productid)
+      );
+
+      if (cartItemFromCart.length) {
+        await cartDB.updateCartItem({
+          ...cartItemFromCart[0],
+          quantity: cartItemFromCart[0].quantity + quantity,
+        });
+
+        return res.status(200).json({
+          status: "success",
+          msg: "Cart added successfully.",
+          productState: "old",
+        });
+      }
+    }
+
+    const cartItem: CartItem = new CartItem();
+    cartItem.cart = cart;
+    cartItem.product = product;
+    cartItem.quantity = quantity;
+    await cartDB.addCartItem(cartItem);
+
+    res.status(200).json({
+      status: "success",
+      msg: "Cart added successfully.",
+      productState: "new",
+    });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server Error" });

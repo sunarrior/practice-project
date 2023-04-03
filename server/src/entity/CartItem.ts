@@ -3,8 +3,6 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -32,7 +30,6 @@ export default class CartItem {
   @ManyToOne(() => Cart, (cart) => cart.cartItems)
   public cart: Cart;
 
-  @OneToOne(() => Product, { onDelete: "CASCADE", onUpdate: "NO ACTION" })
-  @JoinColumn()
+  @ManyToOne(() => Product, (product) => product.cartItems)
   public product: Product;
 }

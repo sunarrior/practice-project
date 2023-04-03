@@ -139,7 +139,7 @@ export default function Profile({
         Authorization: `Bearer ${userObj?.access_token}`,
       },
     };
-    const result = await API.post(`/user/${username}`, data, config);
+    const result = await API.put(`/user/${username}`, data, config);
     if (result.data.status === "failed") {
       // do something
       return router.reload();

@@ -43,27 +43,31 @@ const getCategoryById = async (req: Request, res: Response) => {
 
 const addNewCategory = async (req: Request, res: Response) => {
   try {
-    if (req.role?.localeCompare("admin") === 0) {
-      const { name, description, filePath } = req.body;
-      const category = new Category();
-      category.name = name;
-      category.description = description;
-
-      if (filePath.localeCompare("") !== 0) {
-        // upload the new category image to cloudinary
-        await cloudinary.uploader.upload(
-          filePath,
-          { folder: "category_img" },
-          async (error: any, result: any) => {
-            category.thumbnailUrl = result.secure_url;
-          }
-        );
-      }
-      await categoryDB.addCategory(category);
-      res
-        .status(200)
-        .json({ status: "success", msg: "Add category successfully" });
+    if (req.role?.localeCompare("admin") !== 0) {
+      return res
+        .status(403)
+        .json({ status: "failed", msg: "Authorized require action" });
     }
+
+    const { name, description, filePath } = req.body;
+    const category = new Category();
+    category.name = name;
+    category.description = description;
+
+    if (filePath.localeCompare("") !== 0) {
+      // upload the new category image to cloudinary
+      await cloudinary.uploader.upload(
+        filePath,
+        { folder: "category_img" },
+        async (error: any, result: any) => {
+          category.thumbnailUrl = result.secure_url;
+        }
+      );
+    }
+    await categoryDB.addCategory(category);
+    res
+      .status(200)
+      .json({ status: "success", msg: "Add category successfully" });
   } catch (error) {
     console.log(error);
     res.status(500).json({ status: "failed", msg: "Server Error" });

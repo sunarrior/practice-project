@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
-import jwtDecode from "jwt-decode";
 
 import API from "@/config/axios.config";
 import ButtonEdit from "@/components/button-edit";
@@ -47,11 +46,7 @@ export default function Profile(): React.ReactElement {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
-      const userObjDecode: any = jwtDecode(userObj?.access_token);
-      const result = await API.get(
-        `/user/${userObjDecode?.data?.username}`,
-        config
-      );
+      const result = await API.get(`/user`, config);
       setProfile({
         fullName: result.data.userData.fullName
           ? result.data.userData.fullName
@@ -123,12 +118,7 @@ export default function Profile(): React.ReactElement {
         Authorization: `Bearer ${userObj?.access_token}`,
       },
     };
-    const userObjDecode: any = jwtDecode(userObj?.access_token);
-    const result = await API.post(
-      `/user/${userObjDecode?.data?.username}`,
-      data,
-      config
-    );
+    const result = await API.put(`/user`, data, config);
     if (result.data.status === "failed") {
       // do something
       return router.push("/profile");
@@ -169,12 +159,7 @@ export default function Profile(): React.ReactElement {
       },
     };
     const data = { filePath: avatarPreview };
-    const userObjDecode: any = jwtDecode(userObj?.access_token);
-    const result = await API.post(
-      `/user/${userObjDecode?.data?.username}/avatar`,
-      data,
-      config
-    );
+    const result = await API.post(`/user/avatar`, data, config);
     if (result.data.status === "failed") {
       // do something
       return router.push("/profile");

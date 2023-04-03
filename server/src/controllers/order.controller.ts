@@ -101,6 +101,13 @@ const createOrder = async (req: Request, res: Response) => {
       return res.status(200).json({ status: "failed", msg: "User not found" });
     }
 
+    if (user.isBlocked) {
+      return res.status(200).json({
+        status: "failed",
+        msg: "User is blocked from doing this action",
+      });
+    }
+
     // check item in cart
     const cartItems: CartItem[] = await cartDB.getAllCartItems(user.id);
     const cartItemIds: number[] = cartItems.map((item: CartItem) => item.id);

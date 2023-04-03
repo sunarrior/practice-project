@@ -21,6 +21,7 @@ const getAllUsers = async (req: Request, res: Response) => {
         createdAt: user.createdAt,
         role: user.role,
         status: user.status,
+        isBlocked: user.isBlocked,
       };
     });
     res.status(200).json({ status: "success", userList: userList });
