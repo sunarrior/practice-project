@@ -84,6 +84,7 @@ export default function CategoryDetail(): React.ReactElement {
     <>
       {showModal && (
         <CategoryModalForm
+          categoryId={categoryid as unknown as number}
           isEdit={true}
           currentData={{
             imagePreview: categoryInfo.url || "/blank-image.jpg",

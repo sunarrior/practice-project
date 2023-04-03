@@ -14,11 +14,13 @@ const warningDefault = {
 };
 
 export default function CheckoutModal({
+  categoryId,
   isEdit,
   currentData,
   handleShowModal,
   onCategoryAction,
 }: {
+  categoryId?: number;
   isEdit?: boolean;
   currentData?: {
     imagePreview: string;
@@ -31,6 +33,7 @@ export default function CheckoutModal({
   const [categoryData, setCategoryData] = useState(categoryDataDefault);
   const [warning, setWarning] = useState(warningDefault);
   const [imagePreview, setImagePreview] = useState("");
+  const [isImageChange, setIsImageChange] = useState(false);
   const [uploadProgess, setUploadProgess] = useState(0);
 
   useEffect(() => {
@@ -61,6 +64,7 @@ export default function CheckoutModal({
     reader.readAsDataURL(e.target.files[0]);
     reader.onloadend = () => {
       setImagePreview(reader.result as string);
+      setIsImageChange(true);
     };
     e.target.value = "";
   }
@@ -90,17 +94,23 @@ export default function CheckoutModal({
         setUploadProgess(percent);
       },
     };
-    const data = {
-      name: categoryData.categoryName,
-      description: categoryData.description,
-      filePath: imagePreview,
-    };
     if (!isEdit) {
+      const data = {
+        name: categoryData.categoryName,
+        description: categoryData.description,
+        filePath: imagePreview,
+      };
       await API.post("/category", data, config);
     } else {
-      // await API.put("/category", data, config);
-      console.log("work");
+      const data = {
+        id: categoryId,
+        name: categoryData.categoryName,
+        description: categoryData.description,
+        filePath: isImageChange ? imagePreview : "",
+      };
+      await API.put("/category", data, config);
     }
+    setIsImageChange(false);
     onCategoryAction();
   }
 
@@ -112,7 +122,7 @@ export default function CheckoutModal({
           <div className="max-h-full overflow-hidden border-none rounded-lg shadow-lg relative flex flex-col w-full bg-white bg-clip-padding outline-none text-current px-2">
             {/* header */}
             <div className="items-start justify-between p-5 border-b border-solid border-slate-200 rounded-t">
-              <h3 className="text-3xl font-semibold">Add New Category</h3>
+              <h3 className="text-3xl font-semibold">Category Form</h3>
             </div>
             {/* body */}
             <div className="grid grid-cols-2 gap-3">
@@ -191,7 +201,7 @@ export default function CheckoutModal({
                   type="button"
                   onClick={handleCategoryAction}
                 >
-                  Add
+                  Save
                 </button>
               </div>
             </div>
