@@ -32,7 +32,7 @@ export default function CheckoutModal({
 }: {
   data: any;
   handleShowModal: (isShow: boolean) => void;
-  onPlaceOrder: () => void;
+  onPlaceOrder: (msg: string, typeMsg: string) => void;
 }): React.ReactElement {
   const [paymentOption, setPaymentOption] = useState(paymentOptionDefault);
   const [warning, setWarning] = useState(false);
@@ -67,24 +67,27 @@ export default function CheckoutModal({
   }
 
   async function handlePlaceOrder() {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      return;
-    }
     if (paymentOption.deliveryAddress.localeCompare("") === 0) {
       return setWarning(true);
     }
+    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+    if (!userObj) {
+      return;
+    }
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${userObj?.access_token}`,
       },
     };
     const orderData = {
       items: data,
       paymentOption,
     };
-    await API.post("/order/create", orderData, config);
-    onPlaceOrder();
+    const result = await API.post("/order/create", orderData, config);
+    onPlaceOrder(
+      result.data.msg,
+      result.data.status.localeCompare("success") === 0 ? "success" : "error"
+    );
   }
 
   return (

@@ -1,5 +1,7 @@
+/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 import { CartContext } from "@/context/cart.context";
 import ProductDetail from "@/components/product-detail";
@@ -71,13 +73,13 @@ export default function ProductPage(): React.ReactElement {
   }
 
   async function handleAddToCart() {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+    if (!userObj) {
       return;
     }
     const config = {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${userObj?.access_token}`,
       },
     };
     const data = {
@@ -85,10 +87,13 @@ export default function ProductPage(): React.ReactElement {
       quantity: purchaseAmount,
     };
     const result = await API.post("/cart?additem=1", data, config);
+    if (result.data.status.localeCompare("failed") === 0) {
+      return toast(result.data.msg, { autoClose: 3000, type: "error" });
+    }
     if (result.data.productState === "new") {
       (setCartState as any)(Number(cartState) + 1);
     }
-    // router.back();
+    toast(result.data.msg, { autoClose: 3000, type: "success" });
   }
 
   return (

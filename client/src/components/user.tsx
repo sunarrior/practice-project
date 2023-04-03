@@ -9,8 +9,10 @@ export default function User({
   createdAt,
   role,
   status,
+  isBlocked,
   url,
   handleDeleteUser,
+  handleBlockUser,
 }: {
   userid: number;
   username: string;
@@ -18,8 +20,10 @@ export default function User({
   createdAt: string;
   role: string;
   status: string;
+  isBlocked: boolean;
   url: string;
   handleDeleteUser: (userid: number) => Promise<void>;
+  handleBlockUser: (username: string, isBlocked: boolean) => Promise<void>;
 }) {
   return (
     <>
@@ -32,6 +36,7 @@ export default function User({
         <td className="px-6 py-4">{createdAt.toLocaleString()}</td>
         <td className="px-6 py-4">{role}</td>
         <td className="px-6 py-4">{status}</td>
+        <td className="px-6 py-4">{isBlocked ? "Yes" : "No"}</td>
         <td className="flex px-1 py-4">
           <Link href={url}>
             <button className="px-4 py-2 bg-purple-500 hover:bg-purple-400 rounded-md text-white font-bold">
@@ -40,6 +45,7 @@ export default function User({
           </Link>
           <div className="py-2">
             <button
+              className="focus:outline-none"
               title="Detele User"
               onClick={() => {
                 handleDeleteUser(userid);
@@ -49,7 +55,13 @@ export default function User({
             </button>
           </div>
           <div className="py-2">
-            <button title="Block User">
+            <button
+              className="focus:outline-none"
+              title="Block User"
+              onClick={() => {
+                handleBlockUser(username, isBlocked);
+              }}
+            >
               <TbLock size={20} className="ml-5" />
             </button>
           </div>

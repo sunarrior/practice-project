@@ -103,7 +103,7 @@ const loginUser = async (req: Request, res: Response) => {
     }
 
     // check if user has verify account yet
-    if (!user.isVerify) {
+    if (!user.isVerified) {
       return res
         .status(200)
         .json({ status: "failed", msg: "User has not verify account yet" });
@@ -195,7 +195,7 @@ const changePassword = async (req: Request, res: Response) => {
       }
 
       // check if user has already verify
-      if (!user.isVerify) {
+      if (!user.isVerified) {
         return res
           .status(200)
           .json({ status: "failed", msg: "Account need to be verify first" });

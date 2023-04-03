@@ -9,9 +9,11 @@ import API from "@/config/axios.config";
 function UserList({
   data,
   handleDeleteUser,
+  handleBlockUser,
 }: {
   data: any;
   handleDeleteUser: (userid: number) => Promise<void>;
+  handleBlockUser: (username: string, isBlocked: boolean) => Promise<void>;
 }): React.ReactElement {
   const userList = data.map((user: any) => (
     <User
@@ -22,15 +24,17 @@ function UserList({
       createdAt={new Date(user.createdAt).toLocaleString()}
       role={user.role}
       status={user.status}
+      isBlocked={user.isBlocked}
       url={`http://localhost:3000/admin/user/${user.username}`}
       handleDeleteUser={handleDeleteUser}
+      handleBlockUser={handleBlockUser}
     />
   ));
   return <>{userList}</>;
 }
 
 export default function UserListManager(): React.ReactElement {
-  const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState<any[]>([]);
   const [sortOption, setSortOption] = useState("AscCreatedDay");
 
   useEffect(() => {
@@ -77,7 +81,39 @@ export default function UserListManager(): React.ReactElement {
     if (result.data.status.localeCompare("failed") === 0) {
       return toast(result.data.msg, { autoClose: 3000, type: "error" });
     }
-    const newUserList = userList.filter((user: any) => user.id !== userid);
+    const newUserList: any[] = userList.filter(
+      (user: any) => user.id !== userid
+    );
+    toast(result.data.msg, { autoClose: 3000, type: "success" });
+    setUserList(newUserList);
+  }
+
+  async function handleBlockUser(
+    username: string,
+    isBlocked: boolean
+  ): Promise<any> {
+    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+    if (!userObj) {
+      return;
+    }
+    const config = {
+      headers: {
+        Authorization: `Bearer ${userObj?.access_token}`,
+      },
+    };
+    const data = {
+      isBlocked: !isBlocked,
+    };
+    const result = await API.put(`/user/${username}`, data, config);
+    if (result.data.status.localeCompare("failed") === 0) {
+      return toast(result.data.msg, { autoClose: 3000, type: "error" });
+    }
+    const newUserList = userList.map((user: any) => {
+      if (user.username === username) {
+        return { ...user, isBlocked: !isBlocked };
+      }
+      return user;
+    });
     toast(result.data.msg, { autoClose: 3000, type: "success" });
     setUserList(newUserList);
   }
@@ -99,7 +135,11 @@ export default function UserListManager(): React.ReactElement {
         </div>
         <UserTable>
           {userList ? (
-            <UserList data={userList} handleDeleteUser={handleDeleteUser} />
+            <UserList
+              data={userList}
+              handleDeleteUser={handleDeleteUser}
+              handleBlockUser={handleBlockUser}
+            />
           ) : null}
         </UserTable>
       </div>

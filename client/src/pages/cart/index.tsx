@@ -1,5 +1,8 @@
+/* eslint-disable import/no-extraneous-dependencies */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useContext } from "react";
+import { toast } from "react-toastify";
+import jwtDecode from "jwt-decode";
 
 import { CartContext } from "@/context/cart.context";
 import API from "@/config/axios.config";
@@ -82,13 +85,17 @@ export default function Index(): React.ReactElement {
     }
   }
 
-  function handlePlaceOrder() {
+  function handlePlaceOrder(msg: string, typeMsg: any) {
+    if (typeMsg.localeCompare("error") === 0) {
+      return toast(msg, { autoClose: 3000, type: typeMsg });
+    }
     (setCartState as any)(cartItemList.length - checkedItems.length);
     setCartItemList(
       cartItemList.filter((item: any) => !checkedItems.includes(item.id))
     );
     setCheckedItems([]);
     handleShowModal(false);
+    toast(msg, { autoClose: 3000, type: typeMsg });
   }
 
   async function handleRemoveItem() {
