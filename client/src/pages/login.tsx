@@ -1,5 +1,4 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useContext } from "react";
 import { useRouter } from "next/router";
 import { SessionContext } from "@/context/session.context";
@@ -14,8 +13,8 @@ const notifyDefault = { isFailed: false, msg: "" };
 
 export default function LoginForm() {
   const router = useRouter();
-  const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
-  const { isAdmin, setIsAdmin } = useContext(AdminContext);
+  const { setIsLoggedIn } = useContext(SessionContext);
+  const { setIsAdmin } = useContext(AdminContext);
   const [loginInfo, setLoginInfo] = useState(loginInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 

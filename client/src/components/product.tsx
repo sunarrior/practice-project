@@ -1,5 +1,8 @@
+import { useContext } from "react";
 import Image from "next/image";
 import Link from "next/link";
+
+import { AdminContext } from "@/context/admin.context";
 
 export default function Product({
   id,
@@ -12,19 +15,27 @@ export default function Product({
   productName: string;
   price: number;
 }) {
+  const { isAdmin } = useContext(AdminContext);
   return (
     <>
-      <div className="mr-4 my-5 bg-orange-400 w-60 max-w-sm rounded-md overflow-hidden shadow-md">
-        <Image
-          className="w-full h-44 object-cover"
-          src={url}
-          alt={productName}
-          width={500}
-          height={500}
-        />
-        <div className="px-6 py-4">
-          <div className="font-bold text-xl mb-2">{productName}</div>
-          <p className="text-gray-700 text-base">{price}$</p>
+      <div className="relative mr-4 my-5 bg-orange-400 w-60 max-w-sm rounded-md overflow-hidden shadow-md">
+        {isAdmin && (
+          <div className="z-30 absolute top-2 left-2">
+            <input type="checkbox" className="w-4 h-4 rounded-md" />
+          </div>
+        )}
+        <div onClick={() => console.log("here")}>
+          <Image
+            className="w-full h-44 object-cover"
+            src={url}
+            alt={productName}
+            width={500}
+            height={500}
+          />
+          <div className="px-6 py-4">
+            <div className="font-bold text-xl mb-2">{productName}</div>
+            <p className="text-gray-700 text-base">{price}$</p>
+          </div>
         </div>
         <div className="px-6 pt-2 pb-2">
           <Link href={`/product/${id}`}>
