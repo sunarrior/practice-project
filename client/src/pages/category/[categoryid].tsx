@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
 
+import { AdminContext } from "@/context/admin.context";
 import CategoryBanner from "@/components/category-banner";
 import Product from "@/components/product";
 import CategoryModalForm from "@/components/category-modal-form";
@@ -35,6 +36,7 @@ function ProductList({ data }: { data: any }): React.ReactElement {
 
 export default function CategoryDetail(): React.ReactElement {
   const router = useRouter();
+  const { isAdmin } = useContext(AdminContext);
   const [categoryInfo, setCategoryInfo] = useState(categoryInfoDefault);
   const [productList, setProductList] = useState();
   const [sortOption, setSortOption] = useState("name");
@@ -104,19 +106,31 @@ export default function CategoryDetail(): React.ReactElement {
           handleShowModal={handleShowModal}
         />
         <div className="mx-52 mt-5">
-          <div className="w-1/4">
-            <select
-              id="sort-option"
-              className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-              onChange={handleSortOptionChange}
-            >
-              <option value="AscName" defaultValue="AscName">
-                Ascending by name
-              </option>
-              <option value="DescName">Descending by name</option>
-              <option value="AscPrice">Ascending by price</option>
-              <option value="DescPrice">Descending by price</option>
-            </select>
+          <div className="flex">
+            <div className="w-1/4">
+              <select
+                id="sort-option"
+                className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                onChange={handleSortOptionChange}
+              >
+                <option value="AscName" defaultValue="AscName">
+                  Ascending by name
+                </option>
+                <option value="DescName">Descending by name</option>
+                <option value="AscPrice">Ascending by price</option>
+                <option value="DescPrice">Descending by price</option>
+              </select>
+            </div>
+            {isAdmin && (
+              <div className="flex w-3/4 justify-end mr-4">
+                <button className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md">
+                  Add
+                </button>
+                <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
           <div className="container max-w-full my-2">
             <div className="flex flex-wrap">

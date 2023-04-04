@@ -1,6 +1,7 @@
 /* eslint-disable no-lonely-if */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 
+import { AdminContext } from "@/context/admin.context";
 import Product from "@/components/product";
 import CategoryCheckbox from "@/components/category-checkbox";
 import API from "@/config/axios.config";
@@ -47,24 +48,14 @@ function ProductList({ data }: { data: any }): React.ReactElement {
 }
 
 export default function Index(): React.ReactElement {
+  const { isAdmin } = useContext(AdminContext);
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [productList, setProductList] = useState<any[]>([]);
   const [filterOption, setFilterOption] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState("name");
 
-  // const { categoryid } = router.query;
-
   useEffect(() => {
     (async () => {
-      // const token = localStorage.getItem("token");
-      // const config = {
-      //   headers: {
-      //     Authorization: `Bearer ${token}`,
-      //   },
-      // };
-      // if (!categoryid) {
-      //   return;
-      // }
       const categories = await API.get("/category");
       const products = await API.get("/product");
       const sortCategories = categories.data.categoryList.sort(
@@ -129,19 +120,31 @@ export default function Index(): React.ReactElement {
             onCheckboxClick={handleCheckboxChange}
           />
           <div className="flex-none w-3/4 ml-6">
-            <div className="w-1/4">
-              <select
-                id="sort-option"
-                className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                onChange={handleSortOptionChange}
-              >
-                <option value="AscName" defaultValue="AscName">
-                  Ascending by name
-                </option>
-                <option value="DescName">Descending by name</option>
-                <option value="AscPrice">Ascending by price</option>
-                <option value="DescPrice">Descending by price</option>
-              </select>
+            <div className="flex">
+              <div className="w-1/4">
+                <select
+                  id="sort-option"
+                  className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+                  onChange={handleSortOptionChange}
+                >
+                  <option value="AscName" defaultValue="AscName">
+                    Ascending by name
+                  </option>
+                  <option value="DescName">Descending by name</option>
+                  <option value="AscPrice">Ascending by price</option>
+                  <option value="DescPrice">Descending by price</option>
+                </select>
+              </div>
+              {isAdmin && (
+                <div className="flex w-3/4 justify-end mr-4">
+                  <button className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md">
+                    Add
+                  </button>
+                  <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
             <div className="max-w-full my-2">
               <div className="flex flex-wrap">

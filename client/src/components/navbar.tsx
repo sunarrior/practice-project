@@ -1,11 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable import/no-extraneous-dependencies */
 import React, { useContext, useState, useEffect } from "react";
 import Link from "next/link";
 import { Menu } from "@headlessui/react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { HiOutlineUserCircle } from "react-icons/hi";
-import { ToastContainer } from "react-toastify";
 
 import { SessionContext } from "@/context/session.context";
 import { CartContext } from "@/context/cart.context";
@@ -83,7 +81,7 @@ export default function NavBar({
 }: {
   children: React.ReactElement;
 }): React.ReactElement {
-  const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
+  const { isLoggedIn } = useContext(SessionContext);
   const [cartState, setCartState] = useState(0);
 
   useEffect(() => {

@@ -8,6 +8,8 @@ import {
 } from "react-icons/bs";
 import { RxDotFilled } from "react-icons/rx";
 
+import CategoryTag from "@/components/category-tag";
+
 export default function ProductDetail({
   productName,
   productQuantity,
@@ -100,15 +102,17 @@ export default function ProductDetail({
               PRODUCT QUANTITY: {productQuantity}
             </p>
             <p className="text-md font-bold mb-3">PRICE: {price}$</p>
-            <p className="flex text-md font-bold mb-3 uppercase">
+            <div className="flex text-md font-bold mb-3 uppercase">
               CATEGORY:{" "}
-              {categories.reduce(
-                (result: any, category: any) => `${result} [${category}]`,
+              {categories.map(
+                (category: any) => (
+                  <CategoryTag key={category} category={category} />
+                ),
                 ""
               )}
-            </p>
+            </div>
             <p className="text-md text-justify mb-5">{description}</p>
-            <div className="h-10 w-32 mb-3">
+            <div className="h-10 w-32 mt-[70px] mb-3">
               <div className="flex flex-row h-10 w-full rounded-lg relative bg-transparent mt-1">
                 <button
                   className=" bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-l cursor-pointer outline-none"
