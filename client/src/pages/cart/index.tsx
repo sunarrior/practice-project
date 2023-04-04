@@ -1,8 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState, useEffect, useContext } from "react";
 import { toast } from "react-toastify";
-import jwtDecode from "jwt-decode";
 
 import { CartContext } from "@/context/cart.context";
 import API from "@/config/axios.config";
@@ -40,7 +38,7 @@ function CartItemList({
 }
 
 export default function Index(): React.ReactElement {
-  const { cartState, setCartState } = useContext(CartContext);
+  const { setCartState } = useContext(CartContext);
   const [cartItemList, setCartItemList] = useState<any[]>([]);
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [showModal, setShowModal] = useState(false);

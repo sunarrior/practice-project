@@ -38,9 +38,14 @@ const updateCategory = async (category: Category): Promise<void> => {
   await categoryRepos.update(category.id, category);
 };
 
+const deleteCategory = async (categories: Category[]): Promise<void> => {
+  await categoryRepos.remove(categories);
+};
+
 export default {
   getAllCategories,
   getCategoryById,
   addCategory,
   updateCategory,
+  deleteCategory,
 };

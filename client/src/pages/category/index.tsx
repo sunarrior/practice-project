@@ -1,23 +1,32 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
-import Link from "next/link";
+import { toast } from "react-toastify";
 
 import { AdminContext } from "@/context/admin.context";
 import Category from "@/components/category";
 import CategoryModalForm from "@/components/category-modal-form";
 import API from "@/config/axios.config";
 
-function CategoryList({ data }: { data: any }) {
+function CategoryList({
+  data,
+  checkedItems,
+  handleCheckboxChange,
+}: {
+  data: any;
+  checkedItems: number[];
+  handleCheckboxChange: (key: number) => void;
+}) {
   const categoryList = data.map((category: any) => {
     return (
-      <Link key={category.id} href={`/category/${category.id}`}>
-        <Category
-          url={category.url || "/blank-image.jpg"}
-          categoryName={category.name}
-          productQuantity={category.productQuantity}
-        />
-      </Link>
+      <Category
+        key={category.id}
+        url={category.url || "/blank-image.jpg"}
+        categoryId={category.id}
+        categoryName={category.name}
+        productQuantity={category.productQuantity}
+        checkedItem={checkedItems.includes(category.id)}
+        handleCheckboxChange={handleCheckboxChange}
+      />
     );
   });
   return categoryList;
@@ -25,10 +34,11 @@ function CategoryList({ data }: { data: any }) {
 
 export default function CategoryPage() {
   const router = useRouter();
-  const { isAdmin, setIsAdmin } = useContext(AdminContext);
+  const { isAdmin } = useContext(AdminContext);
   const [categoryInfo, setCategoryInfo] = useState();
   const [sortOption, setSortOption] = useState("name");
   const [showModal, setShowModal] = useState(false);
+  const [checkedItems, setCheckedItems] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -61,6 +71,39 @@ export default function CategoryPage() {
 
   function handleAddCategory() {
     router.reload();
+  }
+
+  function handleCheckboxChange(key: number) {
+    if (!checkedItems.includes(key)) {
+      return setCheckedItems([...checkedItems, key]);
+    }
+    setCheckedItems(checkedItems.filter((item: number) => item !== key));
+  }
+
+  async function handleDeleteCategory() {
+    try {
+      if (checkedItems.length === 0) {
+        return toast("Please select a category to delete by checkbox", {
+          type: "warning",
+          autoClose: 3000,
+        });
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        data: checkedItems,
+      };
+      const result = await API.delete("/category", config);
+      toast(result.data.msg, { type: "success", autoClose: 3000 });
+      router.reload();
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+    }
   }
 
   return (
@@ -101,7 +144,10 @@ export default function CategoryPage() {
               >
                 Add
               </button>
-              <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+              <button
+                className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2"
+                onClick={handleDeleteCategory}
+              >
                 Detele
               </button>
             </div>
@@ -109,7 +155,13 @@ export default function CategoryPage() {
         </div>
         <div className="container max-w-full my-2 px-2">
           <div className="flex flex-wrap">
-            {categoryInfo ? <CategoryList data={categoryInfo} /> : null}
+            {categoryInfo ? (
+              <CategoryList
+                data={categoryInfo}
+                checkedItems={checkedItems}
+                handleCheckboxChange={handleCheckboxChange}
+              />
+            ) : null}
           </div>
         </div>
       </div>

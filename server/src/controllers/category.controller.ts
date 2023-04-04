@@ -120,9 +120,55 @@ const updateCategory = async (req: Request, res: Response) => {
   }
 };
 
+const deleteCategory = async (req: Request, res: Response) => {
+  try {
+    const ids: number[] = req.body;
+    const categories: (Category | undefined)[] = await Promise.all(
+      ids.map(async (id: number) => {
+        const category: Category | null = await categoryDB.getCategoryById(id);
+        if (category) {
+          return category;
+        }
+      })
+    );
+
+    for (const category of categories) {
+      if (category) {
+        if (category.productCategories.length > 0) {
+          return res.status(400).json({
+            stauts: "failed",
+            msg: "Some categories still have products, that cannot be removed.",
+          });
+        }
+      }
+    }
+
+    const filterCategories: (Category | undefined)[] = categories.filter(
+      (category: Category | undefined) =>
+        category && category.productCategories.length === 0
+    );
+    await Promise.all(
+      filterCategories.map(async (category: Category | undefined) => {
+        if (category?.thumbnailUrl) {
+          const imagePID = category?.thumbnailUrl.split("/")[8].split(".")[0];
+          await cloudinary.uploader.destroy(`category_img/${imagePID}`);
+        }
+      })
+    );
+    await categoryDB.deleteCategory(filterCategories as Category[]);
+    res
+      .status(200)
+      .json({ status: "success", msg: "Category deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   getAllCategories,
   getCategoryById,
   addNewCategory,
   updateCategory,
+  deleteCategory,
 };
