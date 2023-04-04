@@ -9,5 +9,6 @@ router.get("/", category.getAllCategories);
 router.get("/:id", category.getCategoryById);
 router.post("/", tokenValidation, category.addNewCategory);
 router.put("/", tokenValidation, category.updateCategory);
+router.delete("/", tokenValidation, category.deleteCategory);
 
 export default router;
