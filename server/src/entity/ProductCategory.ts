@@ -10,6 +10,9 @@ export default class ProductCategory {
   @ManyToOne(() => Category, (category) => category.productCategories)
   public category: Category;
 
-  @ManyToOne(() => Product, (product) => product.productCategories)
+  @ManyToOne(() => Product, (product) => product.productCategories, {
+    onDelete: "CASCADE",
+    onUpdate: "NO ACTION",
+  })
   public product: Product;
 }
