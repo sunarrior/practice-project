@@ -5,6 +5,7 @@ import { AdminContext } from "@/context/admin.context";
 import CategoryBanner from "@/components/category-banner";
 import Product from "@/components/product";
 import CategoryModalForm from "@/components/category-modal-form";
+import ProductModalForm from "@/components/product-modal-form";
 import API from "@/config/axios.config";
 
 const categoryInfoDefault: {
@@ -40,7 +41,8 @@ export default function CategoryDetail(): React.ReactElement {
   const [categoryInfo, setCategoryInfo] = useState(categoryInfoDefault);
   const [productList, setProductList] = useState();
   const [sortOption, setSortOption] = useState("name");
-  const [showModal, setShowModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showProductModal, setShowProductModal] = useState(false);
 
   const { categoryid } = router.query;
 
@@ -74,17 +76,25 @@ export default function CategoryDetail(): React.ReactElement {
     setSortOption(e.target.value);
   }
 
-  function handleShowModal(state: boolean) {
-    setShowModal(state);
+  function handleShowCategoryModal(state: boolean) {
+    setShowCategoryModal(state);
   }
 
-  function handleCategoryEdit() {
+  function handleEditCategory() {
+    router.reload();
+  }
+
+  function handleShowProductModal(state: boolean) {
+    setShowProductModal(state);
+  }
+
+  function handleAddProduct() {
     router.reload();
   }
 
   return (
     <>
-      {showModal && (
+      {showCategoryModal && (
         <CategoryModalForm
           categoryId={categoryid as unknown as number}
           isEdit={true}
@@ -93,8 +103,14 @@ export default function CategoryDetail(): React.ReactElement {
             categoryName: categoryInfo.name,
             description: categoryInfo.description,
           }}
-          handleShowModal={handleShowModal}
-          onCategoryAction={handleCategoryEdit}
+          handleShowModal={handleShowCategoryModal}
+          onCategoryAction={handleEditCategory}
+        />
+      )}
+      {showProductModal && (
+        <ProductModalForm
+          handleShowModal={handleShowProductModal}
+          onProductAction={handleAddProduct}
         />
       )}
       <div className="my-10">
@@ -103,7 +119,7 @@ export default function CategoryDetail(): React.ReactElement {
           categoryName={categoryInfo.name}
           productQuantity={categoryInfo.productQuantity}
           description={categoryInfo.description}
-          handleShowModal={handleShowModal}
+          handleShowModal={handleShowCategoryModal}
         />
         <div className="mx-52 mt-5">
           <div className="flex">
@@ -122,8 +138,11 @@ export default function CategoryDetail(): React.ReactElement {
               </select>
             </div>
             {isAdmin && (
-              <div className="flex w-3/4 justify-end mr-4">
-                <button className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md">
+              <div className="flex-none flex w-3/4 justify-end mr-4">
+                <button
+                  className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md"
+                  onClick={() => handleShowProductModal(true)}
+                >
                   Add
                 </button>
                 <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">

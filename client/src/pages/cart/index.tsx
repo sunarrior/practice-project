@@ -121,6 +121,17 @@ export default function Index(): React.ReactElement {
 
   return (
     <>
+      {showModal && (
+        <>
+          <CheckoutModal
+            data={cartItemList.filter((item: any) =>
+              checkedItems.includes(item.id)
+            )}
+            handleShowModal={handleShowModal}
+            onPlaceOrder={handlePlaceOrder}
+          />
+        </>
+      )}
       <div className="mx-10 my-10">
         <div className="flex relative justify-center">
           <h1 className="uppercase text-3xl font-bold">Cart</h1>
@@ -144,17 +155,6 @@ export default function Index(): React.ReactElement {
             </div>
           )}
         </div>
-        {showModal && (
-          <>
-            <CheckoutModal
-              data={cartItemList.filter((item: any) =>
-                checkedItems.includes(item.id)
-              )}
-              handleShowModal={handleShowModal}
-              onPlaceOrder={handlePlaceOrder}
-            />
-          </>
-        )}
         <div className="w-3/4 mx-44">
           <div className="max-w-full mx-6 my-2">
             <div className="flex flex-wrap">

@@ -13,7 +13,7 @@ const warningDefault = {
   msg: "",
 };
 
-export default function CheckoutModal({
+export default function CategoryModal({
   categoryId,
   isEdit,
   currentData,

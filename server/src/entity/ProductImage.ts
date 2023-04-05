@@ -29,6 +29,9 @@ export default class ProductImage {
   @Column({ name: "is_default", default: false })
   public isDefault: boolean;
 
-  @ManyToOne(() => Product, (product) => product.productImages)
+  @ManyToOne(() => Product, (product) => product.productImages, {
+    onDelete: "CASCADE",
+    onUpdate: "NO ACTION",
+  })
   public product: Product;
 }

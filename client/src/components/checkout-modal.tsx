@@ -92,7 +92,7 @@ export default function CheckoutModal({
 
   return (
     <>
-      <div className="z-50 fixed top-0 left-0 w-full h-full outline-none overflow-x-hidden overflow-y-auto">
+      <div className="z-50 fixed top-0 left-0 w-full h-full outline-none overflow-x-hidden overflow-y-auto overscroll-contain no-scrollbar">
         <div className="h-full max-w-3xl my-6 mx-auto relative w-full">
           {/* content */}
           <div className="max-h-full overflow-hidden border-none rounded-lg shadow-lg relative flex flex-col w-full bg-white bg-clip-padding outline-none text-current">
