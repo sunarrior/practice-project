@@ -124,9 +124,13 @@ const getProductDetail = async (req: Request, res: Response) => {
       quantity: product?.quantity,
       price: product?.price,
       description: product?.description,
-      imageList: product?.productImages?.map(
-        (image: ProductImage) => image.url
-      ),
+      imageList: product?.productImages?.map((image: ProductImage) => {
+        return {
+          id: image.id,
+          url: image.url,
+          isDefault: image.isDefault,
+        };
+      }),
       categories: product?.productCategories.map(
         (productCategory: ProductCategory) => productCategory.category.name
       ),

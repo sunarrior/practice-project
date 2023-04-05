@@ -1,5 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
 import Image from "next/image";
 import {
   BsCartPlus,
@@ -8,9 +9,12 @@ import {
 } from "react-icons/bs";
 import { RxDotFilled } from "react-icons/rx";
 
+import { AdminContext } from "@/context/admin.context";
 import CategoryTag from "@/components/category-tag";
+import ProductModalForm from "./product-modal-form";
 
 export default function ProductDetail({
+  productId,
   productName,
   productQuantity,
   price,
@@ -23,11 +27,12 @@ export default function ProductDetail({
   handlePurchaseAmountChange,
   handleAddToCart,
 }: {
+  productId: number;
   productName: string;
   productQuantity: number;
   price: number;
   description: string;
-  imageList: [];
+  imageList: any[];
   categories: [];
   purchaseAmount: number;
   handleIncrease: React.MouseEventHandler<HTMLButtonElement>;
@@ -35,7 +40,10 @@ export default function ProductDetail({
   handlePurchaseAmountChange: React.ChangeEventHandler<HTMLInputElement>;
   handleAddToCart: React.MouseEventHandler<HTMLButtonElement>;
 }): React.ReactElement {
+  const router = useRouter();
+  const { isAdmin } = useContext(AdminContext);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -65,14 +73,37 @@ export default function ProductDetail({
     setCurrentIndex(index);
   }
 
+  function handleShowModal(state: boolean) {
+    setShowModal(state);
+  }
+
+  function handleEditProduct() {
+    router.reload();
+  }
+
   return (
     <>
+      {showModal && (
+        <ProductModalForm
+          isEdit={true}
+          productId={productId}
+          currentData={{
+            imagesPreview: imageList,
+            productName,
+            description,
+            quantity: productQuantity,
+            price,
+          }}
+          handleShowModal={handleShowModal}
+          onProductAction={handleEditProduct}
+        />
+      )}
       <div className="mx-52 my-10">
         <div className="flex max-w-full w-full h-96 py-3 px-4 bg-orange-400 border border-b border-gray-200 rounded-md">
           <div className="w-1/3 relative group">
             <Image
               className="rounded-md w-full h-52 object-cover bg-center bg-cover"
-              src={imageList[currentIndex] || "/blank-image.jpg"}
+              src={imageList[currentIndex]?.url || "/blank-image.jpg"}
               alt={productName}
               width={500}
               height={500}
@@ -96,7 +127,7 @@ export default function ProductDetail({
               })}
             </div>
           </div>
-          <div className="flex-none w-2/3 ml-5">
+          <div className="flex-none relative w-2/3 ml-5">
             <p className="text-lg font-bold mb-3 uppercase">{productName}</p>
             <p className="text-md font-bold mb-3">
               PRODUCT QUANTITY: {productQuantity}
@@ -141,6 +172,14 @@ export default function ProductDetail({
             >
               <BsCartPlus className="mr-2" size={20} /> ADD TO CART
             </button>
+            {isAdmin && (
+              <button
+                className="absolute bottom-2 right-2 px-6 py-2 bg-purple-500 hover:bg-purple-400 rounded-md font-bold text-white"
+                onClick={() => handleShowModal(true)}
+              >
+                Edit Product
+              </button>
+            )}
           </div>
         </div>
       </div>

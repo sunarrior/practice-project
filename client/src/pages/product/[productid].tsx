@@ -8,13 +8,15 @@ import ProductDetail from "@/components/product-detail";
 import API from "@/config/axios.config";
 
 const productDetailDefault: {
+  productId: number;
   productName: string;
   productQuantity: number;
   price: number;
   description: string;
-  imageList: [];
+  imageList: any[];
   categories: [];
 } = {
+  productId: 0,
   productName: "",
   productQuantity: 0,
   price: 0,
@@ -38,6 +40,7 @@ export default function ProductPage(): React.ReactElement {
       }
       const result = await API.get(`/product/${productid}`);
       setProductDetail({
+        productId: productid as unknown as number,
         productName: result.data.productDetail.name || "",
         productQuantity: result.data.productDetail.quantity || "",
         price: result.data.productDetail.price || "",
@@ -45,7 +48,7 @@ export default function ProductPage(): React.ReactElement {
         imageList:
           result.data.productDetail.imageList.length > 0
             ? result.data.productDetail.imageList
-            : ["/blank-image.jpg"],
+            : [{ id: 0, url: "/blank-image.jpg", isDefault: true }],
         categories: result.data.productDetail.categories || [],
       });
     })();

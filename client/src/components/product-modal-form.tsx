@@ -27,7 +27,7 @@ export default function ProductModal({
   productId?: number;
   isEdit?: boolean;
   currentData?: {
-    imagePreviews: string[];
+    imagesPreview: string[];
     productName: string;
     quantity: number;
     price: number;
@@ -48,6 +48,7 @@ export default function ProductModal({
   useEffect(() => {
     (async () => {
       if (currentData) {
+        setImagesPreview(currentData.imagesPreview);
         setProductData({
           productName: currentData.productName,
           quantity: currentData.quantity,
@@ -316,7 +317,7 @@ export default function ProductModal({
               </h1>
 
               <ul id="gallery" className="flex items-center -m-1 mb-4 ml-2">
-                {imagesUpload.length === 0 && (
+                {imagesUpload.length === 0 && imagesPreview.length === 0 && (
                   <>
                     <li className="h-full w-fit ml-1 text-center inline-block">
                       <Image
@@ -332,41 +333,78 @@ export default function ProductModal({
                     </span>
                   </>
                 )}
-                {imagesUpload.map((image: any) => {
-                  return (
-                    <li
-                      key={image.id}
-                      className="relative group h-full w-fit ml-1 text-center inline-block"
-                    >
-                      {image.isDefault && (
-                        <TbCircleCheckFilled
-                          size={25}
-                          className="absolute top-1 left-1 text-green-400"
+                {imagesUpload.length > 0 &&
+                  imagesUpload.map((image: any) => {
+                    return (
+                      <li
+                        key={image.id}
+                        className="relative group h-full w-fit ml-1 text-center inline-block"
+                      >
+                        {image.isDefault && (
+                          <TbCircleCheckFilled
+                            size={25}
+                            className="absolute top-1 left-1 text-green-400"
+                          />
+                        )}
+                        <div className="absolute w-full h-full hidden group-hover:block">
+                          <div className="w-full h-full bg-gray-500 opacity-50"></div>
+                          <button
+                            className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
+                            onClick={() => handleRemoveUploadImage(image.id)}
+                          >
+                            X
+                          </button>
+                        </div>
+                        <div
+                          className="absolute w-full h-full"
+                          onClick={() => handleSelectDefaultThumbnail(image.id)}
+                        ></div>
+                        <Image
+                          className="mx-auto h-32 w-32 object-cover rounded-md"
+                          src={image.url}
+                          alt="no data"
+                          width={500}
+                          height={500}
                         />
-                      )}
-                      <div className="absolute w-full h-full hidden group-hover:block">
-                        <div className="w-full h-full bg-gray-500 opacity-50"></div>
-                        <button
-                          className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
-                          onClick={() => handleRemoveUploadImage(image.id)}
-                        >
-                          X
-                        </button>
-                      </div>
-                      <div
-                        className="absolute w-full h-full"
-                        onClick={() => handleSelectDefaultThumbnail(image.id)}
-                      ></div>
-                      <Image
-                        className="mx-auto h-32 w-32 object-cover rounded-md"
-                        src={image.url}
-                        alt="no data"
-                        width={500}
-                        height={500}
-                      />
-                    </li>
-                  );
-                })}
+                      </li>
+                    );
+                  })}
+                {imagesUpload.length === 0 &&
+                  imagesPreview.map((image: any) => {
+                    return (
+                      <li
+                        key={image.id}
+                        className="relative group h-full w-fit ml-1 text-center inline-block"
+                      >
+                        {image.isDefault && (
+                          <TbCircleCheckFilled
+                            size={25}
+                            className="absolute top-1 left-1 text-green-400"
+                          />
+                        )}
+                        <div className="absolute w-full h-full hidden group-hover:block">
+                          <div className="w-full h-full bg-gray-500 opacity-50"></div>
+                          <button
+                            className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
+                            onClick={() => handleRemoveUploadImage(image.id)}
+                          >
+                            X
+                          </button>
+                        </div>
+                        <div
+                          className="absolute w-full h-full"
+                          onClick={() => handleSelectDefaultThumbnail(image.id)}
+                        ></div>
+                        <Image
+                          className="mx-auto h-32 w-32 object-cover rounded-md"
+                          src={image.url}
+                          alt="no data"
+                          width={500}
+                          height={500}
+                        />
+                      </li>
+                    );
+                  })}
               </ul>
             </div>
             <div
