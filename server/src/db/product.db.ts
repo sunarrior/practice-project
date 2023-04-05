@@ -1,9 +1,26 @@
 import { dataSource } from "../config/data-source.config";
 import Product from "../entity/Product";
+import ProductCategory from "../entity/ProductCategory";
 import ProductImage from "../entity/ProductImage";
 
 const productRepos = dataSource.getRepository(Product);
+const productCategoryRepos = dataSource.getRepository(ProductCategory);
 const productImageRepos = dataSource.getRepository(ProductImage);
+
+const addProduct = async (product: Product): Promise<Product> => {
+  const newProduct: Product = await productRepos.save(product);
+  return newProduct;
+};
+
+const addProductCategory = async (
+  productCategory: ProductCategory[]
+): Promise<void> => {
+  await productCategoryRepos.save(productCategory);
+};
+
+const addProductImage = async (productImage: ProductImage[]): Promise<void> => {
+  await productImageRepos.save(productImage);
+};
 
 const getAllProducts = async (): Promise<Product[]> => {
   const products: Product[] = await productRepos.find({
@@ -82,6 +99,9 @@ const updateProduct = async (
 };
 
 export default {
+  addProduct,
+  addProductCategory,
+  addProductImage,
   getAllProducts,
   getProductByCategory,
   getProductByName,

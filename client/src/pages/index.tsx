@@ -1,8 +1,10 @@
 /* eslint-disable no-lonely-if */
 import React, { useState, useEffect, useContext } from "react";
+import { useRouter } from "next/router";
 
 import { AdminContext } from "@/context/admin.context";
 import Product from "@/components/product";
+import ProductModalForm from "@/components/product-modal-form";
 import CategoryCheckbox from "@/components/category-checkbox";
 import API from "@/config/axios.config";
 
@@ -48,11 +50,13 @@ function ProductList({ data }: { data: any }): React.ReactElement {
 }
 
 export default function Index(): React.ReactElement {
+  const router = useRouter();
   const { isAdmin } = useContext(AdminContext);
   const [categoryList, setCategoryList] = useState<any[]>([]);
   const [productList, setProductList] = useState<any[]>([]);
   const [filterOption, setFilterOption] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState("name");
+  const [showProductModal, setShowProductModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -111,8 +115,22 @@ export default function Index(): React.ReactElement {
     setSortOption(e.target.value);
   }
 
+  function handleShowProductModal(state: boolean) {
+    setShowProductModal(state);
+  }
+
+  function handleAddProduct() {
+    router.reload();
+  }
+
   return (
     <>
+      {showProductModal && (
+        <ProductModalForm
+          handleShowModal={handleShowProductModal}
+          onProductAction={handleAddProduct}
+        />
+      )}
       <div className="mx-10 my-10">
         <div className="flex mt-5">
           <CategoryListCheckbox
@@ -136,8 +154,11 @@ export default function Index(): React.ReactElement {
                 </select>
               </div>
               {isAdmin && (
-                <div className="flex w-3/4 justify-end mr-4">
-                  <button className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md">
+                <div className="flex-none flex w-3/4 justify-end mr-4">
+                  <button
+                    className="bg-purple-500 hover:bg-purple-400 px-4 py-2 font-bold text-white rounded-md"
+                    onClick={() => handleShowProductModal(true)}
+                  >
                     Add
                   </button>
                   <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">

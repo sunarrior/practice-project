@@ -29,19 +29,16 @@ export default class Product {
   @Column()
   public name: string;
 
-  @Column()
+  @Column({ default: 0 })
   public quantity: number;
 
-  @Column()
+  @Column({ default: 0 })
   public price: number;
 
-  @Column({ nullable: true })
+  @Column()
   public description: string;
 
-  @OneToMany(() => ProductImage, (productImage) => productImage.product, {
-    onDelete: "CASCADE",
-    onUpdate: "NO ACTION",
-  })
+  @OneToMany(() => ProductImage, (productImage) => productImage.product)
   public productImages: ProductImage[];
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.product, {
