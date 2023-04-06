@@ -1,5 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useContext } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import {
@@ -45,16 +45,6 @@ export default function ProductDetail({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (currentIndex === imageList.length - 1) {
-        return setCurrentIndex(0);
-      }
-      setCurrentIndex(currentIndex + 1);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [currentIndex, imageList]);
-
   function prevImage() {
     if (currentIndex === 0) {
       return setCurrentIndex(imageList.length - 1);
@@ -86,10 +76,11 @@ export default function ProductDetail({
       {showModal && (
         <ProductModalForm
           isEdit={true}
-          productId={productId}
           currentData={{
-            imagesPreview: imageList,
+            productId,
+            imagesPreview: imageList[0].id === 0 ? [] : imageList,
             productName,
+            categories,
             description,
             quantity: productQuantity,
             price,
@@ -137,7 +128,7 @@ export default function ProductDetail({
               CATEGORY:{" "}
               {categories.map(
                 (category: any) => (
-                  <CategoryTag key={category} category={category} />
+                  <CategoryTag key={category.id} category={category.name} />
                 ),
                 ""
               )}
@@ -146,7 +137,7 @@ export default function ProductDetail({
             <div className="h-10 w-32 mt-[70px] mb-3">
               <div className="flex flex-row h-10 w-full rounded-lg relative bg-transparent mt-1">
                 <button
-                  className=" bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-l cursor-pointer outline-none"
+                  className="pb-1 bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-l cursor-pointer outline-none"
                   onClick={handleDecrease}
                 >
                   <span className="m-auto text-2xl font-thin">-</span>
@@ -158,7 +149,7 @@ export default function ProductDetail({
                   onChange={handlePurchaseAmountChange}
                 />
                 <button
-                  className="bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-r cursor-pointer"
+                  className="pb-1 bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-r cursor-pointer"
                   onClick={handleIncrease}
                 >
                   <span className="m-auto text-2xl font-thin">+</span>

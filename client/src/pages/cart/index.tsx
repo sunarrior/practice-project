@@ -19,16 +19,16 @@ function CartItemList({
   handleItemClick: (id: number) => void;
   handleCheckboxChange: (id: number) => void;
 }): React.ReactElement {
-  const cartItemList = data.map((product: any) => {
+  const cartItemList = data.map((cartProduct: any) => {
     return (
       <CartItem
-        key={product.id}
-        id={product.id}
-        checkedItem={checkedItems.includes(product.id)}
-        url={product.url || "/blank-image.jpg"}
-        productName={product.name}
-        quantity={product.quantity || 0}
-        price={product.price}
+        key={cartProduct.id}
+        id={cartProduct.id}
+        checkedItem={checkedItems.includes(cartProduct.id)}
+        url={cartProduct.url || "/blank-image.jpg"}
+        productName={cartProduct.product.name}
+        quantity={cartProduct.quantity || 0}
+        price={cartProduct.product.price}
         handleItemClick={handleItemClick}
         handleCheckboxChange={handleCheckboxChange}
       />

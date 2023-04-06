@@ -11,9 +11,9 @@ function CheckoutItemList({ data }: { data: any }) {
       <CheckoutItem
         key={item.id}
         url={item.url || "/blank-image.jpg"}
-        productName={item.name}
+        productName={item.product.name}
         quantity={item.quantity}
-        price={item.price}
+        price={item.product.price}
       />
     );
   });
@@ -112,7 +112,7 @@ export default function CheckoutModal({
                     <span className="font-bold">Total: </span>
                     {data.reduce(
                       (total: number, item: any) =>
-                        total + item.price * item.quantity,
+                        total + item.product.price * item.quantity,
                       0
                     )}
                     {"$"}

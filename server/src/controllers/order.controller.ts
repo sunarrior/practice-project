@@ -132,8 +132,8 @@ const createOrder = async (req: Request, res: Response) => {
         }
 
         // check if product is valid
-        const product: Product | null = await productDB.getProductByName(
-          item.name
+        const product: Product | null = await productDB.getProductById(
+          item.product.id
         );
         if (!product) {
           return;
@@ -142,7 +142,7 @@ const createOrder = async (req: Request, res: Response) => {
         // add order item
         const orderItem = new OrderItem();
         orderItem.quantity = item.quantity;
-        orderItem.price = item.price;
+        orderItem.price = item.product.price;
         orderItem.order = order;
         orderItem.product = product;
 

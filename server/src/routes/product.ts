@@ -8,5 +8,6 @@ router.post("/", product.addProduct);
 router.get("/", product.getAllProducts);
 router.get("/:categoryid/category", product.getProductByCategory);
 router.get("/:id", product.getProductDetail);
+router.put("/", product.updateProductDetail);
 
 export default router;
