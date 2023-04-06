@@ -18,17 +18,17 @@ const warningDefault = {
 };
 
 export default function ProductModal({
-  productId,
   isEdit,
   currentData,
   handleShowModal,
   onProductAction,
 }: {
-  productId?: number;
   isEdit?: boolean;
   currentData?: {
-    imagesPreview: string[];
+    productId: number;
+    imagesPreview: any[];
     productName: string;
+    categories: any[];
     quantity: number;
     price: number;
     description: string;
@@ -38,30 +38,38 @@ export default function ProductModal({
 }): React.ReactElement {
   const [productData, setProductData] = useState(productDataDefault);
   const [categoryList, setCategoryList] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<any[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<any[]>([]);
+  const [newCategories, setNewCategories] = useState<any[]>([]);
+  const [removeCategories, setRemoveCategories] = useState<any[]>([]);
+  const [defaultThumbnail, setDefaultThumbnail] = useState(0);
   const [imagesPreview, setImagesPreview] = useState<any[]>([]);
   const [imagesUpload, setImagesUpload] = useState<any[]>([]);
-  const [isImageChange, setIsImageChange] = useState(false);
+  const [imagesUpdate, setImagesUpdate] = useState<any[]>([]);
+  const [imagesRemove, setImagesRemove] = useState<any[]>([]);
   const [uploadProgess, setUploadProgess] = useState(0);
   const [warning, setWarning] = useState(warningDefault);
 
   useEffect(() => {
     (async () => {
       if (currentData) {
-        setImagesPreview(currentData.imagesPreview);
+        setImagesPreview([...currentData.imagesPreview]);
+        setSelectedCategories([...currentData.categories]);
         setProductData({
           productName: currentData.productName,
           quantity: currentData.quantity,
           price: currentData.price,
           description: currentData.description,
         });
+        const defaultThumb = currentData.imagesPreview?.find(
+          (image: any) => image.isDefault
+        );
+        setDefaultThumbnail(defaultThumb?.id);
       }
       const categories = await API.get("/category");
       const sortCategories = categories.data.categoryList.sort(
         (c1: any, c2: any) => c1.name.localeCompare(c2.name)
       );
-      setCategoryList(sortCategories);
-      // setImagePreview(currentData.imagePreview);
+      setCategoryList([...sortCategories]);
     })();
   }, [currentData]);
 
@@ -70,23 +78,48 @@ export default function ProductModal({
   }
 
   function handleSelectedCategory(e: React.ChangeEvent<HTMLSelectElement>) {
-    const selectCategory = categoryList.find(
+    const isRemoveCategory = removeCategories.find(
       (category: any) => category.name === e.target.value
     );
-    const isExistCategory = selectedCategory.find(
+    if (isRemoveCategory) {
+      const tmpRemoveCategory = removeCategories.filter(
+        (category: any) => category.name !== e.target.value
+      );
+      setRemoveCategories(tmpRemoveCategory);
+      return setSelectedCategories([...selectedCategories, isRemoveCategory]);
+    }
+    const isExistOldCategory = selectedCategories.find(
       (category: any) => category.name === e.target.value
     );
-    if (isExistCategory) {
+    const isExistNewCategory = newCategories.find(
+      (category: any) => category.name === e.target.value
+    );
+    if (isExistOldCategory || isExistNewCategory) {
+      e.target.options[0].selected = true;
       return;
     }
-    setSelectedCategory([...selectedCategory, selectCategory]);
+    const newCategory = categoryList.find(
+      (category: any) => category.name === e.target.value
+    );
+    setNewCategories([...newCategories, newCategory]);
+    e.target.options[0].selected = true;
   }
 
   function handleDeleteCategoryTag(name: string) {
-    const filterCategory = selectedCategory.filter(
+    const removeCategory = selectedCategories.find(
+      (category: any) => category.name === name
+    );
+    if (removeCategory) {
+      const filterCategory = selectedCategories.filter(
+        (category: any) => category.name !== name
+      );
+      setRemoveCategories([...removeCategories, removeCategory]);
+      return setSelectedCategories(filterCategory);
+    }
+    const filterCategory = newCategories.filter(
       (category: any) => category.name !== name
     );
-    setSelectedCategory(filterCategory);
+    setNewCategories(filterCategory);
   }
 
   function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
@@ -109,6 +142,10 @@ export default function ProductModal({
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
     // e.preventDefault();
+    const largestId =
+      imagesPreview.length > 0
+        ? Math.max(...imagesPreview.map((image: any) => image.id))
+        : 0;
     if (e.target.files === null) {
       return;
     }
@@ -118,48 +155,131 @@ export default function ProductModal({
       reader.readAsDataURL(e.target.files[i]);
       // eslint-disable-next-line @typescript-eslint/no-loop-func
       reader.onloadend = () => {
+        const isExistImage = imagesUpload.find(
+          (image: any) => image.url === (reader.result as string)
+        );
+        if (isExistImage) {
+          return;
+        }
         images = [
           ...images,
-          { id: i, url: reader.result as string, isDefault: false },
+          {
+            id: largestId + 1 + i || i,
+            url: reader.result as string,
+            isDefault: false,
+          },
         ];
-        images[0].isDefault = true;
-        setImagesPreview(images);
+        const isHaveDefault = imagesPreview.find(
+          (image: any) => image.isDefault
+        );
+        if (!isHaveDefault) {
+          images[0].isDefault = true;
+          setDefaultThumbnail(images[0].id);
+        }
         setImagesUpload(images);
-        setIsImageChange(true);
       };
     }
     e.target.value = "";
   }
 
   function handleSelectDefaultThumbnail(pid: number) {
-    const tmpImages = imagesUpload.map((image: any) => {
+    let tmpImagesUpdate: any[] = [];
+    const tmpImagesPreview = currentData?.imagesPreview.map((image: any) => {
+      const inImagePreview = imagesPreview.find(
+        (img: any) => img.id === image.id
+      );
+      if (!inImagePreview) {
+        return;
+      }
+      if (image.id === pid) {
+        if (!image.isDefault) {
+          tmpImagesUpdate = [...tmpImagesUpdate, { ...image, isDefault: true }];
+        }
+        return { ...image, isDefault: true };
+      }
+      if (image.isDefault) {
+        tmpImagesUpdate = [...tmpImagesUpdate, { ...image, isDefault: false }];
+      }
+      return { ...image, isDefault: false };
+    });
+    const tmpImagesPreviewFilter = tmpImagesPreview?.filter(
+      (image: any) => image
+    );
+
+    const tmpImagesUpload = imagesUpload.map((image: any) => {
       if (image.id === pid) {
         return { ...image, isDefault: true };
       }
       return { ...image, isDefault: false };
     });
-    // setDefaultThumbnail(pid);
-    setImagesUpload(tmpImages);
+    setDefaultThumbnail(pid);
+    setImagesUpdate(tmpImagesUpdate);
+    setImagesPreview(tmpImagesPreviewFilter as any);
+    setImagesUpload(tmpImagesUpload);
   }
 
   function handleRemoveUploadImage(pid: number) {
-    const newUploadImages = imagesUpload.filter(
+    const isOldImage = imagesPreview.find((image: any) => image.id === pid);
+    if (isOldImage) {
+      const newImagesPreview = imagesPreview
+        .filter((image: any) => image.id !== pid)
+        .map((image: any) => {
+          return { ...image };
+        });
+
+      // check if update image contain image has been removed
+      const inImagesUpdate = imagesUpdate.find(
+        (image: any) => image.id === isOldImage.id
+      );
+      if (inImagesUpdate) {
+        const tmpImagesUpdate = imagesUpdate.filter(
+          (image: any) => image.id !== isOldImage.id
+        );
+        setImagesUpdate(tmpImagesUpdate);
+      }
+
+      const isHaveDefaultPreview = newImagesPreview.find(
+        (image: any) => image.isDefault
+      );
+      const isHaveDefaultUpload = imagesUpload.find(
+        (image: any) => image.isDefault
+      );
+      if (!isHaveDefaultPreview && !isHaveDefaultUpload) {
+        newImagesPreview[0].isDefault = true;
+        setImagesUpdate([{ ...newImagesPreview[0], isDefault: true }]);
+        setDefaultThumbnail(newImagesPreview[0].id);
+      }
+      setImagesRemove([...imagesRemove, isOldImage]);
+      return setImagesPreview(newImagesPreview);
+    }
+    const newImagesUpload = imagesUpload.filter(
       (image: any) => image.id !== pid
     );
-    const isHaveDefault = newUploadImages.filter(
+    const isHaveDefaultUpload = newImagesUpload.find(
       (image: any) => image.isDefault
     );
-    if (isHaveDefault.length === 0) {
-      newUploadImages[0].isDefault = true;
+    const isHaveDefaultPreview = imagesPreview.find(
+      (image: any) => image.isDefault
+    );
+    if (!isHaveDefaultUpload && !isHaveDefaultPreview) {
+      if (imagesPreview.length > 0) {
+        if (imagesUpdate.length > 0) {
+          setImagesUpdate([]);
+          setDefaultThumbnail(imagesUpdate[0].id);
+        } else {
+          setImagesUpdate([{ ...imagesPreview[0], isDefault: true }]);
+          setDefaultThumbnail(imagesPreview[0].id);
+        }
+      }
     }
-    setImagesUpload(newUploadImages);
+    return setImagesUpload(newImagesUpload);
   }
 
   async function handleProductAction() {
     setWarning({ ...warning, isWarning: false });
     if (
       productData.productName.localeCompare("") === 0 ||
-      selectedCategory.length === 0 ||
+      (selectedCategories.length === 0 && newCategories.length === 0) ||
       productData.description.localeCompare("") === 0
     ) {
       return setWarning({
@@ -184,7 +304,7 @@ export default function ProductModal({
     if (!isEdit) {
       const data = {
         name: productData.productName,
-        categories: selectedCategory,
+        categories: selectedCategories,
         description: productData.description,
         quantity: productData.quantity,
         price: productData.price,
@@ -193,14 +313,20 @@ export default function ProductModal({
       await API.post("/product", data, config);
     } else {
       const data = {
-        id: productId,
+        id: currentData?.productId,
         name: productData.productName,
+        removeCategories,
+        newCategories,
         description: productData.description,
-        filePath: isImageChange ? productData : "",
+        quantity: productData.quantity,
+        price: productData.price,
+        filesPath: imagesUpload.length > 0 ? imagesUpload : [],
+        imagesUpdate,
+        imagesRemove: imagesRemove.length > 0 ? imagesRemove : [],
       };
-      // await API.put("/category", data, config);
+      // console.log(data);
+      await API.put("/product", data, config);
     }
-    setIsImageChange(false);
     setImagesUpload([]);
     onProductAction();
   }
@@ -221,7 +347,12 @@ export default function ProductModal({
                 <Image
                   className="object-cover h-56 w-96 rounded-2xl bg-white"
                   src={
-                    imagesUpload.find((image: any) => image.isDefault)?.url ||
+                    imagesUpload.find(
+                      (image: any) => image.id === defaultThumbnail
+                    )?.url ||
+                    imagesPreview.find(
+                      (image: any) => image.id === defaultThumbnail
+                    )?.url ||
                     "/blank-image.jpg"
                   }
                   alt="image"
@@ -259,7 +390,7 @@ export default function ProductModal({
                     onChange={handleSelectedCategory}
                     required
                   >
-                    <option value="">-- Category --</option>
+                    <option>-- Category --</option>
                     {categoryList.map((category: any) => {
                       return (
                         <option key={category.id} value={category.name}>
@@ -270,7 +401,16 @@ export default function ProductModal({
                   </select>
                 </div>
                 <div className="mb-4 flex">
-                  {selectedCategory.map((category: any) => {
+                  {selectedCategories.map((category: any) => {
+                    return (
+                      <SelectedCategoryTag
+                        key={category.id}
+                        category={category.name}
+                        handleRemoveTag={handleDeleteCategoryTag}
+                      />
+                    );
+                  })}
+                  {newCategories.map((category: any) => {
                     return (
                       <SelectedCategoryTag
                         key={category.id}
@@ -333,78 +473,76 @@ export default function ProductModal({
                     </span>
                   </>
                 )}
-                {imagesUpload.length > 0 &&
-                  imagesUpload.map((image: any) => {
-                    return (
-                      <li
-                        key={image.id}
-                        className="relative group h-full w-fit ml-1 text-center inline-block"
-                      >
-                        {image.isDefault && (
-                          <TbCircleCheckFilled
-                            size={25}
-                            className="absolute top-1 left-1 text-green-400"
-                          />
-                        )}
-                        <div className="absolute w-full h-full hidden group-hover:block">
-                          <div className="w-full h-full bg-gray-500 opacity-50"></div>
-                          <button
-                            className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
-                            onClick={() => handleRemoveUploadImage(image.id)}
-                          >
-                            X
-                          </button>
-                        </div>
-                        <div
-                          className="absolute w-full h-full"
-                          onClick={() => handleSelectDefaultThumbnail(image.id)}
-                        ></div>
-                        <Image
-                          className="mx-auto h-32 w-32 object-cover rounded-md"
-                          src={image.url}
-                          alt="no data"
-                          width={500}
-                          height={500}
+                {imagesPreview.map((image: any) => {
+                  return (
+                    <li
+                      key={image.id}
+                      className="relative group h-full w-fit ml-1 text-center inline-block"
+                    >
+                      {image.id === defaultThumbnail && (
+                        <TbCircleCheckFilled
+                          size={25}
+                          className="absolute top-1 left-1 text-green-400"
                         />
-                      </li>
-                    );
-                  })}
-                {imagesUpload.length === 0 &&
-                  imagesPreview.map((image: any) => {
-                    return (
-                      <li
-                        key={image.id}
-                        className="relative group h-full w-fit ml-1 text-center inline-block"
-                      >
-                        {image.isDefault && (
-                          <TbCircleCheckFilled
-                            size={25}
-                            className="absolute top-1 left-1 text-green-400"
-                          />
-                        )}
-                        <div className="absolute w-full h-full hidden group-hover:block">
-                          <div className="w-full h-full bg-gray-500 opacity-50"></div>
-                          <button
-                            className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
-                            onClick={() => handleRemoveUploadImage(image.id)}
-                          >
-                            X
-                          </button>
-                        </div>
-                        <div
-                          className="absolute w-full h-full"
-                          onClick={() => handleSelectDefaultThumbnail(image.id)}
-                        ></div>
-                        <Image
-                          className="mx-auto h-32 w-32 object-cover rounded-md"
-                          src={image.url}
-                          alt="no data"
-                          width={500}
-                          height={500}
+                      )}
+                      <div className="absolute w-full h-full hidden group-hover:block">
+                        <div className="w-full h-full bg-gray-500 opacity-50"></div>
+                        <button
+                          className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
+                          onClick={() => handleRemoveUploadImage(image.id)}
+                        >
+                          X
+                        </button>
+                      </div>
+                      <div
+                        className="absolute w-full h-full"
+                        onClick={() => handleSelectDefaultThumbnail(image.id)}
+                      ></div>
+                      <Image
+                        className="mx-auto h-32 w-32 object-cover rounded-md"
+                        src={image.url}
+                        alt="no data"
+                        width={500}
+                        height={500}
+                      />
+                    </li>
+                  );
+                })}
+                {imagesUpload.map((image: any) => {
+                  return (
+                    <li
+                      key={image.id}
+                      className="relative group h-full w-fit ml-1 text-center inline-block"
+                    >
+                      {image.id === defaultThumbnail && (
+                        <TbCircleCheckFilled
+                          size={25}
+                          className="absolute top-1 left-1 text-green-400"
                         />
-                      </li>
-                    );
-                  })}
+                      )}
+                      <div className="absolute w-full h-full hidden group-hover:block">
+                        <div className="w-full h-full bg-gray-500 opacity-50"></div>
+                        <button
+                          className="z-50 absolute top-1 right-2 font-bold text-xl text-white"
+                          onClick={() => handleRemoveUploadImage(image.id)}
+                        >
+                          X
+                        </button>
+                      </div>
+                      <div
+                        className="absolute w-full h-full"
+                        onClick={() => handleSelectDefaultThumbnail(image.id)}
+                      ></div>
+                      <Image
+                        className="mx-auto h-32 w-32 object-cover rounded-md"
+                        src={image.url}
+                        alt="no data"
+                        width={500}
+                        height={500}
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             </div>
             <div

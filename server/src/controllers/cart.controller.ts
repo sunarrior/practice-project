@@ -134,9 +134,12 @@ const getAllCartItems = async (req: Request, res: Response) => {
         );
         return {
           id: item?.id,
-          name: item?.product?.name,
+          product: {
+            id: item?.product?.id,
+            name: item?.product?.name,
+            price: item?.product?.price,
+          },
           quantity: item?.quantity,
-          price: item?.product?.price,
           url: thumbnail?.url,
         };
       })

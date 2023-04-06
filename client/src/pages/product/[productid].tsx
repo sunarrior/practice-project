@@ -39,6 +39,15 @@ export default function ProductPage(): React.ReactElement {
         return;
       }
       const result = await API.get(`/product/${productid}`);
+      const sortImageList = result.data.productDetail.imageList.sort(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        (i1: any, i2: any) => {
+          if (i1.isDefault) {
+            return -1;
+          }
+          return 1;
+        }
+      );
       setProductDetail({
         productId: productid as unknown as number,
         productName: result.data.productDetail.name || "",
@@ -46,8 +55,8 @@ export default function ProductPage(): React.ReactElement {
         price: result.data.productDetail.price || "",
         description: result.data.productDetail.description || "",
         imageList:
-          result.data.productDetail.imageList.length > 0
-            ? result.data.productDetail.imageList
+          sortImageList.length > 0
+            ? sortImageList
             : [{ id: 0, url: "/blank-image.jpg", isDefault: true }],
         categories: result.data.productDetail.categories || [],
       });
