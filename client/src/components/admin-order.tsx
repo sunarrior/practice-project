@@ -1,31 +1,45 @@
 import Link from "next/link";
 
 export default function Order({
+  isSelected,
   orderid,
   username,
+  paymentMethod,
   orderDay,
   completedDay,
   firstItem,
   totalItem,
   cost,
   url,
+  handleOrderSelection,
 }: {
+  isSelected: boolean;
   orderid: number;
   username: string;
+  paymentMethod: string;
   orderDay: string;
-  completedDay: string;
+  completedDay: string | undefined;
   firstItem: string;
   totalItem: number;
   cost: number;
   url: string;
+  handleOrderSelection: (orderid: number) => void;
 }) {
   return (
     <>
-      <tr className="bg-gray-300 border-b font-medium">
-        <th scope="row" className="px-6 py-4 text-black">
+      <tr
+        className={
+          isSelected
+            ? "bg-gray-400 border-b font-medium"
+            : "bg-gray-300 border-b font-medium"
+        }
+        onClick={() => handleOrderSelection(orderid)}
+      >
+        <td scope="row" className="px-6 py-4 text-black">
           {orderid}
-        </th>
+        </td>
         <td className="px-6 py-4">{username}</td>
+        <td className="px-6 py-4">{paymentMethod}</td>
         <td className="px-6 py-4">{orderDay}</td>
         <td className="px-6 py-4">{completedDay || "Not yet completed"}</td>
         <td className="px-6 py-4">{firstItem}</td>

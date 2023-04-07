@@ -10,8 +10,13 @@ function OrderList({ data }: { data: any }): React.ReactElement {
     <Order
       key={order.id}
       orderid={order.id}
+      paymentMethod={order.paymentMethod}
       orderDay={new Date(order.orderDay).toLocaleString()}
-      completedDay={order.completeDay}
+      completedDay={
+        order.completeDay
+          ? new Date(order.completeDay).toLocaleString()
+          : undefined
+      }
       firstItem={order.firstItem}
       totalItem={order.totalItems}
       cost={order.cost}

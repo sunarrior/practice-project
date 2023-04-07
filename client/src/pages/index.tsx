@@ -151,10 +151,13 @@ export default function Index(): React.ReactElement {
   async function handleDeleteProduct() {
     try {
       if (selectedProducts.length === 0) {
-        return toast("Please select a product to delete by checkbox", {
-          type: "warning",
-          autoClose: 3000,
-        });
+        return toast(
+          "Please select atleast one product to delete by checkbox",
+          {
+            type: "warning",
+            autoClose: 3000,
+          }
+        );
       }
       const userObj = JSON.parse(localStorage.getItem("_uob") as any);
       if (!userObj) {
