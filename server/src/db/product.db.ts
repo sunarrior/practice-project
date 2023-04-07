@@ -30,6 +30,9 @@ const getAllProducts = async (): Promise<Product[]> => {
       },
       productImages: true,
     },
+    where: {
+      isDelete: false,
+    },
   });
   return products;
 };
@@ -45,6 +48,7 @@ const getProductByCategory = async (categoryid: number): Promise<Product[]> => {
           id: categoryid,
         },
       },
+      isDelete: false,
     },
   });
   return result;
@@ -54,6 +58,7 @@ const getProductById = async (productid: number): Promise<Product | null> => {
   const result: Product | null = await productRepos.findOne({
     where: {
       id: productid,
+      isDelete: false,
     },
   });
   return result;
@@ -127,6 +132,7 @@ const getProductDetail = async (
     },
     where: {
       id: productid,
+      isDelete: false,
     },
   });
   return result;
@@ -143,6 +149,10 @@ const updateProductImage = async (
   productImages: ProductImage[]
 ): Promise<void> => {
   await productImageRepos.save(productImages);
+};
+
+const removeProducts = async (products: Product[]): Promise<void> => {
+  await productRepos.save(products);
 };
 
 const removeProductCategory = async (
@@ -171,6 +181,7 @@ export default {
   getProductDetail,
   updateProduct,
   updateProductImage,
+  removeProducts,
   removeProductCategory,
   removeProductImages,
 };

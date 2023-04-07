@@ -3,11 +3,13 @@ import { Request, Response } from "express";
 
 import productDB from "../db/product.db";
 import categoryDB from "../db/category.db";
+import cartDB from "../db/cart.db";
 import Product from "../entity/Product";
 import Category from "../entity/Category";
 import ProductCategory from "../entity/ProductCategory";
 import ProductImage from "../entity/ProductImage";
 import cloudinary from "../config/cloudinary.config";
+import CartItem from "../entity/CartItem";
 
 const addProduct = async (req: Request, res: Response) => {
   try {
@@ -281,10 +283,51 @@ const updateProductDetail = async (req: Request, res: Response) => {
   }
 };
 
+const remmoveProducts = async (req: Request, res: Response) => {
+  try {
+    const ids: number[] = req.body;
+    const products: (Product | undefined)[] = await Promise.all(
+      ids.map(async (id) => {
+        const product: Product | null = await productDB.getProductById(id);
+        if (!product) {
+          return;
+        }
+        return { ...product, isDelete: true };
+      })
+    );
+    const productsFilter: (Product | undefined)[] = products.filter(
+      (product: Product | undefined) => product
+    );
+
+    // check if product live in some cart
+    for (const product of productsFilter) {
+      // eslint-disable-next-line no-await-in-loop
+      const cartItems: CartItem[] = await cartDB.getCartItemsByProductId(
+        product?.id as number
+      );
+      if (cartItems.length > 0) {
+        return res.status(400).json({
+          status: "failed",
+          msg: "This product has in cart of users",
+        });
+      }
+    }
+
+    await productDB.removeProducts(productsFilter as Product[]);
+    res
+      .status(200)
+      .json({ status: "success", msg: "Removed products successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   addProduct,
   getAllProducts,
   getProductByCategory,
   getProductDetail,
   updateProductDetail,
+  remmoveProducts,
 };

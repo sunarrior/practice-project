@@ -23,7 +23,7 @@ function UserList({
       email={user.email}
       createdAt={new Date(user.createdAt).toLocaleString()}
       role={user.role}
-      status={user.status}
+      status={user.status ? "active" : "inactive"}
       isBlocked={user.isBlocked}
       url={`http://localhost:3000/admin/user/${user.username}`}
       handleDeleteUser={handleDeleteUser}
@@ -57,8 +57,8 @@ export default function UserListManager(): React.ReactElement {
           return o1.createdAt - o2.createdAt;
         });
         setUserList(sortUserList);
-      } catch (error) {
-        // do something
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [sortOption]);
@@ -68,54 +68,62 @@ export default function UserListManager(): React.ReactElement {
   }
 
   async function handleDeleteUser(userid: number): Promise<any> {
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
+    try {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+      };
+      const result = await API.delete(`/user/${userid}`, config);
+      if (result.data.status.localeCompare("failed") === 0) {
+        return toast(result.data.msg, { autoClose: 3000, type: "error" });
+      }
+      const newUserList: any[] = userList.filter(
+        (user: any) => user.id !== userid
+      );
+      toast(result.data.msg, { autoClose: 3000, type: "success" });
+      setUserList(newUserList);
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-    };
-    const result = await API.delete(`/user/${userid}`, config);
-    if (result.data.status.localeCompare("failed") === 0) {
-      return toast(result.data.msg, { autoClose: 3000, type: "error" });
-    }
-    const newUserList: any[] = userList.filter(
-      (user: any) => user.id !== userid
-    );
-    toast(result.data.msg, { autoClose: 3000, type: "success" });
-    setUserList(newUserList);
   }
 
   async function handleBlockUser(
     username: string,
     isBlocked: boolean
   ): Promise<any> {
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
-    }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-    };
-    const data = {
-      isBlocked: !isBlocked,
-    };
-    const result = await API.put(`/user/${username}`, data, config);
-    if (result.data.status.localeCompare("failed") === 0) {
-      return toast(result.data.msg, { autoClose: 3000, type: "error" });
-    }
-    const newUserList = userList.map((user: any) => {
-      if (user.username === username) {
-        return { ...user, isBlocked: !isBlocked };
+    try {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
       }
-      return user;
-    });
-    toast(result.data.msg, { autoClose: 3000, type: "success" });
-    setUserList(newUserList);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+      };
+      const data = {
+        isBlocked: !isBlocked,
+      };
+      const result = await API.put(`/user/${username}`, data, config);
+      if (result.data.status.localeCompare("failed") === 0) {
+        return toast(result.data.msg, { autoClose: 3000, type: "error" });
+      }
+      const newUserList = userList.map((user: any) => {
+        if (user.username === username) {
+          return { ...user, isBlocked: !isBlocked };
+        }
+        return user;
+      });
+      toast(result.data.msg, { autoClose: 3000, type: "success" });
+      setUserList(newUserList);
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+    }
   }
 
   return (

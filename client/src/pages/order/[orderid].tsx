@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 
 import OrderItem from "@/components/order-item";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 const defaultOrderInfo: {
   orderDay: string;
@@ -41,33 +42,37 @@ export default function OrderDetail() {
 
   useEffect(() => {
     (async () => {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-      if (!userObj) {
-        return;
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${userObj?.access_token}`,
-        },
-      };
+      try {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
+          return;
+        }
+        const config = {
+          headers: {
+            Authorization: `Bearer ${userObj?.access_token}`,
+          },
+        };
 
-      if (!orderid) {
-        return;
+        if (!orderid) {
+          return;
+        }
+        const result = await API.get(`/order/${orderid}`, config);
+        setOrderInfo({
+          orderDay: result.data.orderInfo.orderDay
+            ? new Date(result.data.orderInfo.orderDay).toLocaleString()
+            : "",
+          paymentDay: result.data.orderInfo.paymentDay
+            ? new Date(result.data.orderInfo.paymentDay).toLocaleString()
+            : "",
+          completeDay: result.data.orderInfo.completeDay
+            ? new Date(result.data.orderInfo.completeDay).toLocaleString()
+            : "",
+          cost: result.data.orderInfo.cost || 0,
+        });
+        setOrderItems(result.data.orderItems);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
-      const result = await API.get(`/order/${orderid}`, config);
-      setOrderInfo({
-        orderDay: result.data.orderInfo.orderDay
-          ? new Date(result.data.orderInfo.orderDay).toLocaleString()
-          : "",
-        paymentDay: result.data.orderInfo.paymentDay
-          ? new Date(result.data.orderInfo.paymentDay).toLocaleString()
-          : "",
-        completeDay: result.data.orderInfo.completeDay
-          ? new Date(result.data.orderInfo.completeDay).toLocaleString()
-          : "",
-        cost: result.data.orderInfo.cost || 0,
-      });
-      setOrderItems(result.data.orderItems);
     })();
   }, [orderid]);
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 import { AdminContext } from "@/context/admin.context";
 import CategoryBanner from "@/components/category-banner";
@@ -20,7 +21,15 @@ const categoryInfoDefault: {
   description: "",
 };
 
-function ProductList({ data }: { data: any }): React.ReactElement {
+function ProductList({
+  data,
+  selectedProducts,
+  handleProductSelectChange,
+}: {
+  data: any;
+  selectedProducts: number[];
+  handleProductSelectChange: (key: number) => void;
+}): React.ReactElement {
   const productList = data.map((product: any) => {
     return (
       <Product
@@ -29,6 +38,8 @@ function ProductList({ data }: { data: any }): React.ReactElement {
         url={product.url || "/blank-image.jpg"}
         productName={product.name}
         price={product.price}
+        checked={selectedProducts.includes(product.id)}
+        handleProductSelectChange={handleProductSelectChange}
       />
     );
   });
@@ -43,32 +54,37 @@ export default function CategoryDetail(): React.ReactElement {
   const [sortOption, setSortOption] = useState("name");
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
   const { categoryid } = router.query;
 
   useEffect(() => {
     (async () => {
-      if (!categoryid) {
-        return;
-      }
-      const category = await API.get(`/category/${categoryid}`);
-      const products = await API.get(`/product/${categoryid}/category`);
-      const sortProducts = products.data.productList.sort(
-        (p1: any, p2: any) => {
-          if (sortOption === "DescName") {
-            return p2.name.localeCompare(p1.name);
-          }
-          if (sortOption === "AscPrice") {
-            return p1.price - p2.price;
-          }
-          if (sortOption === "DescPrice") {
-            return p2.price - p1.price;
-          }
-          return p1.name.localeCompare(p2.name);
+      try {
+        if (!categoryid) {
+          return;
         }
-      );
-      setCategoryInfo(category.data.categoryInfo);
-      setProductList(sortProducts);
+        const category = await API.get(`/category/${categoryid}`);
+        const products = await API.get(`/product/${categoryid}/category`);
+        const sortProducts = products.data.productList.sort(
+          (p1: any, p2: any) => {
+            if (sortOption === "DescName") {
+              return p2.name.localeCompare(p1.name);
+            }
+            if (sortOption === "AscPrice") {
+              return p1.price - p2.price;
+            }
+            if (sortOption === "DescPrice") {
+              return p2.price - p1.price;
+            }
+            return p1.name.localeCompare(p2.name);
+          }
+        );
+        setCategoryInfo(category.data.categoryInfo);
+        setProductList(sortProducts);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      }
     })();
   }, [sortOption, categoryid]);
 
@@ -90,6 +106,41 @@ export default function CategoryDetail(): React.ReactElement {
 
   function handleAddProduct() {
     router.reload();
+  }
+
+  function handleProductSelectChange(key: number) {
+    if (!selectedProducts.includes(key)) {
+      return setSelectedProducts([...selectedProducts, key]);
+    }
+    setSelectedProducts(
+      selectedProducts.filter((item: number) => item !== key)
+    );
+  }
+
+  async function handleDeleteProduct() {
+    try {
+      if (selectedProducts.length === 0) {
+        return toast("Please select a product to delete by checkbox", {
+          type: "warning",
+          autoClose: 3000,
+        });
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        data: selectedProducts,
+      };
+      const result = await API.delete("/product", config);
+      toast(result.data.msg, { type: "success", autoClose: 3000 });
+      router.reload();
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+    }
   }
 
   return (
@@ -145,7 +196,10 @@ export default function CategoryDetail(): React.ReactElement {
                 >
                   Add
                 </button>
-                <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+                <button
+                  className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2"
+                  onClick={handleDeleteProduct}
+                >
                   Delete
                 </button>
               </div>
@@ -153,7 +207,13 @@ export default function CategoryDetail(): React.ReactElement {
           </div>
           <div className="container max-w-full my-2">
             <div className="flex flex-wrap">
-              {productList ? <ProductList data={productList} /> : null}
+              {productList ? (
+                <ProductList
+                  data={productList}
+                  selectedProducts={selectedProducts}
+                  handleProductSelectChange={handleProductSelectChange}
+                />
+              ) : null}
             </div>
           </div>
         </div>

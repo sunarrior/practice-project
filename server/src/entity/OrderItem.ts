@@ -16,6 +16,9 @@ export default class OrderItem {
   @ManyToOne(() => Order, (order) => order.orderItems)
   public order: Order;
 
-  @ManyToOne(() => Product, (product) => product.orderItems)
+  @ManyToOne(() => Product, (product) => product.orderItems, {
+    onDelete: "NO ACTION",
+    onUpdate: "NO ACTION",
+  })
   public product: Product;
 }

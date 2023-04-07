@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { SessionContext } from "@/context/session.context";
 import { AdminContext } from "@/context/admin.context";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 export default function Logout() {
   const router = useRouter();
@@ -28,8 +29,8 @@ export default function Logout() {
           (setIsAdmin as any)(false);
           (setIsLoggedIn as any)(false);
         }
-      } catch (error) {
-        // console.log(error);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [setIsAdmin, setIsLoggedIn]);

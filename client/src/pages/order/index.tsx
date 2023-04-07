@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Order from "@/components/order";
 import OrderTable from "@/components/order-table";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 function OrderList({ data }: { data: any }): React.ReactElement {
   const orderList = data.map((order: any) => (
@@ -50,8 +51,8 @@ export default function OrderHistory(): React.ReactElement {
           return o1.createdAt - o2.createdAt;
         });
         setOrderList(sortOrderList);
-      } catch (error) {
-        // do something
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [sortOption]);

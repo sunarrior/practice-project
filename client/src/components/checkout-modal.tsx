@@ -4,6 +4,7 @@ import { BsCash } from "react-icons/bs";
 
 import CheckoutItem from "@/components/checkout-item";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 function CheckoutItemList({ data }: { data: any }) {
   const checkoutItemList = data.map((item: any) => {
@@ -39,22 +40,26 @@ export default function CheckoutModal({
 
   useEffect(() => {
     (async () => {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-      if (!userObj) {
-        return;
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${userObj?.access_token}`,
-        },
-      };
-      const result = await API.get("/user?option=delivery-address", config);
-      setPaymentOption((curPaymentOption: any) => {
-        return {
-          ...curPaymentOption,
-          deliveryAddress: result.data.deliveryAddress || "",
+      try {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
+          return;
+        }
+        const config = {
+          headers: {
+            Authorization: `Bearer ${userObj?.access_token}`,
+          },
         };
-      });
+        const result = await API.get("/user?option=delivery-address", config);
+        setPaymentOption((curPaymentOption: any) => {
+          return {
+            ...curPaymentOption,
+            deliveryAddress: result.data.deliveryAddress || "",
+          };
+        });
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      }
     })();
   }, []);
 
@@ -67,27 +72,31 @@ export default function CheckoutModal({
   }
 
   async function handlePlaceOrder() {
-    if (paymentOption.deliveryAddress.localeCompare("") === 0) {
-      return setWarning(true);
+    try {
+      if (paymentOption.deliveryAddress.localeCompare("") === 0) {
+        return setWarning(true);
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+      };
+      const orderData = {
+        items: data,
+        paymentOption,
+      };
+      const result = await API.post("/order/create", orderData, config);
+      onPlaceOrder(
+        result.data.msg,
+        result.data.status.localeCompare("success") === 0 ? "success" : "error"
+      );
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
-    }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-    };
-    const orderData = {
-      items: data,
-      paymentOption,
-    };
-    const result = await API.post("/order/create", orderData, config);
-    onPlaceOrder(
-      result.data.msg,
-      result.data.status.localeCompare("success") === 0 ? "success" : "error"
-    );
   }
 
   return (

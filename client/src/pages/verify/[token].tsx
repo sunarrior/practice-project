@@ -1,6 +1,7 @@
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 const notifyDefault = { isFailed: false, msg: "" };
 
@@ -12,12 +13,16 @@ export default function Verify() {
 
   useEffect(() => {
     (async () => {
-      if (verifyToken !== undefined) {
-        const result = await API.post("/auth/verify", { token: verifyToken });
-        if (result.data.status === "failed") {
-          return setNotify({ isFailed: true, msg: result.data.msg });
+      try {
+        if (verifyToken !== undefined) {
+          const result = await API.post("/auth/verify", { token: verifyToken });
+          if (result.data.status === "failed") {
+            return setNotify({ isFailed: true, msg: result.data.msg });
+          }
+          return setNotify({ isFailed: false, msg: result.data.msg });
         }
-        return setNotify({ isFailed: false, msg: result.data.msg });
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [verifyToken]);

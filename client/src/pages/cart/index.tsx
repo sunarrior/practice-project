@@ -57,8 +57,8 @@ export default function Index(): React.ReactElement {
         };
         const products = await API.get("/cart", config);
         setCartItemList(products.data.cartItems);
-      } catch (error) {
-        //
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, []);
@@ -114,8 +114,8 @@ export default function Index(): React.ReactElement {
         cartItemList.filter((item: any) => !checkedItems.includes(item.id))
       );
       setCheckedItems([]);
-    } catch (error) {
-      //
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
   }
 

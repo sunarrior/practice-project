@@ -9,5 +9,6 @@ router.get("/", product.getAllProducts);
 router.get("/:categoryid/category", product.getProductByCategory);
 router.get("/:id", product.getProductDetail);
 router.put("/", product.updateProductDetail);
+router.delete("/", product.remmoveProducts);
 
 export default router;
