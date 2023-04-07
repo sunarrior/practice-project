@@ -5,7 +5,19 @@ import { dataSource } from "../config/data-source.config";
 const orderRepos = dataSource.getRepository(Order);
 const orderItemRepos = dataSource.getRepository(OrderItem);
 
-const getOrderList = async (userid: number): Promise<Order[]> => {
+const getAllOrders = async (): Promise<Order[]> => {
+  const result: Order[] = await orderRepos.find({
+    relations: {
+      user: true,
+      orderItems: {
+        product: true,
+      },
+    },
+  });
+  return result;
+};
+
+const getOrderListByUserId = async (userid: number): Promise<Order[]> => {
   const result: Order[] = await orderRepos.find({
     relations: {
       orderItems: {
@@ -24,6 +36,7 @@ const getOrderList = async (userid: number): Promise<Order[]> => {
 const getOrderById = async (orderid: number): Promise<Order | null> => {
   const result: Order | null = await orderRepos.findOne({
     relations: {
+      user: true,
       orderItems: true,
     },
     where: {
@@ -56,7 +69,8 @@ const addOrderItem = async (orderItems: OrderItem[]): Promise<void> => {
 };
 
 export default {
-  getOrderList,
+  getAllOrders,
+  getOrderListByUserId,
   getOrderById,
   getOrderItems,
   createOrder,

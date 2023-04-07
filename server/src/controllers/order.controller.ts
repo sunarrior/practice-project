@@ -12,7 +12,31 @@ import Product from "../entity/Product";
 import CartItem from "../entity/CartItem";
 import { mail } from "../utils";
 
-const getOrderList = async (req: Request, res: Response) => {
+const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    const result: Order[] = await orderDB.getAllOrders();
+    const orderList = result.map((order: Order) => {
+      order.orderItems.sort((i1, i2) => i1.id - i2.id);
+      return {
+        id: order.id,
+        username: order.user.username,
+        orderDay: order.createdAt,
+        completeDay: order.completeDay,
+        firstItem: order.orderItems[0].product.name,
+        totalItems: order.orderItems.length,
+        cost: order.orderItems.reduce((acc: number, item: any) => {
+          return acc + item.quantity * item.price;
+        }, 0),
+      };
+    });
+    res.status(200).json({ status: "success", orderList: orderList });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
+const getOrderListByUserId = async (req: Request, res: Response) => {
   try {
     const username: string | undefined = req.username;
 
@@ -24,7 +48,7 @@ const getOrderList = async (req: Request, res: Response) => {
       return res.status(200).json({ status: "failed", msg: "User not found" });
     }
 
-    const result: Order[] = await orderDB.getOrderList(user.id);
+    const result: Order[] = await orderDB.getOrderListByUserId(user.id);
     const orderList = result.map((order: Order) => {
       order.orderItems.sort((i1, i2) => i1.id - i2.id);
       return {
@@ -55,6 +79,7 @@ const getOrderItems = async (req: Request, res: Response) => {
       orderid as unknown as number
     );
     const orderInfo = {
+      username: order?.user.username,
       orderDay: order?.createdAt,
       paymentDay: order?.paymentDay,
       completeDay: order?.completeDay,
@@ -185,7 +210,8 @@ const createOrder = async (req: Request, res: Response) => {
 };
 
 export default {
-  getOrderList,
+  getAllOrders,
+  getOrderListByUserId,
   getOrderItems,
   createOrder,
 };
