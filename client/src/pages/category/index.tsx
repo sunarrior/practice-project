@@ -42,22 +42,26 @@ export default function CategoryPage() {
 
   useEffect(() => {
     (async () => {
-      const result = await API.get("/category");
-      const sortCategoryList = result.data.categoryList.sort(
-        (c1: any, c2: any) => {
-          if (sortOption === "DescName") {
-            return c2.name.localeCompare(c1.name);
+      try {
+        const result = await API.get("/category");
+        const sortCategoryList = result.data.categoryList.sort(
+          (c1: any, c2: any) => {
+            if (sortOption === "DescName") {
+              return c2.name.localeCompare(c1.name);
+            }
+            if (sortOption === "AscProductQuantity") {
+              return c1.productQuantity - c2.productQuantity;
+            }
+            if (sortOption === "DescProductQuantity") {
+              return c2.productQuantity - c1.productQuantity;
+            }
+            return c1.name.localeCompare(c2.name);
           }
-          if (sortOption === "AscProductQuantity") {
-            return c1.productQuantity - c2.productQuantity;
-          }
-          if (sortOption === "DescProductQuantity") {
-            return c2.productQuantity - c1.productQuantity;
-          }
-          return c1.name.localeCompare(c2.name);
-        }
-      );
-      setCategoryInfo(sortCategoryList);
+        );
+        setCategoryInfo(sortCategoryList);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      }
     })();
   }, [sortOption]);
 

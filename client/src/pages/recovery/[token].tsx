@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 
 import API from "@/config/axios.config";
 import Notify from "@/components/notify";
+import { toast } from "react-toastify";
 
 const passwordInfoDefault = { password: "", repeatPassword: "" };
 const notifyDefault = { isFailed: false, msg: "" };
@@ -16,15 +17,19 @@ export default function FindAccount(): React.ReactElement {
 
   useEffect(() => {
     (async () => {
-      if (recoveryToken !== undefined) {
-        const result = await API.post("/auth/recovery?checktoken=1", {
-          token: recoveryToken,
-        });
-        if (result.data.status === "success") {
-          setNotify({ ...notifyDefault, msg: result.data.msg });
-        } else {
-          setNotify({ isFailed: true, msg: result.data.msg });
+      try {
+        if (recoveryToken !== undefined) {
+          const result = await API.post("/auth/recovery?checktoken=1", {
+            token: recoveryToken,
+          });
+          if (result.data.status === "success") {
+            setNotify({ ...notifyDefault, msg: result.data.msg });
+          } else {
+            setNotify({ isFailed: true, msg: result.data.msg });
+          }
         }
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [recoveryToken]);

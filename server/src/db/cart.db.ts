@@ -66,6 +66,19 @@ const getCartItemById = async (itemid: number): Promise<CartItem | null> => {
   return result;
 };
 
+const getCartItemsByProductId = async (
+  productid: number
+): Promise<CartItem[]> => {
+  const result: CartItem[] = await cartItemRepos.find({
+    where: {
+      product: {
+        id: productid,
+      },
+    },
+  });
+  return result;
+};
+
 const updateCartItem = async (cartItem: CartItem): Promise<void> => {
   await cartItemRepos.update(cartItem.id, cartItem);
 };
@@ -79,6 +92,7 @@ export default {
   getCartByUsername,
   getCartState,
   getAllCartItems,
+  getCartItemsByProductId,
   addCartItem,
   getCartItemById,
   updateCartItem,

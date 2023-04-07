@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import { toast } from "react-toastify";
 
 import API from "@/config/axios.config";
 import ButtonEdit from "@/components/button-edit";
@@ -48,38 +49,44 @@ export default function Profile({
 
   useEffect(() => {
     (async () => {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-      if (!userObj) {
-        return;
+      try {
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
+          return;
+        }
+        const config = {
+          headers: {
+            Authorization: `Bearer ${userObj?.access_token}`,
+          },
+        };
+        const result = await API.get(`/user/${username}`, config);
+        setProfile({
+          username: result.data.userData.username || "",
+          email: result.data.userData.email ? result.data.userData.email : "",
+          createdAt:
+            new Date(result.data.userData.createdAt).toLocaleString() || "",
+          role: result.data.userData.role || "",
+          status: result.data.userData.status || "",
+          fullName: result.data.userData.fullName
+            ? result.data.userData.fullName
+            : "",
+          phone: result.data.userData.phone ? result.data.userData.phone : "",
+          dob: result.data.userData.dob
+            ? result.data.userData.dob.substring(0, 10)
+            : getYYYYMMDDString(),
+          gender: result.data.userData.gender
+            ? result.data.userData.gender
+            : "",
+          deliveryAddress: result.data.userData.deliveryAddress
+            ? result.data.userData.deliveryAddress
+            : "",
+          avatarUrl: result.data.userData.avatarUrl
+            ? result.data.userData.avatarUrl
+            : "",
+        });
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${userObj?.access_token}`,
-        },
-      };
-      const result = await API.get(`/user/${username}`, config);
-      setProfile({
-        username: result.data.userData.username || "",
-        email: result.data.userData.email ? result.data.userData.email : "",
-        createdAt:
-          new Date(result.data.userData.createdAt).toLocaleString() || "",
-        role: result.data.userData.role || "",
-        status: result.data.userData.status || "",
-        fullName: result.data.userData.fullName
-          ? result.data.userData.fullName
-          : "",
-        phone: result.data.userData.phone ? result.data.userData.phone : "",
-        dob: result.data.userData.dob
-          ? result.data.userData.dob.substring(0, 10)
-          : getYYYYMMDDString(),
-        gender: result.data.userData.gender ? result.data.userData.gender : "",
-        deliveryAddress: result.data.userData.deliveryAddress
-          ? result.data.userData.deliveryAddress
-          : "",
-        avatarUrl: result.data.userData.avatarUrl
-          ? result.data.userData.avatarUrl
-          : "",
-      });
     })();
   }, [isUploadAvatar, username]);
 
@@ -124,27 +131,31 @@ export default function Profile({
     e: React.FormEvent<HTMLFormElement>
   ): Promise<any> {
     e.preventDefault();
-    const data: ProfileType = { ...profile };
-    delete data.username;
-    delete data.createdAt;
-    delete data.role;
-    delete data.status;
+    try {
+      const data: ProfileType = { ...profile };
+      delete data.username;
+      delete data.createdAt;
+      delete data.role;
+      delete data.status;
 
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+      };
+      const result = await API.put(`/user/${username}`, data, config);
+      if (result.data.status === "failed") {
+        // do something
+        return router.reload();
+      }
+      setIsEdit(false);
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-    };
-    const result = await API.put(`/user/${username}`, data, config);
-    if (result.data.status === "failed") {
-      // do something
-      return router.reload();
-    }
-    setIsEdit(false);
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
@@ -165,34 +176,38 @@ export default function Profile({
     e: React.FormEvent<HTMLFormElement>
   ): Promise<any> {
     e.preventDefault();
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
+    try {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        onUploadProgress: (progressEvent: any) => {
+          const { loaded, total } = progressEvent;
+          const percent: number = Math.floor((loaded * 100) / total);
+          setUploadProgess(percent);
+        },
+      };
+      const data = { filePath: avatarPreview };
+      const result = await API.post(
+        `/user/${userObj?.username}/avatar`,
+        data,
+        config
+      );
+      if (result.data.status === "failed") {
+        // do something
+        return router.reload();
+      }
+      setProfile({ ...profile, avatarUrl: avatarPreview });
+      setAvatarPreview("");
+      setIsUploadAvatar(false);
+      setUploadProgess(0);
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-      onUploadProgress: (progressEvent: any) => {
-        const { loaded, total } = progressEvent;
-        const percent: number = Math.floor((loaded * 100) / total);
-        setUploadProgess(percent);
-      },
-    };
-    const data = { filePath: avatarPreview };
-    const result = await API.post(
-      `/user/${userObj?.username}/avatar`,
-      data,
-      config
-    );
-    if (result.data.status === "failed") {
-      // do something
-      return router.reload();
-    }
-    setProfile({ ...profile, avatarUrl: avatarPreview });
-    setAvatarPreview("");
-    setIsUploadAvatar(false);
-    setUploadProgess(0);
   }
 
   function handleCancelUploadAvatar(): void {

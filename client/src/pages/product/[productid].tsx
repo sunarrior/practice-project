@@ -35,31 +35,35 @@ export default function ProductPage(): React.ReactElement {
 
   useEffect(() => {
     (async () => {
-      if (!productid) {
-        return;
-      }
-      const result = await API.get(`/product/${productid}`);
-      const sortImageList = result.data.productDetail.imageList.sort(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        (i1: any, i2: any) => {
-          if (i1.isDefault) {
-            return -1;
-          }
-          return 1;
+      try {
+        if (!productid) {
+          return;
         }
-      );
-      setProductDetail({
-        productId: productid as unknown as number,
-        productName: result.data.productDetail.name || "",
-        productQuantity: result.data.productDetail.quantity || "",
-        price: result.data.productDetail.price || "",
-        description: result.data.productDetail.description || "",
-        imageList:
-          sortImageList.length > 0
-            ? sortImageList
-            : [{ id: 0, url: "/blank-image.jpg", isDefault: true }],
-        categories: result.data.productDetail.categories || [],
-      });
+        const result = await API.get(`/product/${productid}`);
+        const sortImageList = result.data.productDetail.imageList.sort(
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          (i1: any, i2: any) => {
+            if (i1.isDefault) {
+              return -1;
+            }
+            return 1;
+          }
+        );
+        setProductDetail({
+          productId: productid as unknown as number,
+          productName: result.data.productDetail.name || "",
+          productQuantity: result.data.productDetail.quantity || "",
+          price: result.data.productDetail.price || "",
+          description: result.data.productDetail.description || "",
+          imageList:
+            sortImageList.length > 0
+              ? sortImageList
+              : [{ id: 0, url: "/blank-image.jpg", isDefault: true }],
+          categories: result.data.productDetail.categories || [],
+        });
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      }
     })();
   }, [productid]);
 
@@ -85,27 +89,31 @@ export default function ProductPage(): React.ReactElement {
   }
 
   async function handleAddToCart() {
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
+    try {
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+      };
+      const data = {
+        productid,
+        quantity: purchaseAmount,
+      };
+      const result = await API.post("/cart?additem=1", data, config);
+      if (result.data.status.localeCompare("failed") === 0) {
+        return toast(result.data.msg, { autoClose: 3000, type: "error" });
+      }
+      if (result.data.productState === "new") {
+        (setCartState as any)(Number(cartState) + 1);
+      }
+      toast(result.data.msg, { autoClose: 3000, type: "success" });
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-    };
-    const data = {
-      productid,
-      quantity: purchaseAmount,
-    };
-    const result = await API.post("/cart?additem=1", data, config);
-    if (result.data.status.localeCompare("failed") === 0) {
-      return toast(result.data.msg, { autoClose: 3000, type: "error" });
-    }
-    if (result.data.productState === "new") {
-      (setCartState as any)(Number(cartState) + 1);
-    }
-    toast(result.data.msg, { autoClose: 3000, type: "success" });
   }
 
   return (

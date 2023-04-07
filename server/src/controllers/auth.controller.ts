@@ -78,7 +78,10 @@ const verifyUser = async (req: Request, res: Response) => {
 
     // update user's verify status
     redis.clearCache(token);
-    await userDB.updateUserData(user.id, { isVerify: true, tokenStore: null });
+    await userDB.updateUserData(user.id, {
+      isVerified: true,
+      tokenStore: null,
+    });
     res
       .status(200)
       .json({ status: "success", msg: "User verified successfully" });
@@ -125,9 +128,6 @@ const loginUser = async (req: Request, res: Response) => {
 
     // remove login attemps
     // await rateLimit.loginAttemps.delete(req.ip);
-
-    // update user status
-    await userDB.updateUserData(user.id, { status: "active" });
 
     // process jwt
     const accessToken = jwt.generateAccessToken({

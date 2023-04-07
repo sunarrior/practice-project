@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 const categoryDataDefault = {
   categoryName: "",
@@ -70,48 +71,52 @@ export default function CategoryModal({
   }
 
   async function handleCategoryAction() {
-    setWarning({ ...warning, isWarning: false });
-    if (
-      categoryData.categoryName.localeCompare("") === 0 ||
-      categoryData.description.localeCompare("") === 0
-    ) {
-      return setWarning({
-        isWarning: true,
-        msg: "Please provide all required information",
-      });
-    }
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
-    }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-      onUploadProgress: (progressEvent: any) => {
-        const { loaded, total } = progressEvent;
-        const percent: number = Math.floor((loaded * 100) / total);
-        setUploadProgess(percent);
-      },
-    };
-    if (!isEdit) {
-      const data = {
-        name: categoryData.categoryName,
-        description: categoryData.description,
-        filePath: imagePreview,
+    try {
+      setWarning({ ...warning, isWarning: false });
+      if (
+        categoryData.categoryName.localeCompare("") === 0 ||
+        categoryData.description.localeCompare("") === 0
+      ) {
+        return setWarning({
+          isWarning: true,
+          msg: "Please provide all required information",
+        });
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        onUploadProgress: (progressEvent: any) => {
+          const { loaded, total } = progressEvent;
+          const percent: number = Math.floor((loaded * 100) / total);
+          setUploadProgess(percent);
+        },
       };
-      await API.post("/category", data, config);
-    } else {
-      const data = {
-        id: categoryId,
-        name: categoryData.categoryName,
-        description: categoryData.description,
-        filePath: isImageChange ? imagePreview : "",
-      };
-      await API.put("/category", data, config);
+      if (!isEdit) {
+        const data = {
+          name: categoryData.categoryName,
+          description: categoryData.description,
+          filePath: imagePreview,
+        };
+        await API.post("/category", data, config);
+      } else {
+        const data = {
+          id: categoryId,
+          name: categoryData.categoryName,
+          description: categoryData.description,
+          filePath: isImageChange ? imagePreview : "",
+        };
+        await API.put("/category", data, config);
+      }
+      setIsImageChange(false);
+      onCategoryAction();
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    setIsImageChange(false);
-    onCategoryAction();
   }
 
   return (

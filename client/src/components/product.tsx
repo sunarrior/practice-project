@@ -9,22 +9,31 @@ export default function Product({
   url,
   productName,
   price,
+  checked,
+  handleProductSelectChange,
 }: {
   id: number;
   url: string;
   productName: string;
   price: number;
+  checked: boolean;
+  handleProductSelectChange: (key: number) => void;
 }) {
   const { isAdmin } = useContext(AdminContext);
   return (
     <>
       <div className="relative mr-4 my-5 bg-orange-400 w-60 max-w-sm rounded-md overflow-hidden shadow-md">
         {isAdmin && (
-          <div className="z-30 absolute top-2 left-2">
-            <input type="checkbox" className="w-4 h-4 rounded-md" />
+          <div className="absolute top-2 left-2">
+            <input
+              type="checkbox"
+              className="w-4 h-4 rounded-md"
+              checked={checked}
+              onChange={() => handleProductSelectChange(id)}
+            />
           </div>
         )}
-        <div onClick={() => console.log("here")}>
+        <div onClick={() => handleProductSelectChange(id)}>
           <Image
             className="w-full h-44 object-cover"
             src={url}

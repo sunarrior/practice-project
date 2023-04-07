@@ -98,8 +98,8 @@ export default function NavBar({
         };
         const result = await API.get("/cart/state", config);
         setCartState(result.data.cartState);
-      } catch (error) {
-        //
+      } catch (error: any) {
+        // toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
   }, [isLoggedIn]);
@@ -108,7 +108,7 @@ export default function NavBar({
     <>
       {/* <!-- component --> */}
       <div className="relative">
-        <div className="fixed z-10 top-0 w-full">
+        <div className="fixed z-40 top-0 w-full">
           <nav className="bg-white shadow">
             <div className="mx-auto px-11 py-3 flex justify-between md:items-center">
               <div className="flex justify-between items-center">

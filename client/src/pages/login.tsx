@@ -6,6 +6,7 @@ import { AdminContext } from "@/context/admin.context";
 import jwtDecode from "jwt-decode";
 
 import Notify from "@/components/notify";
+import { toast } from "react-toastify";
 import API from "../config/axios.config";
 
 const loginInfoDefault = { account: "", password: "" };
@@ -18,10 +19,6 @@ export default function LoginForm() {
   const [loginInfo, setLoginInfo] = useState(loginInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 
-  // if (isLoggedIn) {
-  //   return router.push("/");
-  // }
-
   function handleAccountChange(e: any) {
     setLoginInfo({ ...loginInfo, account: e.target.value });
   }
@@ -32,20 +29,24 @@ export default function LoginForm() {
 
   async function handleSubmit(e: any) {
     e.preventDefault();
-    const data = { ...loginInfo };
-    const result = await API.post("/auth/login", data);
-    if (result.data.status === "failed") {
-      return setNotify({ isFailed: true, msg: result.data.msg });
+    try {
+      const data = { ...loginInfo };
+      const result = await API.post("/auth/login", data);
+      if (result.data.status === "failed") {
+        return setNotify({ isFailed: true, msg: result.data.msg });
+      }
+      (setIsLoggedIn as any)(true);
+      setLoginInfo(loginInfoDefault);
+      setNotify(notifyDefault);
+      const userObjDecode: any = jwtDecode(result.data.user_obj.access_token);
+      if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
+        (setIsAdmin as any)(true);
+      }
+      localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
+      router.push("/");
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    (setIsLoggedIn as any)(true);
-    setLoginInfo(loginInfoDefault);
-    setNotify(notifyDefault);
-    const userObjDecode: any = jwtDecode(result.data.user_obj.access_token);
-    if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
-      (setIsAdmin as any)(true);
-    }
-    localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
-    router.push("/");
   }
 
   return (

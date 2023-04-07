@@ -1,6 +1,7 @@
 /* eslint-disable no-lonely-if */
 import React, { useState, useEffect, useContext } from "react";
 import { useRouter } from "next/router";
+import { toast } from "react-toastify";
 
 import { AdminContext } from "@/context/admin.context";
 import Product from "@/components/product";
@@ -27,14 +28,22 @@ function CategoryListCheckbox({
   });
   return (
     <>
-      <ul className="w-48 h-fit text-sm font-medium text-gray-900 bg-gray-400 border border-gray-300 rounded-lg">
+      <ul className="fixed w-48 h-fit text-sm font-medium text-gray-900 bg-gray-400 border border-gray-300 rounded-lg">
         {categoryListCheckbox}
       </ul>
     </>
   );
 }
 
-function ProductList({ data }: { data: any }): React.ReactElement {
+function ProductList({
+  data,
+  selectedProducts,
+  handleProductSelectChange,
+}: {
+  data: any;
+  selectedProducts: number[];
+  handleProductSelectChange: (key: number) => void;
+}): React.ReactElement {
   const productList = data.map((product: any) => {
     return (
       <Product
@@ -43,6 +52,8 @@ function ProductList({ data }: { data: any }): React.ReactElement {
         url={product.url || "/blank-image.jpg"}
         productName={product.name}
         price={product.price}
+        checked={selectedProducts.includes(product.id)}
+        handleProductSelectChange={handleProductSelectChange}
       />
     );
   });
@@ -57,43 +68,48 @@ export default function Index(): React.ReactElement {
   const [filterOption, setFilterOption] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState("name");
   const [showProductModal, setShowProductModal] = useState(false);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
   useEffect(() => {
     (async () => {
-      const categories = await API.get("/category");
-      const products = await API.get("/product");
-      const sortCategories = categories.data.categoryList.sort(
-        (c1: any, c2: any) => c1.name.localeCompare(c2.name)
-      );
-      let filterProduct = products.data.productList.map((product: any) => {
-        if (filterOption.length <= 0) {
-          return product;
-        }
-
-        for (const option of filterOption) {
-          if (product.categories.includes(option)) {
+      try {
+        const categories = await API.get("/category");
+        const products = await API.get("/product");
+        const sortCategories = categories.data.categoryList.sort(
+          (c1: any, c2: any) => c1.name.localeCompare(c2.name)
+        );
+        let filterProduct = products.data.productList.map((product: any) => {
+          if (filterOption.length <= 0) {
             return product;
           }
-        }
-        return undefined;
-      });
-      filterProduct = filterProduct.filter(
-        (product: any) => product !== undefined
-      );
-      const sortProducts = filterProduct.sort((p1: any, p2: any) => {
-        if (sortOption === "DescName") {
-          return p2.name.localeCompare(p1.name);
-        }
-        if (sortOption === "AscPrice") {
-          return p1.price - p2.price;
-        }
-        if (sortOption === "DescPrice") {
-          return p2.price - p1.price;
-        }
-        return p1.name.localeCompare(p2.name);
-      });
-      setCategoryList(sortCategories);
-      setProductList(sortProducts);
+
+          for (const option of filterOption) {
+            if (product.categories.includes(option)) {
+              return product;
+            }
+          }
+          return undefined;
+        });
+        filterProduct = filterProduct.filter(
+          (product: any) => product !== undefined
+        );
+        const sortProducts = filterProduct.sort((p1: any, p2: any) => {
+          if (sortOption === "DescName") {
+            return p2.name.localeCompare(p1.name);
+          }
+          if (sortOption === "AscPrice") {
+            return p1.price - p2.price;
+          }
+          if (sortOption === "DescPrice") {
+            return p2.price - p1.price;
+          }
+          return p1.name.localeCompare(p2.name);
+        });
+        setCategoryList(sortCategories);
+        setProductList(sortProducts);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      }
     })();
   }, [filterOption, sortOption]);
 
@@ -123,6 +139,41 @@ export default function Index(): React.ReactElement {
     router.reload();
   }
 
+  function handleProductSelectChange(key: number) {
+    if (!selectedProducts.includes(key)) {
+      return setSelectedProducts([...selectedProducts, key]);
+    }
+    setSelectedProducts(
+      selectedProducts.filter((item: number) => item !== key)
+    );
+  }
+
+  async function handleDeleteProduct() {
+    try {
+      if (selectedProducts.length === 0) {
+        return toast("Please select a product to delete by checkbox", {
+          type: "warning",
+          autoClose: 3000,
+        });
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        data: selectedProducts,
+      };
+      const result = await API.delete("/product", config);
+      toast(result.data.msg, { type: "success", autoClose: 3000 });
+      router.reload();
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+    }
+  }
+
   return (
     <>
       {showProductModal && (
@@ -131,13 +182,15 @@ export default function Index(): React.ReactElement {
           onProductAction={handleAddProduct}
         />
       )}
-      <div className="mx-10 my-10">
+      <div className="relative mx-10 my-10">
         <div className="flex mt-5">
-          <CategoryListCheckbox
-            data={categoryList}
-            onCheckboxClick={handleCheckboxChange}
-          />
-          <div className="flex-none w-3/4 ml-6">
+          <div className="absolute w-60 h-full">
+            <CategoryListCheckbox
+              data={categoryList}
+              onCheckboxClick={handleCheckboxChange}
+            />
+          </div>
+          <div className="flex-none w-3/4 ml-60">
             <div className="flex">
               <div className="w-1/4">
                 <select
@@ -161,7 +214,10 @@ export default function Index(): React.ReactElement {
                   >
                     Add
                   </button>
-                  <button className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2">
+                  <button
+                    className="bg-red-500 hover:bg-red-400 px-4 py-2 font-bold text-white rounded-md ml-2"
+                    onClick={handleDeleteProduct}
+                  >
                     Delete
                   </button>
                 </div>
@@ -169,7 +225,13 @@ export default function Index(): React.ReactElement {
             </div>
             <div className="max-w-full my-2">
               <div className="flex flex-wrap">
-                {productList ? <ProductList data={productList} /> : null}
+                {productList ? (
+                  <ProductList
+                    data={productList}
+                    selectedProducts={selectedProducts}
+                    handleProductSelectChange={handleProductSelectChange}
+                  />
+                ) : null}
               </div>
             </div>
           </div>

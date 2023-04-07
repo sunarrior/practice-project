@@ -38,6 +38,9 @@ export default class Product {
   @Column()
   public description: string;
 
+  @Column({ name: "is_delete", default: false })
+  public isDelete: boolean;
+
   @OneToMany(() => ProductImage, (productImage) => productImage.product)
   public productImages: ProductImage[];
 

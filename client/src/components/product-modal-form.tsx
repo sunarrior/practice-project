@@ -4,6 +4,7 @@ import { TbCircleCheckFilled } from "react-icons/tb";
 
 import SelectedCategoryTag from "@/components/selected-category-tag";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
 const productDataDefault = {
   productName: "",
@@ -51,25 +52,29 @@ export default function ProductModal({
 
   useEffect(() => {
     (async () => {
-      if (currentData) {
-        setImagesPreview([...currentData.imagesPreview]);
-        setSelectedCategories([...currentData.categories]);
-        setProductData({
-          productName: currentData.productName,
-          quantity: currentData.quantity,
-          price: currentData.price,
-          description: currentData.description,
-        });
-        const defaultThumb = currentData.imagesPreview?.find(
-          (image: any) => image.isDefault
+      try {
+        if (currentData) {
+          setImagesPreview([...currentData.imagesPreview]);
+          setSelectedCategories([...currentData.categories]);
+          setProductData({
+            productName: currentData.productName,
+            quantity: currentData.quantity,
+            price: currentData.price,
+            description: currentData.description,
+          });
+          const defaultThumb = currentData.imagesPreview?.find(
+            (image: any) => image.isDefault
+          );
+          setDefaultThumbnail(defaultThumb?.id);
+        }
+        const categories = await API.get("/category");
+        const sortCategories = categories.data.categoryList.sort(
+          (c1: any, c2: any) => c1.name.localeCompare(c2.name)
         );
-        setDefaultThumbnail(defaultThumb?.id);
+        setCategoryList([...sortCategories]);
+      } catch (error: any) {
+        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
-      const categories = await API.get("/category");
-      const sortCategories = categories.data.categoryList.sort(
-        (c1: any, c2: any) => c1.name.localeCompare(c2.name)
-      );
-      setCategoryList([...sortCategories]);
     })();
   }, [currentData]);
 
@@ -276,59 +281,63 @@ export default function ProductModal({
   }
 
   async function handleProductAction() {
-    setWarning({ ...warning, isWarning: false });
-    if (
-      productData.productName.localeCompare("") === 0 ||
-      (selectedCategories.length === 0 && newCategories.length === 0) ||
-      productData.description.localeCompare("") === 0
-    ) {
-      return setWarning({
-        isWarning: true,
-        msg: "Please provide all required information",
-      });
-    }
-    const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-    if (!userObj) {
-      return;
-    }
-    const config = {
-      headers: {
-        Authorization: `Bearer ${userObj?.access_token}`,
-      },
-      onUploadProgress: (progressEvent: any) => {
-        const { loaded, total } = progressEvent;
-        const percent: number = Math.floor((loaded * 100) / total);
-        setUploadProgess(percent);
-      },
-    };
-    if (!isEdit) {
-      const data = {
-        name: productData.productName,
-        categories: selectedCategories,
-        description: productData.description,
-        quantity: productData.quantity,
-        price: productData.price,
-        filesPath: imagesUpload,
+    try {
+      setWarning({ ...warning, isWarning: false });
+      if (
+        productData.productName.localeCompare("") === 0 ||
+        (selectedCategories.length === 0 && newCategories.length === 0) ||
+        productData.description.localeCompare("") === 0
+      ) {
+        return setWarning({
+          isWarning: true,
+          msg: "Please provide all required information",
+        });
+      }
+      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      if (!userObj) {
+        return;
+      }
+      const config = {
+        headers: {
+          Authorization: `Bearer ${userObj?.access_token}`,
+        },
+        onUploadProgress: (progressEvent: any) => {
+          const { loaded, total } = progressEvent;
+          const percent: number = Math.floor((loaded * 100) / total);
+          setUploadProgess(percent);
+        },
       };
-      await API.post("/product", data, config);
-    } else {
-      const data = {
-        id: currentData?.productId,
-        name: productData.productName,
-        removeCategories,
-        newCategories,
-        description: productData.description,
-        quantity: productData.quantity,
-        price: productData.price,
-        filesPath: imagesUpload.length > 0 ? imagesUpload : [],
-        imagesUpdate,
-        imagesRemove: imagesRemove.length > 0 ? imagesRemove : [],
-      };
-      // console.log(data);
-      await API.put("/product", data, config);
+      if (!isEdit) {
+        const data = {
+          name: productData.productName,
+          categories: selectedCategories,
+          description: productData.description,
+          quantity: productData.quantity,
+          price: productData.price,
+          filesPath: imagesUpload,
+        };
+        await API.post("/product", data, config);
+      } else {
+        const data = {
+          id: currentData?.productId,
+          name: productData.productName,
+          removeCategories,
+          newCategories,
+          description: productData.description,
+          quantity: productData.quantity,
+          price: productData.price,
+          filesPath: imagesUpload.length > 0 ? imagesUpload : [],
+          imagesUpdate,
+          imagesRemove: imagesRemove.length > 0 ? imagesRemove : [],
+        };
+        // console.log(data);
+        await API.put("/product", data, config);
+      }
+      setImagesUpload([]);
+      onProductAction();
+    } catch (error: any) {
+      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
-    setImagesUpload([]);
-    onProductAction();
   }
 
   return (

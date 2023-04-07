@@ -53,9 +53,6 @@ export default class User {
   @Column({ name: "avatar_url", nullable: true })
   public avatarUrl: string;
 
-  @Column({ default: "inactive" })
-  public status: string;
-
   @Column({ name: "is_verified", default: false })
   public isVerified: boolean;
 

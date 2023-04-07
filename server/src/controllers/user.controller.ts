@@ -20,7 +20,7 @@ const getAllUsers = async (req: Request, res: Response) => {
         email: user.email,
         createdAt: user.createdAt,
         role: user.role,
-        status: user.status,
+        status: user.isVerified,
         isBlocked: user.isBlocked,
       };
     });
@@ -176,15 +176,13 @@ const deleteUser = async (req: Request, res: Response) => {
       return res.status(200).json({ status: "failed", msg: "User not found" });
     }
 
-    if (user.status.localeCompare("active") === 0) {
+    if (user.isVerified) {
       return res
         .status(200)
         .json({ status: "failed", msg: "Cannot delete active user" });
     }
 
-    if (user.status.localeCompare("inactive") === 0) {
-      await userDB.deleteUser(user);
-    }
+    await userDB.deleteUser(user);
     res
       .status(200)
       .json({ status: "success", msg: "User deleted successfully" });

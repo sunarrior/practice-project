@@ -39,27 +39,30 @@ export default function Register() {
 
   async function handleSubmit(e: any) {
     e.preventDefault();
-    const data: { [index: string]: string } = { ...registerInfo };
+    try {
+      const data: { [index: string]: string } = { ...registerInfo };
 
-    for (const index in data) {
-      if (data[index] === null) {
+      for (const index in data) {
+        if (data[index] === null) {
+          setRegisterInfo({
+            ...registerInfo,
+            password: "",
+            repeatPassword: "",
+          });
+          return setNotify({
+            isFailed: true,
+            msg: "Please provide all required information",
+          });
+        }
+      }
+
+      if (data.password !== data.repeatPassword) {
         setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
         return setNotify({
           isFailed: true,
-          msg: "Please provide all required information",
+          msg: "Repeat password does not match the password",
         });
       }
-    }
-
-    if (data.password !== data.repeatPassword) {
-      setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-      return setNotify({
-        isFailed: true,
-        msg: "Repeat password does not match the password",
-      });
-    }
-
-    try {
       const result = await API.post("/auth/register", data);
       if (result.data.status === "failed") {
         setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
