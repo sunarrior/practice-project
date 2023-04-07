@@ -13,7 +13,7 @@ export default function OrderItem({
 }) {
   return (
     <>
-      <div className="mr-4 my-5 bg-orange-300 w-64 max-w-sm rounded-md overflow-hidden shadow-lg">
+      <div className="mr-4 my-5 bg-orange-300 w-60 max-w-sm rounded-md overflow-hidden shadow-lg">
         <Image
           className="w-full h-44 object-cover"
           src={url}

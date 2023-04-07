@@ -89,7 +89,7 @@ export default function CheckoutModal({
         items: data,
         paymentOption,
       };
-      const result = await API.post("/order/create", orderData, config);
+      const result = await API.post("/order", orderData, config);
       onPlaceOrder(
         result.data.msg,
         result.data.status.localeCompare("success") === 0 ? "success" : "error"
