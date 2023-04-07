@@ -2,6 +2,7 @@ import Link from "next/link";
 
 export default function Order({
   orderid,
+  paymentMethod,
   orderDay,
   completedDay,
   firstItem,
@@ -10,8 +11,9 @@ export default function Order({
   url,
 }: {
   orderid: number;
+  paymentMethod: string;
   orderDay: string;
-  completedDay: string;
+  completedDay: string | undefined;
   firstItem: string;
   totalItem: number;
   cost: number;
@@ -20,9 +22,10 @@ export default function Order({
   return (
     <>
       <tr className="bg-gray-300 border-b font-medium">
-        <th scope="row" className="px-6 py-4 text-black">
+        <td scope="row" className="px-6 py-4 text-black">
           {orderid}
-        </th>
+        </td>
+        <td className="px-6 py-4">{paymentMethod}</td>
         <td className="px-6 py-4">{orderDay}</td>
         <td className="px-6 py-4">{completedDay || "Not yet completed"}</td>
         <td className="px-6 py-4">{firstItem}</td>

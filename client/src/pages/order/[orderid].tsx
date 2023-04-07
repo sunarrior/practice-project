@@ -6,11 +6,13 @@ import API from "@/config/axios.config";
 import { toast } from "react-toastify";
 
 const defaultOrderInfo: {
+  paymentMethod: string;
   orderDay: string;
   paymentDay: string;
   completeDay: string;
   cost: number;
 } = {
+  paymentMethod: "",
   orderDay: "",
   paymentDay: "",
   completeDay: "",
@@ -58,6 +60,7 @@ export default function OrderDetail() {
         }
         const result = await API.get(`/order/${orderid}`, config);
         setOrderInfo({
+          paymentMethod: result.data.orderInfo.paymentMethod || "",
           orderDay: result.data.orderInfo.orderDay
             ? new Date(result.data.orderInfo.orderDay).toLocaleString()
             : "",
@@ -86,6 +89,9 @@ export default function OrderDetail() {
                 Order ID
               </th>
               <th scope="col" className="px-6 py-3">
+                Payment Method
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Order Day
               </th>
               <th scope="col" className="px-6 py-3">
@@ -102,6 +108,7 @@ export default function OrderDetail() {
           <tbody>
             <tr className="bg-gray-300 border-b font-medium">
               <td className="px-6 py-4">{orderid}</td>
+              <td className="px-6 py-4">{orderInfo.paymentMethod}</td>
               <td className="px-6 py-4">{orderInfo.orderDay}</td>
               <td className="px-6 py-4">
                 {orderInfo.paymentDay || "Not yet payment"}

@@ -5,7 +5,6 @@ import { useRouter } from "next/router";
 import Image from "next/image";
 
 import API from "@/config/axios.config";
-import ButtonEdit from "@/components/button-edit";
 import { getYYYYMMDDString } from "@/utils/format.util";
 import { toast } from "react-toastify";
 
@@ -205,11 +204,33 @@ export default function Profile(): React.ReactElement {
         <div className="box-border h-auto w-auto p-4 border-4 rounded-xl bg-orange-400">
           <div className="relative">
             <div className="absolute top-0 right-0">
-              <ButtonEdit
-                isEdit={isEdit}
-                onEdit={handleEdit}
-                onCancel={handleCancle}
-              ></ButtonEdit>
+              {isEdit && (
+                <>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-red-500 hover:bg-red-400 text-white font-bold"
+                    onClick={handleCancle}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-green-500 hover:bg-green-400 text-white font-bold"
+                    type="submit"
+                    form="profile-form"
+                  >
+                    Save
+                  </button>
+                </>
+              )}
+              {!isEdit && (
+                <>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-purple-500 hover:bg-purple-400 text-white font-bold"
+                    onClick={handleEdit}
+                  >
+                    Edit
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <p className="text-center text-4xl font-bold text-neutral-500 mt-4 mb-5">

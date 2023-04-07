@@ -9,5 +9,7 @@ router.get("/all", isAdmin, order.getAllOrders);
 router.get("/", order.getOrderListByUserId);
 router.get("/:id", order.getOrderItems);
 router.post("/", order.createOrder);
+router.put("/", isAdmin, order.updateOrders);
+router.delete("/", isAdmin, order.cancelOrders);
 
 export default router;

@@ -68,6 +68,14 @@ const addOrderItem = async (orderItems: OrderItem[]): Promise<void> => {
   await orderItemRepos.save(orderItems);
 };
 
+const updateOrders = async (order: Order[]): Promise<void> => {
+  await orderRepos.save(order);
+};
+
+const removeOrders = async (order: Order[]): Promise<void> => {
+  await orderRepos.remove(order);
+};
+
 export default {
   getAllOrders,
   getOrderListByUserId,
@@ -75,4 +83,6 @@ export default {
   getOrderItems,
   createOrder,
   addOrderItem,
+  updateOrders,
+  removeOrders,
 };

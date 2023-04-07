@@ -6,6 +6,7 @@ import { AiOutlineShoppingCart } from "react-icons/ai";
 import { HiOutlineUserCircle } from "react-icons/hi";
 
 import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
 import { CartContext } from "@/context/cart.context";
 import API from "@/config/axios.config";
 
@@ -82,6 +83,7 @@ export default function NavBar({
   children: React.ReactElement;
 }): React.ReactElement {
   const { isLoggedIn } = useContext(SessionContext);
+  const { isAdmin } = useContext(AdminContext);
   const [cartState, setCartState] = useState(0);
 
   useEffect(() => {
@@ -145,6 +147,22 @@ export default function NavBar({
                   >
                     About
                   </Link>
+                  {isAdmin && (
+                    <>
+                      <Link
+                        className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
+                        href="/admin/user"
+                      >
+                        User List
+                      </Link>
+                      <Link
+                        className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
+                        href="/admin/order"
+                      >
+                        Order List
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
 

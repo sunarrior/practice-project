@@ -7,12 +7,14 @@ import { toast } from "react-toastify";
 
 const defaultOrderInfo: {
   username: string;
+  paymentMethod: string;
   orderDay: string;
   paymentDay: string;
   completeDay: string;
   cost: number;
 } = {
   username: "",
+  paymentMethod: "",
   orderDay: "",
   paymentDay: "",
   completeDay: "",
@@ -61,6 +63,7 @@ export default function OrderDetail() {
         const result = await API.get(`/order/${orderid}`, config);
         setOrderInfo({
           username: result.data.orderInfo.username || "",
+          paymentMethod: result.data.orderInfo.paymentMethod || "",
           orderDay: result.data.orderInfo.orderDay
             ? new Date(result.data.orderInfo.orderDay).toLocaleString()
             : "",
@@ -92,6 +95,9 @@ export default function OrderDetail() {
                 Username
               </th>
               <th scope="col" className="px-6 py-3">
+                Payment Method
+              </th>
+              <th scope="col" className="px-6 py-3">
                 Order Day
               </th>
               <th scope="col" className="px-6 py-3">
@@ -109,6 +115,7 @@ export default function OrderDetail() {
             <tr className="bg-gray-300 border-b font-medium">
               <td className="px-6 py-4">{orderid}</td>
               <td className="px-6 py-4">{orderInfo.username}</td>
+              <td className="px-6 py-4">{orderInfo.paymentMethod}</td>
               <td className="px-6 py-4">{orderInfo.orderDay}</td>
               <td className="px-6 py-4">
                 {orderInfo.paymentDay || "Not yet payment"}

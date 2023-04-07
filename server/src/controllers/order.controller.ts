@@ -20,8 +20,9 @@ const getAllOrders = async (req: Request, res: Response) => {
       return {
         id: order.id,
         username: order.user.username,
+        paymentMethod: order.paymentMethod,
         orderDay: order.createdAt,
-        completeDay: order.completeDay,
+        completeDay: order.completeDay || undefined,
         firstItem: order.orderItems[0].product.name,
         totalItems: order.orderItems.length,
         cost: order.orderItems.reduce((acc: number, item: any) => {
@@ -53,6 +54,7 @@ const getOrderListByUserId = async (req: Request, res: Response) => {
       order.orderItems.sort((i1, i2) => i1.id - i2.id);
       return {
         id: order.id,
+        paymentMethod: order.paymentMethod,
         orderDay: order.createdAt,
         completeDay: order.completeDay,
         firstItem: order.orderItems[0].product.name,
@@ -80,6 +82,7 @@ const getOrderItems = async (req: Request, res: Response) => {
     );
     const orderInfo = {
       username: order?.user.username,
+      paymentMethod: order?.paymentMethod,
       orderDay: order?.createdAt,
       paymentDay: order?.paymentDay,
       completeDay: order?.completeDay,
@@ -209,9 +212,102 @@ const createOrder = async (req: Request, res: Response) => {
   }
 };
 
+const updateOrders = async (req: Request, res: Response) => {
+  try {
+    const orderids: number[] = req.body.data;
+    const updateOrderList = await Promise.all(
+      orderids.map(async (id: number) => {
+        const order: Order | null = await orderDB.getOrderById(id);
+        if (!order) {
+          return;
+        }
+        if (!order.completeDay) {
+          if (order.paymentMethod.localeCompare("visa") === 0) {
+            return {
+              ...order,
+              completeDay: new Date(),
+              status: "completed",
+            };
+          }
+          return {
+            ...order,
+            completeDay: new Date(),
+            paymentDay: new Date(),
+            status: "completed",
+          };
+        }
+        if (order.paymentMethod.localeCompare("visa") === 0) {
+          return {
+            ...order,
+            completeDay: null,
+            status: "pending",
+          };
+        }
+        return {
+          ...order,
+          completeDay: null,
+          paymentDay: null,
+          status: "pending",
+        };
+      })
+    );
+    const updateOrderListFilter: (Order | undefined)[] = updateOrderList.filter(
+      (order: Order | undefined) => order
+    );
+    await orderDB.updateOrders(updateOrderListFilter as Order[]);
+    res
+      .status(200)
+      .json({ stauts: "success", msg: "Order updated successfully." });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
+const cancelOrders = async (req: Request, res: Response) => {
+  try {
+    const orderids: number[] = req.body;
+    const cancelOrderList = await Promise.all(
+      orderids.map(async (id: number) => {
+        const order: Order | null = await orderDB.getOrderById(id);
+        if (!order) {
+          return;
+        }
+        if (!order.completeDay) {
+          return {
+            ...order,
+            status: "canceled",
+          };
+        }
+        return order;
+      })
+    );
+    const cancelOrderListFilter: (Order | undefined)[] = cancelOrderList.filter(
+      (order: Order | undefined) => order
+    );
+    for (const order of cancelOrderListFilter) {
+      if (order?.completeDay) {
+        return res.status(400).json({
+          status: "failed",
+          msg: "Cannot cancel completed order",
+        });
+      }
+    }
+    await orderDB.removeOrders(cancelOrderListFilter as Order[]);
+    res
+      .status(200)
+      .json({ stauts: "success", msg: "Order cancel successfully." });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ status: "failed", msg: "Server Error" });
+  }
+};
+
 export default {
   getAllOrders,
   getOrderListByUserId,
   getOrderItems,
   createOrder,
+  updateOrders,
+  cancelOrders,
 };
