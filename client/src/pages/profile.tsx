@@ -1,24 +1,16 @@
-/* eslint-disable @typescript-eslint/return-await */
-/* eslint-disable import/no-extraneous-dependencies */
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
 import Image from "next/image";
-
-import API from "@/config/axios.config";
-import { getYYYYMMDDString } from "@/utils/format.util";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
-type ProfileType = {
-  fullName: string;
-  phone: string;
-  dob: string;
-  gender: boolean;
-  email: string;
-  deliveryAddress: string;
-  avatarUrl: string;
-};
+import { UserData, UserDataUpdate } from "@/interface/UserData";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
+import API from "@/config/axios.config";
+import { getYYYYMMDDString } from "@/utils/format.util";
 
-const profileDefault: ProfileType = {
+const profileDefault: UserData = {
   fullName: "",
   phone: "",
   dob: getYYYYMMDDString(),
@@ -29,50 +21,46 @@ const profileDefault: ProfileType = {
 };
 
 export default function Profile(): React.ReactElement {
-  const router = useRouter();
+  const router: NextRouter = useRouter();
   const [profile, setProfile] = useState(profileDefault);
   const [isEdit, setIsEdit] = useState(false);
-  const [isUploadAvatar, setIsUploadAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [uploadProgess, setUploadProgess] = useState(0);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
         if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get(`/user`, config);
+        const result: AxiosResponse = await API.get(`/user`, config);
         setProfile({
-          fullName: result.data.userData.fullName
-            ? result.data.userData.fullName
-            : "",
-          phone: result.data.userData.phone ? result.data.userData.phone : "",
+          fullName: result.data.userData.fullName || "",
+          phone: result.data.userData.phone || "",
           dob: result.data.userData.dob
             ? result.data.userData.dob.substring(0, 10)
             : getYYYYMMDDString(),
-          gender: result.data.userData.gender
-            ? result.data.userData.gender
-            : "",
-          email: result.data.userData.email ? result.data.userData.email : "",
-          deliveryAddress: result.data.userData.deliveryAddress
-            ? result.data.userData.deliveryAddress
-            : "",
-          avatarUrl: result.data.userData.avatarUrl
-            ? result.data.userData.avatarUrl
-            : "",
+          gender:
+            result.data?.userData?.gender !== undefined
+              ? result.data?.userData?.gender
+              : true,
+          email: result.data.userData.email || "",
+          deliveryAddress: result.data.userData.deliveryAddress || "",
+          avatarUrl: result.data.userData.avatarUrl || "",
         });
       } catch (error: any) {
         toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
-  }, [isUploadAvatar]);
+  }, []);
 
   function handleFullnameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setProfile({ ...profile, fullName: e.target.value });
@@ -116,21 +104,30 @@ export default function Profile(): React.ReactElement {
   ): Promise<any> {
     e.preventDefault();
     try {
-      const data: ProfileType = { ...profile };
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userData: UserData = { ...profile };
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
+        onUploadProgress: (progressEvent: any) => {
+          const { loaded, total } = progressEvent;
+          const percent: number = Math.floor((loaded * 100) / total);
+          setUploadProgess(percent);
+        },
       };
-      const result = await API.put(`/user`, data, config);
-      if (result.data.status === "failed") {
-        return router.push("/profile");
-      }
+      const data: UserDataUpdate = { ...userData, filePath: avatarPreview };
+      await API.put(`/user`, data, config);
+      setProfile({ ...profile, avatarUrl: avatarPreview });
       setIsEdit(false);
+      setAvatarPreview("");
+      setUploadProgess(0);
+      router.reload();
     } catch (error: any) {
       toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }
@@ -141,59 +138,20 @@ export default function Profile(): React.ReactElement {
     if (e.target.files === null) {
       return;
     }
-    const reader = new FileReader();
+    const reader: FileReader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
     };
-    setIsUploadAvatar(true);
     e.target.value = "";
   }
 
-  async function handleImageUpload(
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<any> {
-    e.preventDefault();
-    try {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-      if (!userObj) {
-        return;
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${userObj?.access_token}`,
-        },
-        onUploadProgress: (progressEvent: any) => {
-          const { loaded, total } = progressEvent;
-          const percent: number = Math.floor((loaded * 100) / total);
-          setUploadProgess(percent);
-        },
-      };
-      const data = { filePath: avatarPreview };
-      const result = await API.post(`/user/avatar`, data, config);
-      if (result.data.status === "failed") {
-        return router.push("/profile");
-      }
-      setProfile({ ...profile, avatarUrl: avatarPreview });
-      setAvatarPreview("");
-      setIsUploadAvatar(false);
-      setUploadProgess(0);
-    } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
-    }
-  }
-
-  function handleCancelUploadAvatar(): void {
-    setAvatarPreview("");
-    setIsUploadAvatar(false);
-  }
-
   function imageChange(): string {
-    if (avatarPreview !== "") {
+    if (avatarPreview.localeCompare("") !== 0) {
       return avatarPreview;
     }
-    if (profile.avatarUrl !== "") {
-      return profile.avatarUrl;
+    if (profile.avatarUrl?.localeCompare("") !== 0) {
+      return profile.avatarUrl as string;
     }
     return "/blank-image.jpg";
   }
@@ -247,58 +205,29 @@ export default function Profile(): React.ReactElement {
                   height={500}
                 />
               </div>
-              <div className="w-full bg-gray-200 rounded-full">
-                <div
-                  className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-                  style={{ width: `${uploadProgess}%` }}
-                  hidden={!isEdit || !isUploadAvatar || uploadProgess === 0}
-                >
-                  {" "}
-                  {uploadProgess}%
-                </div>
-              </div>
-              <div className="grid place-items-center mt-2">
-                <form
-                  encType="multipart/form-data"
-                  className="grid place-items-center"
-                  id="upload-avatar-form"
-                  onSubmit={handleImageUpload}
-                >
+              {isEdit && uploadProgess > 0 && (
+                <div className="w-full bg-gray-200 rounded-full">
                   <div
-                    className="relative flex justify-center h-11 rounded-md cursor-pointer bg-purple-500 hover:bg-purple-400"
-                    hidden={!isEdit}
+                    className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                    style={{ width: `${uploadProgess}%` }}
                   >
-                    <input
-                      className="z-20 opacity-0 w-full cursor-pointer"
-                      type="file"
-                      onChange={handleImageChange}
-                      hidden={!isEdit}
-                    />
-                    <span className="absolute grid place-content-center h-full w-full">
-                      <p className="font-bold text-white" hidden={!isEdit}>
-                        Upload Avatar
-                      </p>
-                    </span>
+                    {" "}
+                    {uploadProgess}%
                   </div>
-                </form>
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <button
-                    className="px-6 py-2 border rounded-md bg-green-500 hover:bg-green-400 text-white font-bold"
-                    type="submit"
-                    form="upload-avatar-form"
-                    hidden={!isEdit || !isUploadAvatar}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="px-6 py-2 border rounded-md bg-red-500 hover:bg-red-400 text-white font-bold"
-                    onClick={handleCancelUploadAvatar}
-                    hidden={!isEdit || !isUploadAvatar}
-                  >
-                    Cancel
-                  </button>
                 </div>
-              </div>
+              )}
+              {isEdit && (
+                <div className="relative flex justify-center h-11 rounded-md cursor-pointer bg-purple-500 hover:bg-purple-400">
+                  <input
+                    className="z-20 opacity-0 w-full cursor-pointer"
+                    type="file"
+                    onChange={handleImageChange}
+                  />
+                  <span className="absolute grid place-content-center h-full w-full">
+                    <p className="font-bold text-white">Upload Avatar</p>
+                  </span>
+                </div>
+              )}
             </div>
             <div className="ml-3">
               <form

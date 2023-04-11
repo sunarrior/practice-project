@@ -1,4 +1,4 @@
-import { redisClient } from "../config/redis-cache";
+import { redisClient } from "../config/redis-cache.config";
 
 const setCache = async (
   key: string,
@@ -9,8 +9,8 @@ const setCache = async (
   await redisClient.expire(key, maxAge);
 };
 
-const getCache = async (key: string): Promise<any> => {
-  const result = await redisClient.get(key);
+const getCache = async (key: string): Promise<string | null> => {
+  const result: string | null = await redisClient.get(key);
   return result;
 };
 

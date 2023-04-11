@@ -1,5 +1,6 @@
-/* eslint-disable prefer-destructuring */
 import { Request, Response } from "express";
+
+import { common, orderConstant } from "../constant/controller.constant";
 import Order from "../entity/Order";
 import User from "../entity/User";
 import orderDB from "../db/order.db";
@@ -10,13 +11,15 @@ import OrderItem from "../entity/OrderItem";
 import ProductImage from "../entity/ProductImage";
 import Product from "../entity/Product";
 import CartItem from "../entity/CartItem";
+import { CartItemData } from "../interface/CartData";
+import { OrderData, OrderItemData } from "../interface/OrderData";
 import { mail } from "../utils";
 
 const getAllOrders = async (req: Request, res: Response) => {
   try {
     const result: Order[] = await orderDB.getAllOrders();
-    const orderList = result.map((order: Order) => {
-      order.orderItems.sort((i1, i2) => i1.id - i2.id);
+    const orderList: OrderData[] = result.map((order: Order) => {
+      order.orderItems.sort((i1: OrderItem, i2: OrderItem) => i1.id - i2.id);
       return {
         id: order.id,
         username: order.user.username,
@@ -25,49 +28,47 @@ const getAllOrders = async (req: Request, res: Response) => {
         completeDay: order.completeDay || undefined,
         firstItem: order.orderItems[0].product.name,
         totalItems: order.orderItems.length,
-        cost: order.orderItems.reduce((acc: number, item: any) => {
+        cost: order.orderItems.reduce((acc: number, item: OrderItem) => {
           return acc + item.quantity * item.price;
         }, 0),
       };
     });
-    res.status(200).json({ status: "success", orderList: orderList });
-  } catch (error) {
+    res.status(200).json({ orderList });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
 const getOrderListByUserId = async (req: Request, res: Response) => {
   try {
-    const username: string | undefined = req.username;
+    const id: number | undefined = req.id;
 
     // check if user exists
-    const user: User | null = await userDB.getUserByAttrb({
-      username: username as string,
-    });
+    const user: User | null = await userDB.getUserById(id as unknown as number);
     if (!user) {
-      return res.status(200).json({ status: "failed", msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     const result: Order[] = await orderDB.getOrderListByUserId(user.id);
-    const orderList = result.map((order: Order) => {
-      order.orderItems.sort((i1, i2) => i1.id - i2.id);
+    const orderList: OrderData[] = result.map((order: Order) => {
+      order.orderItems.sort((i1: OrderItem, i2: OrderItem) => i1.id - i2.id);
       return {
         id: order.id,
         paymentMethod: order.paymentMethod,
         orderDay: order.createdAt,
-        completeDay: order.completeDay,
+        completeDay: order.completeDay || undefined,
         firstItem: order.orderItems[0].product.name,
         totalItems: order.orderItems.length,
-        cost: order.orderItems.reduce((acc: number, item: any) => {
+        cost: order.orderItems.reduce((acc: number, item: OrderItem) => {
           return acc + item.quantity * item.price;
         }, 0),
       };
     });
-    res.status(200).json({ status: "success", orderList: orderList });
-  } catch (error) {
+    res.status(200).json({ orderList });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -80,17 +81,17 @@ const getOrderItems = async (req: Request, res: Response) => {
     const order: Order | null = await orderDB.getOrderById(
       orderid as unknown as number
     );
-    const orderInfo = {
+    const orderInfo: OrderData = {
       username: order?.user.username,
-      paymentMethod: order?.paymentMethod,
-      orderDay: order?.createdAt,
-      paymentDay: order?.paymentDay,
-      completeDay: order?.completeDay,
-      cost: order?.orderItems.reduce((acc: number, item: any) => {
+      paymentMethod: order?.paymentMethod as string,
+      orderDay: order?.createdAt as Date,
+      paymentDay: order?.paymentDay || undefined,
+      completeDay: order?.completeDay || undefined,
+      cost: order?.orderItems.reduce((acc: number, item: OrderItem) => {
         return acc + item.quantity * item.price;
-      }, 0),
+      }, 0) as number,
     };
-    const orderItems = await Promise.all(
+    const orderItems: OrderItemData[] = await Promise.all(
       result.map(async (item: OrderItem) => {
         const thumbnail: ProductImage = await productDB.getProductThumbnail(
           item.product.id
@@ -104,35 +105,31 @@ const getOrderItems = async (req: Request, res: Response) => {
         };
       })
     );
-    orderItems.sort((i1, i2) => i1.id - i2.id);
+    orderItems.sort((i1: OrderItemData, i2: OrderItemData) => i1.id - i2.id);
     res.status(200).json({
-      status: "success",
-      orderInfo: orderInfo,
-      orderItems: orderItems,
+      orderInfo,
+      orderItems,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
 const createOrder = async (req: Request, res: Response) => {
   try {
-    const username: string | undefined = req.username;
+    const id: number | undefined = req.id;
     const { items, paymentOption } = req.body;
 
     // check if user exists
-    const user: User | null = await userDB.getUserByAttrb({
-      username: username as string,
-    });
+    const user: User | null = await userDB.getUserById(id as unknown as number);
     if (!user) {
-      return res.status(200).json({ status: "failed", msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     if (user.isBlocked) {
-      return res.status(200).json({
-        status: "failed",
-        msg: "User is blocked from doing this action",
+      return res.status(400).json({
+        msg: common.USER_BLOCKED,
       });
     }
 
@@ -152,8 +149,8 @@ const createOrder = async (req: Request, res: Response) => {
     orderDB.createOrder(order);
 
     // add order item
-    let orderItems: OrderItem[] = await Promise.all(
-      items.map(async (item: any) => {
+    const orderItems: OrderItem[] = await Promise.all(
+      items.map(async (item: CartItemData) => {
         // check if item not in cart
         if (!cartItemIds.includes(Number(item.id))) {
           return;
@@ -168,14 +165,14 @@ const createOrder = async (req: Request, res: Response) => {
         }
 
         // add order item
-        const orderItem = new OrderItem();
+        const orderItem: OrderItem = new OrderItem();
         orderItem.quantity = item.quantity;
         orderItem.price = item.product.price;
         orderItem.order = order;
         orderItem.product = product;
 
         // update product quantity
-        const newProductState = {
+        const newProductState: Product = {
           ...product,
           quantity: product.quantity - item.quantity,
         };
@@ -184,18 +181,18 @@ const createOrder = async (req: Request, res: Response) => {
         return orderItem;
       })
     );
-    orderItems = orderItems.filter(
+    const orderItemsFilter: OrderItem[] = orderItems.filter(
       (item: OrderItem) => item !== null || item !== undefined
     );
-    await orderDB.addOrderItem(orderItems);
+    await orderDB.addOrderItem(orderItemsFilter);
 
     // remove item in cart
     const cartItemsCheckout: CartItem[] = cartItems.filter((item: CartItem) => {
-      for (const i of items) {
+      items.forEach((i: CartItemData) => {
         if (i.id === item.id) {
           return true;
         }
-      }
+      });
       return false;
     });
     await cartDB.removeItem(cartItemsCheckout);
@@ -203,19 +200,17 @@ const createOrder = async (req: Request, res: Response) => {
     // send mail to user
     mail.sendPlaceOrderMail(user.email, items, paymentOption);
 
-    res
-      .status(200)
-      .json({ status: "success", msg: "Place Order Successfully" });
-  } catch (error) {
+    res.status(200).json({ msg: orderConstant.PLACE_ORDER_SUCCESSFULLY });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
 const updateOrders = async (req: Request, res: Response) => {
   try {
     const orderids: number[] = req.body.data;
-    const updateOrderList = await Promise.all(
+    const updateOrderList: (Order | undefined)[] = await Promise.all(
       orderids.map(async (id: number) => {
         const order: Order | null = await orderDB.getOrderById(id);
         if (!order) {
@@ -255,23 +250,21 @@ const updateOrders = async (req: Request, res: Response) => {
       (order: Order | undefined) => order
     );
     await orderDB.updateOrders(updateOrderListFilter as Order[]);
-    res
-      .status(200)
-      .json({ stauts: "success", msg: "Order updated successfully." });
-  } catch (error) {
+    res.status(200).json({ msg: "Order updated successfully." });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 
 const cancelOrders = async (req: Request, res: Response) => {
   try {
     const orderids: number[] = req.body;
-    const cancelOrderList = await Promise.all(
+    const cancelOrderList: (Order | undefined)[] = await Promise.all(
       orderids.map(async (id: number) => {
         const order: Order | null = await orderDB.getOrderById(id);
         if (!order) {
-          return;
+          return undefined;
         }
         if (!order.completeDay) {
           return {
@@ -285,21 +278,18 @@ const cancelOrders = async (req: Request, res: Response) => {
     const cancelOrderListFilter: (Order | undefined)[] = cancelOrderList.filter(
       (order: Order | undefined) => order
     );
-    for (const order of cancelOrderListFilter) {
+    cancelOrderListFilter.forEach((order: Order | undefined) => {
       if (order?.completeDay) {
         return res.status(400).json({
-          status: "failed",
           msg: "Cannot cancel completed order",
         });
       }
-    }
+    });
     await orderDB.removeOrders(cancelOrderListFilter as Order[]);
-    res
-      .status(200)
-      .json({ stauts: "success", msg: "Order cancel successfully." });
-  } catch (error) {
+    res.status(200).json({ msg: "Order cancel successfully." });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 

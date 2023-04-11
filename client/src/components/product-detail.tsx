@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useContext } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
@@ -10,64 +9,65 @@ import {
 import { RxDotFilled } from "react-icons/rx";
 
 import { AdminContext } from "@/context/admin.context";
+import { ProductImageData, ProductCategoryData } from "@/interface/ProductData";
 import CategoryTag from "@/components/category-tag";
-import ProductModalForm from "./product-modal-form";
+import ProductModalForm from "./admin-product-modal";
 
 export default function ProductDetail({
   productId,
   productName,
   productQuantity,
   price,
-  description,
-  imageList,
-  categories,
+  description = "",
+  imageList = [],
+  categories = [],
   purchaseAmount,
-  handleIncrease,
-  handleDecrease,
-  handlePurchaseAmountChange,
-  handleAddToCart,
+  onIncrease,
+  onDecrease,
+  onPurchaseAmountChange,
+  onAddToCart,
 }: {
   productId: number;
   productName: string;
   productQuantity: number;
   price: number;
-  description: string;
-  imageList: any[];
-  categories: [];
+  description?: string | undefined;
+  imageList?: (ProductImageData | undefined)[];
+  categories?: (ProductCategoryData | undefined)[];
   purchaseAmount: number;
-  handleIncrease: React.MouseEventHandler<HTMLButtonElement>;
-  handleDecrease: React.MouseEventHandler<HTMLButtonElement>;
-  handlePurchaseAmountChange: React.ChangeEventHandler<HTMLInputElement>;
-  handleAddToCart: React.MouseEventHandler<HTMLButtonElement>;
+  onIncrease: React.MouseEventHandler<HTMLButtonElement>;
+  onDecrease: React.MouseEventHandler<HTMLButtonElement>;
+  onPurchaseAmountChange: React.ChangeEventHandler<HTMLInputElement>;
+  onAddToCart: React.MouseEventHandler<HTMLButtonElement>;
 }): React.ReactElement {
   const router = useRouter();
   const { isAdmin } = useContext(AdminContext);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
 
-  function prevImage() {
+  function prevImage(): void {
     if (currentIndex === 0) {
       return setCurrentIndex(imageList.length - 1);
     }
     setCurrentIndex(currentIndex - 1);
   }
 
-  function nextImage() {
+  function nextImage(): void {
     if (currentIndex === imageList.length - 1) {
       return setCurrentIndex(0);
     }
     setCurrentIndex(currentIndex + 1);
   }
 
-  function goToSide(index: any) {
+  function goToSide(index: any): void {
     setCurrentIndex(index);
   }
 
-  function handleShowModal(state: boolean) {
+  function handleShowModal(state: boolean): void {
     setShowModal(state);
   }
 
-  function handleEditProduct() {
+  function handleEditProduct(): void {
     router.reload();
   }
 
@@ -78,7 +78,7 @@ export default function ProductDetail({
           isEdit={true}
           currentData={{
             productId,
-            imagesPreview: imageList[0].id === 0 ? [] : imageList,
+            imagesPreview: imageList[0]?.id === 0 ? [] : imageList,
             productName,
             categories,
             description,
@@ -138,7 +138,7 @@ export default function ProductDetail({
               <div className="flex flex-row h-10 w-full rounded-lg relative bg-transparent mt-1">
                 <button
                   className="pb-1 bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-l cursor-pointer outline-none"
-                  onClick={handleDecrease}
+                  onClick={onDecrease}
                 >
                   <span className="m-auto text-2xl font-thin">-</span>
                 </button>
@@ -146,11 +146,11 @@ export default function ProductDetail({
                   type="text"
                   className="focus:outline-none text-center w-full bg-gray-300 font-semibold text-md hover:text-black focus:text-black flex items-center text-gray-700 outline-none"
                   value={purchaseAmount}
-                  onChange={handlePurchaseAmountChange}
+                  onChange={onPurchaseAmountChange}
                 />
                 <button
                   className="pb-1 bg-gray-300 text-gray-600 hover:text-gray-700 hover:bg-gray-400 h-full w-20 rounded-r cursor-pointer"
-                  onClick={handleIncrease}
+                  onClick={onIncrease}
                 >
                   <span className="m-auto text-2xl font-thin">+</span>
                 </button>
@@ -159,7 +159,7 @@ export default function ProductDetail({
             <button
               className="flex px-4 py-2 bg-purple-500 border border-white hover:bg-purple-400 text-white font-bold rounded-md"
               type="button"
-              onClick={handleAddToCart}
+              onClick={onAddToCart}
             >
               <BsCartPlus className="mr-2" size={20} /> ADD TO CART
             </button>

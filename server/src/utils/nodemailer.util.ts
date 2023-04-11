@@ -1,20 +1,33 @@
-import nodemailer from "nodemailer";
+import nodemailer, { Transporter } from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport";
+import ejs from "ejs";
+import path from "path";
+
+import { MailConfig, MailData, MailMessage } from "../interface/MailData";
+import { mailSubject } from "../constant/mail.constant";
+import { CartItemData, CartItemMail } from "../interface/CartData";
+import { PaymentOption } from "../interface/OrderData";
 
 import EnvConfig from "../config/env.config";
 
-const MAIL_CONFIG: any = {
+// Config mail server for sending mail
+const MAIL_CONFIG: MailConfig = {
   service: "gmail",
   auth: {
     user: EnvConfig.GMAIL_USER,
     pass: EnvConfig.GMAIL_PASSWORD,
   },
 };
-const transporter: nodemailer.Transporter<SMTPTransport.SentMessageInfo> =
+
+// initialization transporter
+const transporter: Transporter<SMTPTransport.SentMessageInfo> =
   nodemailer.createTransport(MAIL_CONFIG);
 
-const sendMailFromGmail = (mailData: any) => {
-  const message = {
+// Start send mail with given data
+const sendMailFromGmail = (
+  mailData: MailData
+): Promise<SMTPTransport.SentMessageInfo> => {
+  const message: MailMessage = {
     from: EnvConfig.GMAIL_USER,
     to: mailData.to,
     subject: mailData.subject,
@@ -23,117 +36,109 @@ const sendMailFromGmail = (mailData: any) => {
   return transporter.sendMail(message);
 };
 
-const sendVerifyMail = (email: string, token: string) => {
-  const timeSended: Date = new Date();
-  const mailData = {
-    to: email,
-    subject: `Verify account ${timeSended.toLocaleString()}`,
-    htmlContent: `<b>
-      Click <a href="http://localhost:3000/verify/${token}">here</a> 
-      to verify your account
-    </b>`,
-  };
-  sendMailFromGmail(mailData);
+const sendVerifyMail = async (email: string, token: string): Promise<void> => {
+  try {
+    const timeSended: Date = new Date();
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/VerifyMail.ejs"),
+      { token }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.VERIFY_ACCOUNT} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    sendMailFromGmail(mailData);
+  } catch (error: any) {
+    console.log(error);
+  }
 };
 
-const sendRecoveryLink = (username: string, email: string, token: string) => {
-  const timeSended: Date = new Date();
-  const mailData = {
-    to: email,
-    subject: `Recovery link ${timeSended.toLocaleString()}`,
-    htmlContent: `<b>
-      Recovery link for account ${username}: 
-      <a href="http://localhost:3000/recovery/${token}">Recovery Link</a>
-    </b>`,
-  };
-  sendMailFromGmail(mailData);
-};
-
-const sendPlaceOrderMail = (
+const sendRecoveryMail = async (
+  username: string,
   email: string,
-  orderItems: any[],
-  paymentOption: any
-) => {
-  const timeSended: Date = new Date();
-  const orderItemsContent = orderItems.map((item: any) => {
-    return `
-      <tr>
-        <td style="border: 1px solid black;">${item.name}</td>
-        <td style="border: 1px solid black;">${item.quantity}</td>
-        <td style="border: 1px solid black;">${item.price}</td>
-      </tr>
-    `;
-  });
-  const totalCost = orderItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-  const mailData = {
-    to: email,
-    subject: `Order Infomation ${timeSended.toLocaleString()}`,
-    htmlContent: `
-      <p>Payment Method: ${paymentOption.paymentMethod}</p>
-      <p>Delivery Address: ${paymentOption.deliveryAddress}</p>
-      <table style="width:700px; border:1px solid black; text-align:center; word-wrap: break-word; table-layout: fixed;">
-          <tr>
-            <th style="border: 1px solid black;">Item Name</th>
-            <th style="border: 1px solid black;">Quantity</th>
-            <th style="border: 1px solid black;">Price</th>
-          </tr>
-          ${orderItemsContent.join(" ")}
-          <tr>
-              <td colspan="2" style="border: 1px solid black; text-align:right; font-weight:bold;">Total:</td>
-              <td style="border: 1px solid black; text-align:">${totalCost}$</td>
-          </tr>
-      </table>
-    `,
-  };
-  sendMailFromGmail(mailData);
+  token: string
+): Promise<void> => {
+  try {
+    const timeSended: Date = new Date();
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/RecoveryMail.ejs"),
+      { username, token }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.RECOVERY_MAIL} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    sendMailFromGmail(mailData);
+  } catch (error: any) {
+    console.log(error);
+  }
 };
 
-const sendCartReminderMail = (email: string, cartItems: any[]) => {
-  const timeSended: Date = new Date();
-  const orderItemsContent = cartItems.map((item: any) => {
-    return `
-      <tr>
-        <td style="border: 1px solid black;">${item.name}</td>
-        <td style="border: 1px solid black;">${item.quantity}</td>
-        <td style="border: 1px solid black;">${item.price}</td>
-      </tr>
-    `;
-  });
-  const totalCost = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-  const mailData = {
-    to: email,
-    subject: `Reminder About Current Item In Cart ${timeSended.toLocaleString()}`,
-    htmlContent: `
-      <p>Your cart currently contains ${cartItems.length} ${
-      cartItems.length > 1 ? "items" : "item"
-    }</p>
-      <b><a href="http://localhost:3000/cart">Checkout</a> now today so you won't miss any items!</b>
-      <table style="width:700px; border:1px solid black; text-align:center; word-wrap: break-word; table-layout: fixed;">
-          <tr>
-            <th style="border: 1px solid black;">Item Name</th>
-            <th style="border: 1px solid black;">Quantity</th>
-            <th style="border: 1px solid black;">Price</th>
-          </tr>
-          ${orderItemsContent.join(" ")}
-          <tr>
-              <td colspan="2" style="border: 1px solid black; text-align:right; font-weight:bold;">Total:</td>
-              <td style="border: 1px solid black; text-align:">${totalCost}$</td>
-          </tr>
-      </table>
-    `,
-  };
-  return sendMailFromGmail(mailData);
+const sendPlaceOrderMail = async (
+  email: string,
+  orderItems: CartItemData[],
+  paymentOption: PaymentOption
+) => {
+  try {
+    const timeSended: Date = new Date();
+    const totalCost: number = orderItems.reduce(
+      (total, item) => total + item.product.price * item.quantity,
+      0
+    );
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/PlaceOrderMail.ejs"),
+      {
+        paymentMethod: paymentOption.paymentMethod,
+        deliveryAddress: paymentOption.deliveryAddress,
+        orderItems,
+        totalCost,
+      }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.PLACE_ORDER} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    sendMailFromGmail(mailData);
+  } catch (error: any) {
+    console.log(error);
+  }
+};
+
+const sendCartReminderMail = async (
+  email: string,
+  cartItems: CartItemMail[]
+): Promise<SMTPTransport.SentMessageInfo | undefined> => {
+  try {
+    const timeSended: Date = new Date();
+    const totalCost: number = cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/CartReminderMail.ejs"),
+      {
+        cartItems,
+        totalCost,
+      }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.CART_REMINDER} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    const sender = await sendMailFromGmail(mailData);
+    return sender;
+  } catch (error: any) {
+    console.log(error);
+  }
 };
 
 export {
   sendVerifyMail,
-  sendRecoveryLink,
+  sendRecoveryMail,
   sendPlaceOrderMail,
   sendCartReminderMail,
 };

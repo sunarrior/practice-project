@@ -1,31 +1,37 @@
-/* eslint-disable no-lonely-if */
 import React, { useState, useEffect, useContext } from "react";
-import { useRouter } from "next/router";
+import { NextRouter, useRouter } from "next/router";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
 import { AdminContext } from "@/context/admin.context";
-import Product from "@/components/product";
-import ProductModalForm from "@/components/product-modal-form";
+import { CategoryData } from "@/interface/CategoryData";
+import { ProductData } from "@/interface/ProductData";
+import ProductCard from "@/components/product-card";
+import AdminProductModal from "@/components/admin-product-modal";
 import CategoryCheckbox from "@/components/category-checkbox";
 import API from "@/config/axios.config";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
 
 function CategoryListCheckbox({
   data,
   onCheckboxClick,
 }: {
-  data: any;
-  onCheckboxClick: any;
+  data: CategoryData[];
+  onCheckboxClick: React.ChangeEventHandler<HTMLInputElement>;
 }): React.ReactElement {
-  const categoryListCheckbox = data.map((category: any) => {
-    return (
-      <CategoryCheckbox
-        key={category.id}
-        id={category.id}
-        categoryName={category.name}
-        onCheckboxClick={onCheckboxClick}
-      />
-    );
-  });
+  const categoryListCheckbox: React.ReactElement[] = data.map(
+    (category: CategoryData) => {
+      return (
+        <CategoryCheckbox
+          key={category.id}
+          id={category.id as number}
+          categoryName={category.name}
+          onCheckboxClick={onCheckboxClick}
+        />
+      );
+    }
+  );
   return (
     <>
       <ul className="fixed w-48 h-fit text-sm font-medium text-gray-900 bg-gray-400 border border-gray-300 rounded-lg">
@@ -38,108 +44,116 @@ function CategoryListCheckbox({
 function ProductList({
   data,
   selectedProducts,
-  handleProductSelectChange,
+  onProductSelectChange,
 }: {
-  data: any;
+  data: ProductData[];
   selectedProducts: number[];
-  handleProductSelectChange: (key: number) => void;
+  onProductSelectChange: (key: number) => void;
 }): React.ReactElement {
-  const productList = data.map((product: any) => {
+  const productList: React.ReactElement[] = data.map((product: ProductData) => {
     return (
-      <Product
+      <ProductCard
         key={product.id}
         id={product.id}
         url={product.url || "/blank-image.jpg"}
         productName={product.name}
         price={product.price}
         checked={selectedProducts.includes(product.id)}
-        handleProductSelectChange={handleProductSelectChange}
+        onProductSelectChange={onProductSelectChange}
       />
     );
   });
-  return productList;
+  return <>{productList}</>;
 }
 
 export default function Index(): React.ReactElement {
-  const router = useRouter();
+  const router: NextRouter = useRouter();
   const { isAdmin } = useContext(AdminContext);
-  const [categoryList, setCategoryList] = useState<any[]>([]);
-  const [productList, setProductList] = useState<any[]>([]);
+  const [categoryList, setCategoryList] = useState<CategoryData[]>([]);
+  const [productList, setProductList] = useState<ProductData[]>([]);
   const [filterOption, setFilterOption] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState("name");
   const [showProductModal, setShowProductModal] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const categories = await API.get("/category");
-        const products = await API.get("/product");
-        const sortCategories = categories.data.categoryList.sort(
-          (c1: any, c2: any) => c1.name.localeCompare(c2.name)
-        );
-        let filterProduct = products.data.productList.map((product: any) => {
-          if (filterOption.length <= 0) {
-            return product;
-          }
-
-          for (const option of filterOption) {
-            if (product.categories.includes(option)) {
+        const categories: AxiosResponse = await API.get("/categories");
+        const products: AxiosResponse = await API.get("/products");
+        const sortCategories: CategoryData[] =
+          categories.data.categoryList.sort(
+            (c1: CategoryData, c2: CategoryData) =>
+              c1.name.localeCompare(c2.name)
+          );
+        let productFilter: ProductData[] = products.data.productList.map(
+          (product: ProductData) => {
+            if (filterOption.length <= 0) {
               return product;
             }
+
+            filterOption.forEach((option: string) => {
+              if (product.categories?.includes(option)) {
+                return product;
+              }
+            });
+            return undefined;
           }
-          return undefined;
-        });
-        filterProduct = filterProduct.filter(
-          (product: any) => product !== undefined
         );
-        const sortProducts = filterProduct.sort((p1: any, p2: any) => {
-          if (sortOption === "DescName") {
-            return p2.name.localeCompare(p1.name);
+        productFilter = productFilter.filter(
+          (product: ProductData) => product !== undefined
+        );
+        const sortProducts: ProductData[] = productFilter.sort(
+          (p1: ProductData, p2: ProductData) => {
+            if (sortOption === "DescName") {
+              return p2.name.localeCompare(p1.name);
+            }
+            if (sortOption === "AscPrice") {
+              return p1.price - p2.price;
+            }
+            if (sortOption === "DescPrice") {
+              return p2.price - p1.price;
+            }
+            return p1.name.localeCompare(p2.name);
           }
-          if (sortOption === "AscPrice") {
-            return p1.price - p2.price;
-          }
-          if (sortOption === "DescPrice") {
-            return p2.price - p1.price;
-          }
-          return p1.name.localeCompare(p2.name);
-        });
+        );
         setCategoryList(sortCategories);
         setProductList(sortProducts);
       } catch (error: any) {
         toast(error.response.data.msg, { type: "error", autoClose: 3000 });
       }
     })();
-  }, [filterOption, sortOption]);
+  }, [filterOption, isAdmin, sortOption]);
 
-  function handleCheckboxChange(e: any) {
+  function handleCheckboxChange(e: React.ChangeEvent<HTMLInputElement>): void {
     if (filterOption.includes(e.target.value)) {
       if (!e.target.checked) {
-        setFilterOption(
+        return setFilterOption(
           filterOption?.filter((option: string) => option !== e.target.value)
         );
       }
-    } else {
-      if (e.target.checked) {
-        setFilterOption([...(filterOption as string[]), e.target.value]);
-      }
+      return;
+    }
+    if (e.target.checked) {
+      setFilterOption([...(filterOption as string[]), e.target.value]);
     }
   }
 
-  function handleSortOptionChange(e: React.ChangeEvent<HTMLSelectElement>) {
+  function handleSortOptionChange(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ): void {
     setSortOption(e.target.value);
   }
 
-  function handleShowProductModal(state: boolean) {
+  function handleShowProductModal(state: boolean): void {
     setShowProductModal(state);
   }
 
-  function handleAddProduct() {
+  function handleAddProduct(): void {
     router.reload();
   }
 
-  function handleProductSelectChange(key: number) {
+  function handleProductSelectChange(key: number): void {
     if (!selectedProducts.includes(key)) {
       return setSelectedProducts([...selectedProducts, key]);
     }
@@ -148,7 +162,7 @@ export default function Index(): React.ReactElement {
     );
   }
 
-  async function handleDeleteProduct() {
+  async function handleDeleteProduct(): Promise<any> {
     try {
       if (selectedProducts.length === 0) {
         return toast(
@@ -159,17 +173,19 @@ export default function Index(): React.ReactElement {
           }
         );
       }
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
         data: selectedProducts,
       };
-      const result = await API.delete("/product", config);
+      const result: AxiosResponse = await API.delete("/products", config);
       toast(result.data.msg, { type: "success", autoClose: 3000 });
       router.reload();
     } catch (error: any) {
@@ -180,7 +196,7 @@ export default function Index(): React.ReactElement {
   return (
     <>
       {showProductModal && (
-        <ProductModalForm
+        <AdminProductModal
           handleShowModal={handleShowProductModal}
           onProductAction={handleAddProduct}
         />
@@ -232,7 +248,7 @@ export default function Index(): React.ReactElement {
                   <ProductList
                     data={productList}
                     selectedProducts={selectedProducts}
-                    handleProductSelectChange={handleProductSelectChange}
+                    onProductSelectChange={handleProductSelectChange}
                   />
                 ) : null}
               </div>

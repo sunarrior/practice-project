@@ -2,7 +2,7 @@ import "express";
 
 declare module "express" {
   interface Request {
-    username?: string;
+    id?: number;
     role?: string;
   }
 }

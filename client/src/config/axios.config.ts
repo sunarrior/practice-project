@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/dot-notation */
 import axios, { AxiosInstance } from "axios";
 
 const API: AxiosInstance = axios.create({

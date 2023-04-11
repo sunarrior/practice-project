@@ -33,7 +33,7 @@ export default function CheckoutModal({
 }: {
   data: any;
   handleShowModal: (isShow: boolean) => void;
-  onPlaceOrder: (msg: string, typeMsg: string) => void;
+  onPlaceOrder: (msg: string) => void;
 }): React.ReactElement {
   const [paymentOption, setPaymentOption] = useState(paymentOptionDefault);
   const [warning, setWarning] = useState(false);
@@ -89,11 +89,8 @@ export default function CheckoutModal({
         items: data,
         paymentOption,
       };
-      const result = await API.post("/order", orderData, config);
-      onPlaceOrder(
-        result.data.msg,
-        result.data.status.localeCompare("success") === 0 ? "success" : "error"
-      );
+      const result = await API.post("/orders", orderData, config);
+      onPlaceOrder(result.data.msg);
     } catch (error: any) {
       toast(error.response.data.msg, { type: "error", autoClose: 3000 });
     }

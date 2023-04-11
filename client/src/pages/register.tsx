@@ -1,49 +1,54 @@
 import { useState } from "react";
 import Link from "next/link";
-import Notify from "@/components/notify";
+import { AxiosResponse } from "axios";
 
+import { RegisterData } from "@/interface/UserData";
+import { NotifyData } from "@/interface/NotifyData";
+import Notify from "@/components/notify";
 import API from "../config/axios.config";
 
-const registerInfoDefault = {
+const registerInfoDefault: RegisterData = {
   fullName: "",
   username: "",
   email: "",
   password: "",
   repeatPassword: "",
 };
-const notifyDefault = { isFailed: false, msg: "" };
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
 
-export default function Register() {
+export default function Register(): React.ReactElement {
   const [registerInfo, setRegisterInfo] = useState(registerInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 
-  function handleFullnameChange(e: any) {
+  function handleFullnameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, fullName: e.target.value });
   }
 
-  function handleUsernameChange(e: any) {
+  function handleUsernameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, username: e.target.value });
   }
 
-  function handleEmailChange(e: any) {
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, email: e.target.value });
   }
 
-  function handlePasswordChange(e: any) {
+  function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, password: e.target.value });
   }
 
-  function handleRepeatPasswordChange(e: any) {
+  function handleRepeatPasswordChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setRegisterInfo({ ...registerInfo, repeatPassword: e.target.value });
   }
 
-  async function handleSubmit(e: any) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> {
     e.preventDefault();
     try {
-      const data: { [index: string]: string } = { ...registerInfo };
-
-      for (const index in data) {
-        if (data[index] === null) {
+      Object.values(registerInfo).forEach((value: string) => {
+        if (value === null) {
           setRegisterInfo({
             ...registerInfo,
             password: "",
@@ -54,25 +59,24 @@ export default function Register() {
             msg: "Please provide all required information",
           });
         }
-      }
+      });
 
-      if (data.password !== data.repeatPassword) {
+      if (registerInfo.password !== registerInfo.repeatPassword) {
         setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
         return setNotify({
           isFailed: true,
           msg: "Repeat password does not match the password",
         });
       }
-      const result = await API.post("/auth/register", data);
-      if (result.data.status === "failed") {
-        setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-        return setNotify({ isFailed: true, msg: result.data.msg });
-      }
+      const result: AxiosResponse = await API.post(
+        "/auth/register",
+        registerInfo
+      );
       setRegisterInfo(registerInfoDefault);
       setNotify({ isFailed: false, msg: result.data.msg });
     } catch (error: any) {
       setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-      return setNotify({ isFailed: true, msg: error.message });
+      setNotify({ isFailed: true, msg: error.response.data.msg });
     }
   }
 

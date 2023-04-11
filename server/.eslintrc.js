@@ -24,14 +24,12 @@ module.exports = {
           "endOfLine": "auto"
         }
       ],
-      "import/prefer-default-export": "off",
-      "no-restricted-syntax": "off",
-      "no-console": "off",
-      "@typescript-eslint/ban-types": "off",
-      "object-shorthand": "off",
-      "import/no-extraneous-dependencies": "off",
-      "import/no-cycle": "off",
-      "consistent-return": "off",
+      "@typescript-eslint/no-inferrable-types": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "import/prefer-default-export": "off",
+      "no-console": "off",
+      "prefer-destructuring": "off",
+      "consistent-return": "off",
+      "import/no-cycle": "off",
     },
   }

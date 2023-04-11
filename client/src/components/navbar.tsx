@@ -1,5 +1,4 @@
-/* eslint-disable import/no-extraneous-dependencies */
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext } from "react";
 import Link from "next/link";
 import { Menu } from "@headlessui/react";
 import { AiOutlineShoppingCart } from "react-icons/ai";
@@ -8,7 +7,6 @@ import { HiOutlineUserCircle } from "react-icons/hi";
 import { SessionContext } from "@/context/session.context";
 import { AdminContext } from "@/context/admin.context";
 import { CartContext } from "@/context/cart.context";
-import API from "@/config/axios.config";
 
 function IsLoggedIn({
   isLoggedIn,
@@ -19,7 +17,7 @@ function IsLoggedIn({
 }): React.ReactElement {
   const userMenus = [
     { name: "Profile", url: "/profile" },
-    { name: "Order History", url: "/order" },
+    { name: "Order History", url: "/orders" },
     { name: "Logout", url: "/logout" },
   ];
   if (isLoggedIn) {
@@ -84,27 +82,7 @@ export default function NavBar({
 }): React.ReactElement {
   const { isLoggedIn } = useContext(SessionContext);
   const { isAdmin } = useContext(AdminContext);
-  const [cartState, setCartState] = useState(0);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-        if (!userObj) {
-          return;
-        }
-        const config = {
-          headers: {
-            Authorization: `Bearer ${userObj?.access_token}`,
-          },
-        };
-        const result = await API.get("/cart/state", config);
-        setCartState(result.data.cartState);
-      } catch (error: any) {
-        // toast(error.response.data.msg, { type: "error", autoClose: 3000 });
-      }
-    })();
-  }, [isLoggedIn]);
+  const { cartState } = useContext(CartContext);
 
   return (
     <>
@@ -131,7 +109,7 @@ export default function NavBar({
                   </Link>
                   <Link
                     className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
-                    href="/category"
+                    href="/categories"
                   >
                     Category
                   </Link>
@@ -151,13 +129,13 @@ export default function NavBar({
                     <>
                       <Link
                         className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
-                        href="/admin/user"
+                        href="/admin/users"
                       >
                         User List
                       </Link>
                       <Link
                         className="my-1 text-sm text-gray-700 font-medium hover:text-indigo-500 md:mx-4 md:my-0"
-                        href="/admin/order"
+                        href="/admin/orders"
                       >
                         Order List
                       </Link>
@@ -169,16 +147,14 @@ export default function NavBar({
               <div className="flex items-center">
                 <IsLoggedIn
                   isLoggedIn={isLoggedIn as boolean}
-                  cartState={cartState}
+                  cartState={cartState as number}
                 />
               </div>
             </div>
           </nav>
         </div>
       </div>
-      <CartContext.Provider value={{ cartState, setCartState }}>
-        <div className="mt-20">{children}</div>
-      </CartContext.Provider>
+      <div className="mt-20">{children}</div>
     </>
   );
 }

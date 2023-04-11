@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { AxiosResponse } from "axios";
 
+import { NotifyData } from "@/interface/NotifyData";
 import API from "@/config/axios.config";
 import Notify from "@/components/notify";
 
-const accountInfoDefault = "";
-const notifyDefault = { isFailed: false, msg: "" };
+const accountInfoDefault: string = "";
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
 
 export default function FindAccount(): React.ReactElement {
   const [notify, setNotify] = useState(notifyDefault);
@@ -19,12 +21,12 @@ export default function FindAccount(): React.ReactElement {
   ): Promise<void> {
     try {
       e.preventDefault();
-      const result = await API.post("/auth/recovery?findaccount=1", {
-        account,
-      });
-      if (result.data.status === "failed") {
-        return setNotify({ isFailed: true, msg: result.data.msg });
-      }
+      const result: AxiosResponse = await API.post(
+        "/auth/recovery?findaccount=1",
+        {
+          account,
+        }
+      );
       setAccount(accountInfoDefault);
       setNotify({ ...notifyDefault, msg: result.data.msg });
     } catch (error: any) {

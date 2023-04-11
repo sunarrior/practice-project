@@ -1,6 +1,7 @@
-/* eslint-disable array-callback-return */
 import { Request, Response } from "express";
+import { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
 
+import cloudinary from "../config/cloudinary.config";
 import productDB from "../db/product.db";
 import categoryDB from "../db/category.db";
 import cartDB from "../db/cart.db";
@@ -8,65 +9,19 @@ import Product from "../entity/Product";
 import Category from "../entity/Category";
 import ProductCategory from "../entity/ProductCategory";
 import ProductImage from "../entity/ProductImage";
-import cloudinary from "../config/cloudinary.config";
 import CartItem from "../entity/CartItem";
-
-const addProduct = async (req: Request, res: Response) => {
-  try {
-    const { name, categories, description, quantity, price, filesPath } =
-      req.body;
-    const product: Product = new Product();
-    product.name = name;
-    product.description = description;
-    product.quantity = quantity;
-    product.price = price;
-
-    const categoryList: Category[] = await Promise.all(
-      categories.map(async (category: any) => {
-        const tmpcategory = await categoryDB.getCategoryById(category.id);
-        return tmpcategory;
-      })
-    );
-    const newProduct: Product = await productDB.addProduct(product);
-    const productCategories: ProductCategory[] = categoryList.map(
-      (category: any) => {
-        const productCategory: ProductCategory = new ProductCategory();
-        productCategory.product = newProduct;
-        productCategory.category = category;
-        return productCategory;
-      }
-    );
-    await productDB.addProductCategory(productCategories);
-    const imageList: ProductImage[] = await Promise.all(
-      filesPath.map(async (image: any) => {
-        const productImage: ProductImage = new ProductImage();
-        await cloudinary.uploader.upload(
-          image.url,
-          { folder: "product_img" },
-          async (error: any, result: any) => {
-            productImage.url = result.secure_url;
-          }
-        );
-        productImage.product = newProduct;
-        productImage.isDefault = image.isDefault;
-        return productImage;
-      })
-    );
-    productDB.addProductImage(imageList);
-    res
-      .status(200)
-      .json({ status: "success", msg: "Added product successfully" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
-  }
-};
+import {
+  ProductCategoryData,
+  ProductData,
+  ProductDetail,
+  ProductImageData,
+} from "../interface/ProductData";
 
 const getAllProducts = async (req: Request, res: Response) => {
   try {
-    const result = await productDB.getAllProducts();
-    let productList = result.map((product: Product) => {
-      if (product?.quantity > 0) {
+    const result: Product[] = await productDB.getAllProducts();
+    const productList: (ProductData | undefined)[] = result.map(
+      (product: Product) => {
         return {
           id: product?.id,
           name: product?.name,
@@ -79,38 +34,14 @@ const getAllProducts = async (req: Request, res: Response) => {
           ),
         };
       }
-    });
-    productList = productList.filter((product: any) => product !== undefined);
-    res.status(200).json({ stauts: "success", productList: productList });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
-  }
-};
-
-const getProductByCategory = async (req: Request, res: Response) => {
-  try {
-    const { categoryid } = req.params;
-    const result: Product[] = await productDB.getProductByCategory(
-      categoryid as unknown as number
     );
-    let productList = result.map((product: Product) => {
-      if (product?.quantity > 0) {
-        return {
-          id: product?.id,
-          name: product?.name,
-          price: product?.price,
-          url: product?.productImages?.filter(
-            (image: ProductImage) => image.isDefault
-          )[0]?.url,
-        };
-      }
-    });
-    productList = productList.filter((product: any) => product !== undefined);
-    res.status(200).json({ status: "success", productList: productList });
-  } catch (error) {
+    const productListFilter: (ProductData | undefined)[] = productList.filter(
+      (product: any) => product !== undefined
+    );
+    res.status(200).json({ productList: productListFilter });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 
@@ -121,12 +52,15 @@ const getProductDetail = async (req: Request, res: Response) => {
       productId as unknown as number,
       true
     );
-    const productDetail = {
-      name: product?.name,
-      quantity: product?.quantity,
-      price: product?.price,
-      description: product?.description,
-      imageList: product?.productImages?.map((image: ProductImage) => {
+    if (!product) {
+      return res.status(404).json({ msg: "Product not found" });
+    }
+    const productDetail: ProductDetail = {
+      name: product.name,
+      quantity: product.quantity,
+      price: product.price,
+      description: product.description,
+      imageList: product.productImages?.map((image: ProductImage) => {
         return {
           id: image.id,
           url: image.url,
@@ -142,17 +76,71 @@ const getProductDetail = async (req: Request, res: Response) => {
         }
       ),
     };
-    res.status(200).json({ stauts: "success", productDetail: productDetail });
-  } catch (error) {
+    res.status(200).json({ productDetail });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
+  }
+};
+
+const addProduct = async (req: Request, res: Response) => {
+  try {
+    const { name, newCategories, description, quantity, price, filesPath } =
+      req.body;
+    const product: Product = new Product();
+    product.name = name;
+    product.description = description;
+    product.quantity = quantity;
+    product.price = price;
+
+    const categoryList: Category[] = await Promise.all(
+      newCategories.map(async (category: ProductCategoryData) => {
+        const tmpcategory: Category | null = await categoryDB.getCategoryById(
+          category.id
+        );
+        return tmpcategory;
+      })
+    );
+    const newProduct: Product = await productDB.addProduct(product);
+    const productCategories: ProductCategory[] = categoryList.map(
+      (category: Category) => {
+        const productCategory: ProductCategory = new ProductCategory();
+        productCategory.product = newProduct;
+        productCategory.category = category;
+        return productCategory;
+      }
+    );
+    await productDB.addProductCategory(productCategories);
+    const imageList: ProductImage[] = await Promise.all(
+      filesPath.map(async (image: ProductImageData) => {
+        const productImage: ProductImage = new ProductImage();
+        await cloudinary.uploader.upload(
+          image.url,
+          { folder: "product_img" },
+          async (
+            error: UploadApiErrorResponse | undefined,
+            result: UploadApiResponse | undefined
+          ) => {
+            productImage.url = result?.secure_url as string;
+          }
+        );
+        productImage.product = newProduct;
+        productImage.isDefault = image.isDefault;
+        return productImage;
+      })
+    );
+    await productDB.addProductImage(imageList);
+    res.status(200).json({ msg: "Added product successfully" });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 
 const updateProductDetail = async (req: Request, res: Response) => {
   try {
+    const { id } = req.params;
     const {
-      id,
       name,
       removeCategories,
       newCategories,
@@ -165,16 +153,16 @@ const updateProductDetail = async (req: Request, res: Response) => {
     } = req.body;
 
     // check if product exists
-    const product: Product | null = await productDB.getProductById(id);
+    const product: Product | null = await productDB.getProductById(
+      id as unknown as number
+    );
     if (!product) {
-      return res
-        .status(404)
-        .json({ status: "failed", message: "Product not found" });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     // remove image if have some
     const imageRemoveList: ProductImage[] = await Promise.all(
-      imagesRemove.map(async (image: any) => {
+      imagesRemove.map(async (image: ProductImageData) => {
         const productImage: ProductImage | null =
           await productDB.getProductImageById(image.id);
         return productImage;
@@ -198,11 +186,12 @@ const updateProductDetail = async (req: Request, res: Response) => {
         await productDB.getProductImagesByProductId(product.id);
       const imageUpdateList: (ProductImage | undefined)[] = productImages.map(
         (image: ProductImage) => {
-          for (const imageUpdate of imagesUpdate) {
+          imagesUpdate.forEach((imageUpdate: ProductImageData) => {
             if (image.id === imageUpdate.id) {
               return { ...image, isDefault: imageUpdate.isDefault };
             }
-          }
+          });
+          return undefined;
         }
       );
       const imageUpdateListFilter: (ProductImage | undefined)[] =
@@ -214,13 +203,16 @@ const updateProductDetail = async (req: Request, res: Response) => {
 
     // upload new image if have some
     const imageList: ProductImage[] = await Promise.all(
-      filesPath.map(async (image: any) => {
+      filesPath.map(async (image: ProductImageData) => {
         const productImage: ProductImage = new ProductImage();
         await cloudinary.uploader.upload(
           image.url,
           { folder: "product_img" },
-          async (error: any, result: any) => {
-            productImage.url = result.secure_url;
+          async (
+            error: UploadApiErrorResponse | undefined,
+            result: UploadApiResponse | undefined
+          ) => {
+            productImage.url = result?.secure_url as string;
           }
         );
         productImage.product = product;
@@ -232,7 +224,7 @@ const updateProductDetail = async (req: Request, res: Response) => {
 
     // remove categories of product if have some
     const removeCategoriesList: ProductCategory[] = await Promise.all(
-      removeCategories.map(async (category: any) => {
+      removeCategories.map(async (category: ProductCategoryData) => {
         const tmpProductCategory: ProductCategory | null =
           await productDB.getProductCategory(product.id, category.id);
         if (!tmpProductCategory) {
@@ -249,7 +241,7 @@ const updateProductDetail = async (req: Request, res: Response) => {
 
     // add category to product if have some
     const updateCategoriesList: ProductCategory[] = await Promise.all(
-      newCategories.map(async (category: any) => {
+      newCategories.map(async (category: ProductCategoryData) => {
         const tmpcategory: Category | null = await categoryDB.getCategoryById(
           category.id
         );
@@ -274,12 +266,10 @@ const updateProductDetail = async (req: Request, res: Response) => {
     tmpProduct.quantity = quantity;
     tmpProduct.price = price;
     await productDB.updateProduct(product.id, tmpProduct);
-    res
-      .status(200)
-      .json({ status: "success", msg: "Updated product successfully" });
+    res.status(200).json({ msg: "Updated product successfully" });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 
@@ -287,7 +277,7 @@ const remmoveProducts = async (req: Request, res: Response) => {
   try {
     const ids: number[] = req.body;
     const products: (Product | undefined)[] = await Promise.all(
-      ids.map(async (id) => {
+      ids.map(async (id: number) => {
         const product: Product | null = await productDB.getProductById(id);
         if (!product) {
           return;
@@ -300,7 +290,7 @@ const remmoveProducts = async (req: Request, res: Response) => {
     );
 
     // check if product live in some cart
-    for (const product of productsFilter) {
+    productsFilter.forEach(async (product: Product | undefined) => {
       // eslint-disable-next-line no-await-in-loop
       const cartItems: CartItem[] = await cartDB.getCartItemsByProductId(
         product?.id as number
@@ -311,23 +301,20 @@ const remmoveProducts = async (req: Request, res: Response) => {
           msg: "This product has in cart of users",
         });
       }
-    }
+    });
 
     await productDB.removeProducts(productsFilter as Product[]);
-    res
-      .status(200)
-      .json({ status: "success", msg: "Removed products successfully" });
-  } catch (error) {
+    res.status(200).json({ msg: "Removed products successfully" });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server Error" });
+    res.status(500).json({ msg: "Server Error" });
   }
 };
 
 export default {
-  addProduct,
   getAllProducts,
-  getProductByCategory,
   getProductDetail,
+  addProduct,
   updateProductDetail,
   remmoveProducts,
 };

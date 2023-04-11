@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import path from "path";
 import dotenv from "dotenv";
 
@@ -14,7 +13,6 @@ interface ENV {
   PORT: number | undefined;
   GMAIL_USER: string | undefined;
   GMAIL_PASSWORD: string | undefined;
-  SESSION_SECRET: string | undefined;
   ACCESS_TOKEN_SECRET: string | undefined;
   ACCESS_TOKEN_LIFE: string | undefined;
   CLOUD_NAME: string | undefined;
@@ -32,7 +30,6 @@ interface Config {
   PORT: number;
   GMAIL_USER: string;
   GMAIL_PASSWORD: string;
-  SESSION_SECRET: string;
   ACCESS_TOKEN_SECRET: string;
   ACCESS_TOKEN_LIFE: string;
   CLOUD_NAME: string;
@@ -51,7 +48,6 @@ const getEnvConfig = (): ENV => {
     PORT: process.env.PORT ? Number(process.env.PORT) : 4000,
     GMAIL_USER: process.env.GMAIL_USER,
     GMAIL_PASSWORD: process.env.GMAIL_PASSWORD,
-    SESSION_SECRET: process.env.SESSION_SECRET,
     ACCESS_TOKEN_SECRET: process.env.ACCESS_TOKEN_SECRET,
     ACCESS_TOKEN_LIFE: process.env.ACCESS_TOKEN_LIFE,
     CLOUD_NAME: process.env.CLOUD_NAME,
@@ -61,11 +57,11 @@ const getEnvConfig = (): ENV => {
 };
 
 const verifyEnvConfig = (config: ENV): Config => {
-  for (const [key, value] of Object.entries(config)) {
+  Object.entries(config).forEach((key, value) => {
     if (value === undefined) {
       throw new Error(`${key} does not exist in .env`);
     }
-  }
+  });
   return config as Config;
 };
 

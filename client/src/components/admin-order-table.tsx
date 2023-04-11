@@ -1,4 +1,8 @@
-export default function OrderTable({ children }: { children: any | any[] }) {
+export default function AdminOrderTable({
+  children,
+}: {
+  children: React.ReactElement | React.ReactElement[];
+}) {
   return (
     <div className="relative overflow-x-auto shadow-md mx-10 rounded-md">
       <table className="w-full text-sm text-left">

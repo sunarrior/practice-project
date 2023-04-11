@@ -1,26 +1,15 @@
+import { Repository } from "typeorm";
+
 import { dataSource } from "../config/data-source.config";
 import Product from "../entity/Product";
 import ProductCategory from "../entity/ProductCategory";
 import ProductImage from "../entity/ProductImage";
 
-const productRepos = dataSource.getRepository(Product);
-const productCategoryRepos = dataSource.getRepository(ProductCategory);
-const productImageRepos = dataSource.getRepository(ProductImage);
-
-const addProduct = async (product: Product): Promise<Product> => {
-  const newProduct: Product = await productRepos.save(product);
-  return newProduct;
-};
-
-const addProductCategory = async (
-  productCategory: ProductCategory[]
-): Promise<void> => {
-  await productCategoryRepos.save(productCategory);
-};
-
-const addProductImage = async (productImage: ProductImage[]): Promise<void> => {
-  await productImageRepos.save(productImage);
-};
+const productRepos: Repository<Product> = dataSource.getRepository(Product);
+const productCategoryRepos: Repository<ProductCategory> =
+  dataSource.getRepository(ProductCategory);
+const productImageRepos: Repository<ProductImage> =
+  dataSource.getRepository(ProductImage);
 
 const getAllProducts = async (): Promise<Product[]> => {
   const products: Product[] = await productRepos.find({
@@ -38,7 +27,7 @@ const getAllProducts = async (): Promise<Product[]> => {
 };
 
 const getProductByCategory = async (categoryid: number): Promise<Product[]> => {
-  const result = await productRepos.find({
+  const result: Product[] = await productRepos.find({
     relations: {
       productImages: true,
     },
@@ -84,14 +73,16 @@ const getProductCategory = async (
 const getProductThumbnail = async (
   productid: number
 ): Promise<ProductImage> => {
-  const result = await productImageRepos.find({
+  const result: ProductImage[] = await productImageRepos.find({
     where: {
       product: {
         id: productid,
       },
     },
   });
-  const thumbnail = result.filter((image) => image.isDefault === true);
+  const thumbnail: ProductImage[] = result.filter(
+    (image) => image.isDefault === true
+  );
   return thumbnail[0];
 };
 
@@ -138,6 +129,21 @@ const getProductDetail = async (
   return result;
 };
 
+const addProduct = async (product: Product): Promise<Product> => {
+  const newProduct: Product = await productRepos.save(product);
+  return newProduct;
+};
+
+const addProductCategory = async (
+  productCategory: ProductCategory[]
+): Promise<void> => {
+  await productCategoryRepos.save(productCategory);
+};
+
+const addProductImage = async (productImage: ProductImage[]): Promise<void> => {
+  await productImageRepos.save(productImage);
+};
+
 const updateProduct = async (
   productid: number,
   product: Product
@@ -168,9 +174,6 @@ const removeProductImages = async (
 };
 
 export default {
-  addProduct,
-  addProductCategory,
-  addProductImage,
   getAllProducts,
   getProductByCategory,
   getProductById,
@@ -179,6 +182,9 @@ export default {
   getProductImagesByProductId,
   getProductImageById,
   getProductDetail,
+  addProduct,
+  addProductCategory,
+  addProductImage,
   updateProduct,
   updateProductImage,
   removeProducts,
