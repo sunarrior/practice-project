@@ -1,31 +1,37 @@
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
 import { useState, useEffect } from "react";
-import API from "@/config/axios.config";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
-const notifyDefault = { isFailed: false, msg: "" };
+import { NotifyData } from "@/interface/NotifyData";
+import API from "@/config/axios.config";
 
-export default function Verify() {
-  const router = useRouter();
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
+
+export default function Verify(): React.ReactElement {
+  const router: NextRouter = useRouter();
   const [notify, setNotify] = useState(notifyDefault);
 
-  const verifyToken = router.query.token;
+  const { token } = router.query;
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        if (verifyToken !== undefined) {
-          const result = await API.post("/auth/verify", { token: verifyToken });
-          if (result.data.status === "failed") {
-            return setNotify({ isFailed: true, msg: result.data.msg });
-          }
-          return setNotify({ isFailed: false, msg: result.data.msg });
+        if (!token) {
+          return;
         }
+        const result: AxiosResponse = await API.post("/auth/verify", {
+          token,
+        });
+        setNotify({ isFailed: false, msg: result.data.msg });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
-  }, [verifyToken]);
+  }, [token]);
 
   return (
     <>

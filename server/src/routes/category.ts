@@ -1,14 +1,16 @@
 import { Router } from "express";
 
-import { tokenValidation } from "../middleware/token-validation";
+import { jwtValidation } from "../middleware/jwt-validation";
+import { isAdmin } from "../middleware/is-admin";
 import category from "../controllers/category.controller";
 
 const router: Router = Router();
 
 router.get("/", category.getAllCategories);
 router.get("/:id", category.getCategoryById);
-router.post("/", tokenValidation, category.addNewCategory);
-router.put("/", tokenValidation, category.updateCategory);
-router.delete("/", tokenValidation, category.deleteCategory);
+router.get("/:id/products", category.getProductByCategory);
+router.post("/", [jwtValidation, isAdmin], category.addNewCategory);
+router.put("/:id", [jwtValidation, isAdmin], category.updateCategory);
+router.delete("/", [jwtValidation, isAdmin], category.deleteCategory);
 
 export default router;

@@ -1,9 +1,12 @@
+import { Repository } from "typeorm";
+
 import Order from "../entity/Order";
 import OrderItem from "../entity/OrderItem";
 import { dataSource } from "../config/data-source.config";
 
-const orderRepos = dataSource.getRepository(Order);
-const orderItemRepos = dataSource.getRepository(OrderItem);
+const orderRepos: Repository<Order> = dataSource.getRepository(Order);
+const orderItemRepos: Repository<OrderItem> =
+  dataSource.getRepository(OrderItem);
 
 const getAllOrders = async (): Promise<Order[]> => {
   const result: Order[] = await orderRepos.find({

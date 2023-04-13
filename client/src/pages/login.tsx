@@ -1,51 +1,56 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { useState, useContext } from "react";
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
+import Link from "next/link";
+import jwtDecode from "jwt-decode";
+import { toast } from "react-toastify";
+import { AxiosResponse } from "axios";
+
 import { SessionContext } from "@/context/session.context";
 import { AdminContext } from "@/context/admin.context";
-import jwtDecode from "jwt-decode";
-
+import { LoginData, UserToken } from "@/interface/UserData";
+import { NotifyData } from "@/interface/NotifyData";
 import Notify from "@/components/notify";
-import { toast } from "react-toastify";
 import API from "../config/axios.config";
 
-const loginInfoDefault = { account: "", password: "" };
-const notifyDefault = { isFailed: false, msg: "" };
+const loginInfoDefault: LoginData = { account: "", password: "" };
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
 
-export default function LoginForm() {
-  const router = useRouter();
+export default function LoginForm(): React.ReactElement {
+  const router: NextRouter = useRouter();
   const { setIsLoggedIn } = useContext(SessionContext);
   const { setIsAdmin } = useContext(AdminContext);
   const [loginInfo, setLoginInfo] = useState(loginInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 
-  function handleAccountChange(e: any) {
+  function handleAccountChange(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginInfo({ ...loginInfo, account: e.target.value });
   }
 
-  function handlePasswordChange(e: any) {
+  function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginInfo({ ...loginInfo, password: e.target.value });
   }
 
-  async function handleSubmit(e: any) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     try {
-      const data = { ...loginInfo };
-      const result = await API.post("/auth/login", data);
-      if (result.data.status === "failed") {
-        return setNotify({ isFailed: true, msg: result.data.msg });
-      }
+      const data: LoginData = { ...loginInfo };
+      const result: AxiosResponse = await API.post("/auth/login", data);
       (setIsLoggedIn as any)(true);
       setLoginInfo(loginInfoDefault);
       setNotify(notifyDefault);
-      const userObjDecode: any = jwtDecode(result.data.user_obj.access_token);
+      const userObjDecode: UserToken = jwtDecode(
+        result.data.user_obj.access_token
+      );
       if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
         (setIsAdmin as any)(true);
       }
       localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
       router.push("/");
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 
@@ -79,14 +84,13 @@ export default function LoginForm() {
             />
           </div>
           {notify.isFailed ? <Notify color="red" msg={notify.msg} /> : null}
-          <div className="flex px-4 mb-4 items-center">
-            <input
-              className="w-4 h-4 leading-tight rounded-lg"
-              type="checkbox"
-            />
-            <label className="ml-2 text-gray-500 text-sm font-medium">
-              Remenber me
-            </label>
+          <div className="flex justify-between mb-4">
+            <Link href="/recovery" className="link">
+              Forgot Password?
+            </Link>
+            <Link href="/register" className="link">
+              Sign Up now
+            </Link>
           </div>
           <div className="grid justify-items-center">
             <button

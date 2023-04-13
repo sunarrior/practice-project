@@ -1,16 +1,18 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
-import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 import { useState, useEffect } from "react";
 import { NextRouter, useRouter } from "next/router";
+import { AxiosResponse } from "axios";
 import jwtDecode from "jwt-decode";
 
-import NavBar from "@/components/navbar";
-import API from "@/config/axios.config";
 import { SessionContext } from "@/context/session.context";
 import { AdminContext } from "@/context/admin.context";
+import { CartContext } from "@/context/cart.context";
+import { UserToken } from "@/interface/UserData";
+import NavBar from "@/components/navbar";
+import API from "@/config/axios.config";
 
 function routerCheck(route: string): string {
   const redirectIfLoggedIn: string[] = [
@@ -28,9 +30,10 @@ function routerCheck(route: string): string {
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+  const router: NextRouter = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [cartState, setCartState] = useState(0);
   const [isAllowUrl, setIsAllowUrl] = useState(true);
 
   useEffect(() => {
@@ -50,9 +53,10 @@ export default function App({ Component, pageProps }: AppProps) {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get("/auth/session", config);
+        const result: AxiosResponse = await API.get("/auth/session", config);
         setIsLoggedIn(result.data.isLoggedIn);
-        const userObjDecode: any = jwtDecode(userObj?.access_token);
+        setCartState(result.data.cartState);
+        const userObjDecode: UserToken = jwtDecode(userObj?.access_token);
         if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
           setIsAdmin(true);
         }
@@ -80,9 +84,11 @@ export default function App({ Component, pageProps }: AppProps) {
     <>
       <SessionContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
         <AdminContext.Provider value={{ isAdmin, setIsAdmin }}>
-          <NavBar>
-            <Component {...pageProps} />
-          </NavBar>
+          <CartContext.Provider value={{ cartState, setCartState }}>
+            <NavBar>
+              <Component {...pageProps} />
+            </NavBar>
+          </CartContext.Provider>
         </AdminContext.Provider>
       </SessionContext.Provider>
       <ToastContainer />

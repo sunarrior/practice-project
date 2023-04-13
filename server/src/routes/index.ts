@@ -6,16 +6,15 @@ import category from "./category";
 import product from "./product";
 import cart from "./cart";
 
-import { validation } from "../middleware/input-validation";
-import { tokenValidation } from "../middleware/token-validation";
+import { jwtValidation } from "../middleware/jwt-validation";
 
 const router: Router = Router();
 
-router.use("/auth", validation, auth);
-router.use("/user", tokenValidation, user);
-router.use("/order", tokenValidation, order);
-router.use("/category", category);
-router.use("/product", product);
-router.use("/cart", tokenValidation, cart);
+router.use("/auth", auth);
+router.use("/user", jwtValidation, user);
+router.use("/orders", jwtValidation, order);
+router.use("/categories", category);
+router.use("/products", product);
+router.use("/cart", jwtValidation, cart);
 
 export default router;

@@ -1,10 +1,12 @@
+import { Repository } from "typeorm";
+
 import { dataSource } from "../config/data-source.config";
 import Category from "../entity/Category";
 
-const categoryRepos = dataSource.getRepository(Category);
+const categoryRepos: Repository<Category> = dataSource.getRepository(Category);
 
 const getAllCategories = async (): Promise<Category[]> => {
-  const result = await categoryRepos.find({
+  const result: Category[] = await categoryRepos.find({
     relations: {
       productCategories: {
         product: true,

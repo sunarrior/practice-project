@@ -1,30 +1,19 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
 import Image from "next/image";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
+import { UserData, UserDataUpdate } from "@/interface/UserData";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
 import API from "@/config/axios.config";
-import ButtonEdit from "@/components/button-edit";
 import { getYYYYMMDDString } from "@/utils/format.util";
 
-type ProfileType = {
-  username?: string;
-  email: string;
-  createdAt?: string;
-  role?: string;
-  status?: string;
-  fullName: string;
-  phone: string;
-  dob: string;
-  gender: boolean;
-  deliveryAddress: string;
-  avatarUrl: string;
-};
-
-const profileDefault: ProfileType = {
+const profileDefault: UserData = {
   username: "",
   email: "",
-  createdAt: getYYYYMMDDString(),
+  createdAt: new Date().toLocaleString(),
   role: "",
   status: "",
   fullName: "",
@@ -35,60 +24,65 @@ const profileDefault: ProfileType = {
   avatarUrl: "",
 };
 
-export default function Profile({
-  username,
-}: {
-  username: string;
-}): React.ReactElement {
-  const router = useRouter();
+export default function Profile({ id }: { id: number }): React.ReactElement {
+  const router: NextRouter = useRouter();
   const [profile, setProfile] = useState(profileDefault);
   const [isEdit, setIsEdit] = useState(false);
-  const [isUploadAvatar, setIsUploadAvatar] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState("");
   const [uploadProgess, setUploadProgess] = useState(0);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
         if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get(`/user/${username}`, config);
+        const result: AxiosResponse = await API.get(
+          `/user/admin/${id}`,
+          config
+        );
         setProfile({
-          username: result.data.userData.username || "",
-          email: result.data.userData.email ? result.data.userData.email : "",
+          username: result.data?.userData?.username || "",
+          email: result.data?.userData?.email || "",
           createdAt:
-            new Date(result.data.userData.createdAt).toLocaleString() || "",
-          role: result.data.userData.role || "",
-          status: result.data.userData.status || "",
-          fullName: result.data.userData.fullName
-            ? result.data.userData.fullName
-            : "",
-          phone: result.data.userData.phone ? result.data.userData.phone : "",
-          dob: result.data.userData.dob
-            ? result.data.userData.dob.substring(0, 10)
-            : getYYYYMMDDString(),
-          gender: result.data.userData.gender
-            ? result.data.userData.gender
-            : "",
-          deliveryAddress: result.data.userData.deliveryAddress
-            ? result.data.userData.deliveryAddress
-            : "",
-          avatarUrl: result.data.userData.avatarUrl
-            ? result.data.userData.avatarUrl
-            : "",
+            new Date(result.data?.userData?.createdAt).toLocaleString() || "",
+          role: result.data?.userData?.role || "",
+          status: result.data?.userData?.isVerified ? "active" : "inactive",
+          fullName: result.data?.userData?.fullName || "",
+          phone: result.data?.userData?.phone || "",
+          dob:
+            result.data?.userData?.dob?.substring(0, 10) || getYYYYMMDDString(),
+          gender:
+            result.data?.userData?.gender !== undefined
+              ? result.data?.userData?.gender
+              : true,
+          deliveryAddress: result.data?.userData?.deliveryAddress || "",
+          avatarUrl: result.data?.userData?.avatarUrl || "",
         });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
-  }, [isUploadAvatar, username]);
+  }, [id]);
+
+  function handleEdit(): void {
+    setIsEdit(true);
+  }
+
+  function handleCancle(): void {
+    setIsEdit(false);
+  }
 
   function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setProfile({ ...profile, email: e.target.value });
@@ -107,7 +101,7 @@ export default function Profile({
   }
 
   function handleGenderChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    if (e.target.value === "true") {
+    if (e.target.value) {
       return setProfile({ ...profile, gender: true });
     }
     setProfile({ ...profile, gender: false });
@@ -119,12 +113,16 @@ export default function Profile({
     setProfile({ ...profile, deliveryAddress: e.target.value });
   }
 
-  function handleEdit(): void {
-    setIsEdit(true);
-  }
-
-  function handleCancle(): void {
-    setIsEdit(false);
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    if (e.target.files === null) {
+      return;
+    }
+    const reader: FileReader = new FileReader();
+    reader.readAsDataURL(e.target.files[0]);
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    e.target.value = "";
   }
 
   async function handleSubmitInfo(
@@ -132,95 +130,50 @@ export default function Profile({
   ): Promise<any> {
     e.preventDefault();
     try {
-      const data: ProfileType = { ...profile };
-      delete data.username;
-      delete data.createdAt;
-      delete data.role;
-      delete data.status;
+      const userData: UserData = { ...profile };
+      delete userData.username;
+      delete userData.createdAt;
+      delete userData.role;
+      delete userData.status;
 
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
-      };
-      const result = await API.put(`/user/${username}`, data, config);
-      if (result.data.status === "failed") {
-        // do something
-        return router.reload();
-      }
-      setIsEdit(false);
-    } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
-    }
-  }
-
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    // e.preventDefault();
-    if (e.target.files === null) {
-      return;
-    }
-    const reader = new FileReader();
-    reader.readAsDataURL(e.target.files[0]);
-    reader.onloadend = () => {
-      setAvatarPreview(reader.result as string);
-    };
-    setIsUploadAvatar(true);
-    e.target.value = "";
-  }
-
-  async function handleImageUpload(
-    e: React.FormEvent<HTMLFormElement>
-  ): Promise<any> {
-    e.preventDefault();
-    try {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
-      if (!userObj) {
-        return;
-      }
-      const config = {
-        headers: {
-          Authorization: `Bearer ${userObj?.access_token}`,
-        },
-        onUploadProgress: (progressEvent: any) => {
+        onUploadProgress: (progressEvent: any): void => {
           const { loaded, total } = progressEvent;
           const percent: number = Math.floor((loaded * 100) / total);
           setUploadProgess(percent);
         },
       };
-      const data = { filePath: avatarPreview };
-      const result = await API.post(
-        `/user/${userObj?.username}/avatar`,
-        data,
-        config
-      );
-      if (result.data.status === "failed") {
-        // do something
-        return router.reload();
-      }
-      setProfile({ ...profile, avatarUrl: avatarPreview });
-      setAvatarPreview("");
-      setIsUploadAvatar(false);
-      setUploadProgess(0);
-    } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
-    }
-  }
+      const data: UserDataUpdate = { ...userData, filePath: avatarPreview };
 
-  function handleCancelUploadAvatar(): void {
-    setAvatarPreview("");
-    setIsUploadAvatar(false);
+      await API.put(`/user/admin/${id}`, data, config);
+      setProfile({ ...profile, avatarUrl: avatarPreview });
+      setIsEdit(false);
+      setAvatarPreview("");
+      setUploadProgess(0);
+      router.reload();
+    } catch (error: any) {
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
+    }
   }
 
   function imageChange(): string {
-    if (avatarPreview !== "") {
+    if (avatarPreview.localeCompare("") !== 0) {
       return avatarPreview;
     }
-    if (profile.avatarUrl !== "") {
-      return profile.avatarUrl;
+    if (profile.avatarUrl?.localeCompare("") !== 0) {
+      return profile.avatarUrl as string;
     }
     return "/blank-image.jpg";
   }
@@ -231,11 +184,33 @@ export default function Profile({
         <div className="box-border h-auto w-auto p-4 border-4 rounded-xl bg-orange-400">
           <div className="relative">
             <div className="absolute top-0 right-0">
-              <ButtonEdit
-                isEdit={isEdit}
-                onEdit={handleEdit}
-                onCancel={handleCancle}
-              ></ButtonEdit>
+              {isEdit && (
+                <>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-red-500 hover:bg-red-400 text-white font-bold"
+                    onClick={handleCancle}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-green-500 hover:bg-green-400 text-white font-bold"
+                    type="submit"
+                    form="profile-form"
+                  >
+                    Save
+                  </button>
+                </>
+              )}
+              {!isEdit && (
+                <>
+                  <button
+                    className="px-3 py-2 mr-2 border rounded-md bg-purple-500 hover:bg-purple-400 text-white font-bold"
+                    onClick={handleEdit}
+                  >
+                    Edit
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <p className="text-center text-4xl font-bold text-neutral-500 mt-4 mb-5">
@@ -252,58 +227,29 @@ export default function Profile({
                   height={500}
                 />
               </div>
-              <div className="w-full bg-gray-200 rounded-full">
-                <div
-                  className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-                  style={{ width: `${uploadProgess}%` }}
-                  hidden={!isEdit || !isUploadAvatar || uploadProgess === 0}
-                >
-                  {" "}
-                  {uploadProgess}%
-                </div>
-              </div>
-              <div className="grid place-items-center mt-2">
-                <form
-                  encType="multipart/form-data"
-                  className="grid place-items-center"
-                  id="upload-avatar-form"
-                  onSubmit={handleImageUpload}
-                >
+              {isEdit && uploadProgess > 0 && (
+                <div className="w-full bg-gray-200 rounded-full">
                   <div
-                    className="relative flex justify-center h-11 rounded-md cursor-pointer bg-purple-500 hover:bg-purple-400"
-                    hidden={!isEdit}
+                    className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
+                    style={{ width: `${uploadProgess}%` }}
                   >
-                    <input
-                      className="z-20 opacity-0 w-full cursor-pointer"
-                      type="file"
-                      onChange={handleImageChange}
-                      hidden={!isEdit}
-                    />
-                    <span className="absolute grid place-content-center h-full w-full">
-                      <p className="font-bold text-white" hidden={!isEdit}>
-                        Upload Avatar
-                      </p>
-                    </span>
+                    {" "}
+                    {uploadProgess}%
                   </div>
-                </form>
-                <div className="grid grid-cols-2 gap-2 mt-4">
-                  <button
-                    className="px-6 py-2 border rounded-md bg-green-500 hover:bg-green-400 text-white font-bold"
-                    type="submit"
-                    form="upload-avatar-form"
-                    hidden={!isEdit || !isUploadAvatar}
-                  >
-                    Save
-                  </button>
-                  <button
-                    className="px-6 py-2 border rounded-md bg-red-500 hover:bg-red-400 text-white font-bold"
-                    onClick={handleCancelUploadAvatar}
-                    hidden={!isEdit || !isUploadAvatar}
-                  >
-                    Cancel
-                  </button>
                 </div>
-              </div>
+              )}
+              {isEdit && (
+                <div className="relative flex justify-center h-11 rounded-md cursor-pointer bg-purple-500 hover:bg-purple-400">
+                  <input
+                    className="z-20 opacity-0 w-full cursor-pointer"
+                    type="file"
+                    onChange={handleImageChange}
+                  />
+                  <span className="absolute grid place-content-center h-full w-full">
+                    <p className="font-bold text-white">Upload Avatar</p>
+                  </span>
+                </div>
+              )}
             </div>
             <div className="ml-3">
               <form

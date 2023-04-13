@@ -60,7 +60,7 @@ export default class User {
   public isBlocked: boolean;
 
   @Column({ name: "token_store", type: "text", nullable: true })
-  public tokenStore: string;
+  public tokenStore: string | null;
 
   @OneToMany(() => Order, (order) => order.user, {
     onDelete: "CASCADE",

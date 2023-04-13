@@ -1,8 +1,11 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useEffect, useContext } from "react";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
 import { CartContext } from "@/context/cart.context";
+import { CartItemData } from "@/interface/CartData";
+import { ApiConfig } from "@/interface/ApiConfig";
+import { UserObjectLS } from "@/interface/LocalStorageData";
 import API from "@/config/axios.config";
 import { AiOutlineShopping } from "react-icons/ai";
 import CartItem from "@/components/cart-item";
@@ -14,7 +17,7 @@ function CartItemList({
   handleItemClick,
   handleCheckboxChange,
 }: {
-  data: any;
+  data: CartItemData[];
   checkedItems: number[];
   handleItemClick: (id: number) => void;
   handleCheckboxChange: (id: number) => void;
@@ -34,75 +37,81 @@ function CartItemList({
       />
     );
   });
-  return cartItemList;
+  return <>{cartItemList}</>;
 }
 
-export default function Index(): React.ReactElement {
+export default function Cart(): React.ReactElement {
   const { setCartState } = useContext(CartContext);
-  const [cartItemList, setCartItemList] = useState<any[]>([]);
+  const [cartItemList, setCartItemList] = useState<CartItemData[]>([]);
   const [checkedItems, setCheckedItems] = useState<number[]>([]);
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
         if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const products = await API.get("/cart", config);
+        const products: AxiosResponse = await API.get("/cart", config);
         setCartItemList(products.data.cartItems);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, []);
 
-  function handleItemClick(key: number) {
+  function handleItemClick(key: number): void {
     if (!checkedItems.includes(key)) {
       return setCheckedItems([...checkedItems, key]);
     }
     setCheckedItems(checkedItems.filter((item: number) => item !== key));
   }
 
-  function handlleCheckboxChange(key: number) {
+  function handlleCheckboxChange(key: number): void {
     if (!checkedItems.includes(key)) {
       return setCheckedItems([...checkedItems, key]);
     }
     setCheckedItems(checkedItems.filter((item: number) => item !== key));
   }
 
-  function handleShowModal(state: boolean) {
+  function handleShowModal(state: boolean): void {
     if (checkedItems.length > 0) {
       setShowModal(state);
     }
   }
 
-  function handlePlaceOrder(msg: string, typeMsg: any) {
-    if (typeMsg.localeCompare("error") === 0) {
-      return toast(msg, { autoClose: 3000, type: typeMsg });
-    }
+  function handlePlaceOrder(msg: string): void {
     (setCartState as any)(cartItemList.length - checkedItems.length);
     setCartItemList(
-      cartItemList.filter((item: any) => !checkedItems.includes(item.id))
+      cartItemList.filter(
+        (item: CartItemData) => !checkedItems.includes(item.id)
+      )
     );
     setCheckedItems([]);
     handleShowModal(false);
-    toast(msg, { autoClose: 3000, type: typeMsg });
+    toast(msg, { autoClose: 3000, type: "success" });
   }
 
-  async function handleRemoveItem() {
+  async function handleRemoveItem(): Promise<void> {
     try {
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
@@ -111,11 +120,16 @@ export default function Index(): React.ReactElement {
       await API.delete("/cart", config);
       (setCartState as any)(cartItemList.length - checkedItems.length);
       setCartItemList(
-        cartItemList.filter((item: any) => !checkedItems.includes(item.id))
+        cartItemList.filter(
+          (item: CartItemData) => !checkedItems.includes(item.id)
+        )
       );
       setCheckedItems([]);
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 
@@ -124,7 +138,7 @@ export default function Index(): React.ReactElement {
       {showModal && (
         <>
           <CheckoutModal
-            data={cartItemList.filter((item: any) =>
+            data={cartItemList.filter((item: CartItemData) =>
               checkedItems.includes(item.id)
             )}
             handleShowModal={handleShowModal}
