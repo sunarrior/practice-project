@@ -1,32 +1,31 @@
 import { Request, Response, NextFunction } from "express";
+import Joi, { ObjectSchema } from "joi";
 
-import { jwt } from "../utils";
+import { validation } from "../constant/middleware.constant";
 
-export const tokenValidation = (
+export const tokenValidation = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const bearerToken: string | undefined = req.header("Authorization");
-  // check if jwt token exists
-  if (!bearerToken) {
-    return res
-      .status(403)
-      .json({ status: "failed", msg: "Token not found-to", isLoggedIn: false });
-  }
+  try {
+    const { token } = req.body;
 
-  // get and decode jwt token
-  const token: string = bearerToken.split(" ")[1];
-  const result = jwt.verifyAccessToken(token);
-
-  // get user info and check if exists in session
-  const { username } = (result as any).data;
-  if (username !== req.session.username) {
-    return res.status(403).json({
-      status: "failed",
-      msg: "User session invalid-to",
-      isLoggedIn: false,
+    const validateSchema: ObjectSchema<string> = Joi.object({
+      token: Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/),
     });
+    await validateSchema.validateAsync({ token });
+    next();
+  } catch (error: any) {
+    let msg: string = "";
+    switch (error.details[0].context.key) {
+      case "token":
+        msg = validation.TOKEN_INVALID;
+        break;
+      default:
+        msg = validation.DEFAULT;
+        break;
+    }
+    res.status(400).json({ msg });
   }
-  next();
 };

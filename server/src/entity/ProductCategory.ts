@@ -7,9 +7,15 @@ export default class ProductCategory {
   @PrimaryGeneratedColumn()
   public id: number;
 
-  @ManyToOne(() => Category, (category) => category.productCategories)
+  @ManyToOne(() => Category, (category) => category.productCategories, {
+    onDelete: "CASCADE",
+    onUpdate: "NO ACTION",
+  })
   public category: Category;
 
-  @ManyToOne(() => Product, (product) => product.productCategories)
+  @ManyToOne(() => Product, (product) => product.productCategories, {
+    onDelete: "CASCADE",
+    onUpdate: "NO ACTION",
+  })
   public product: Product;
 }

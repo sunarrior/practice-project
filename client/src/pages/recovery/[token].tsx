@@ -1,30 +1,42 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
+import { AxiosResponse } from "axios";
+import { toast } from "react-toastify";
 
+import { NotifyData } from "@/interface/NotifyData";
+import { RecoveryData } from "@/interface/UserData";
 import API from "@/config/axios.config";
 import Notify from "@/components/notify";
 
-const passwordInfoDefault = { password: "", repeatPassword: "" };
-const notifyDefault = { isFailed: false, msg: "" };
+const passwordInfoDefault: RecoveryData = { password: "", repeatPassword: "" };
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
 
 export default function FindAccount(): React.ReactElement {
-  const router = useRouter();
+  const router: NextRouter = useRouter();
   const [notify, setNotify] = useState(notifyDefault);
   const [password, setPassword] = useState(passwordInfoDefault);
 
-  const recoveryToken = router.query.token;
+  const recoveryToken: string | string[] | undefined = router.query.token;
 
-  useEffect(() => {
-    (async () => {
-      if (recoveryToken !== undefined) {
-        const result = await API.post("/auth/recovery?checktoken=1", {
-          token: recoveryToken,
-        });
-        if (result.data.status === "success") {
-          setNotify({ ...notifyDefault, msg: result.data.msg });
-        } else {
-          setNotify({ isFailed: true, msg: result.data.msg });
+  useEffect((): void => {
+    (async (): Promise<void> => {
+      try {
+        if (!recoveryToken) {
+          return;
         }
+
+        const result: AxiosResponse = await API.post(
+          "/auth/recovery?checktoken=1",
+          {
+            token: recoveryToken,
+          }
+        );
+        setNotify({ ...notifyDefault, msg: result.data.msg });
+      } catch (error: any) {
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [recoveryToken]);
@@ -44,20 +56,23 @@ export default function FindAccount(): React.ReactElement {
   ): Promise<void> {
     try {
       e.preventDefault();
-      const result = await API.post("/auth/recovery?changepass=1", {
-        token: recoveryToken,
-        password: password.password,
-      });
-      if (result.data.status === "failed") {
-        return setNotify({ isFailed: true, msg: result.data.msg });
-      }
+      const result: AxiosResponse = await API.post(
+        "/auth/recovery?changepass=1",
+        {
+          token: recoveryToken,
+          password: password.password,
+        }
+      );
       setPassword(passwordInfoDefault);
       setNotify({ ...notifyDefault, msg: result.data.msg });
       setTimeout(() => {
         router.push("/");
       }, 1500);
     } catch (error: any) {
-      setNotify({ isFailed: true, msg: error.response.data.msg });
+      setNotify({
+        isFailed: true,
+        msg: error.response?.data?.msg || error.message,
+      });
     }
   }
 

@@ -53,14 +53,14 @@ export default class User {
   @Column({ name: "avatar_url", nullable: true })
   public avatarUrl: string;
 
-  @Column({ default: "active" })
-  public status: string;
+  @Column({ name: "is_verified", default: false })
+  public isVerified: boolean;
 
-  @Column({ name: "is_verify", default: false })
-  public isVerify: boolean;
+  @Column({ name: "is_blocked", default: false })
+  public isBlocked: boolean;
 
   @Column({ name: "token_store", type: "text", nullable: true })
-  public tokenStore: string;
+  public tokenStore: string | null;
 
   @OneToMany(() => Order, (order) => order.user, {
     onDelete: "CASCADE",

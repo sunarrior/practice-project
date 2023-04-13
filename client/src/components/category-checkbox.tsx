@@ -7,7 +7,7 @@ export default function CategoryListCheckbox({
 }: {
   id: number;
   categoryName: string;
-  onCheckboxClick: any;
+  onCheckboxClick: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }): React.ReactElement {
   return (
     <>

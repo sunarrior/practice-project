@@ -4,7 +4,8 @@ import cart from "../controllers/cart.controller";
 
 const router: Router = Router();
 
-router.get("/state", cart.getCartState);
+router.get("/", cart.getAllCartItems);
 router.post("/", cart.addCartItem);
+router.delete("/", cart.removeItems);
 
 export default router;

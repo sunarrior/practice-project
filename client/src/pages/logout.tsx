@@ -1,34 +1,44 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useContext } from "react";
-import { useRouter } from "next/router";
+import { useRouter, NextRouter } from "next/router";
 
 import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
 import API from "@/config/axios.config";
+import { toast } from "react-toastify";
 
-export default function Logout() {
-  const router = useRouter();
-  const { isLoggedIn, setIsLoggedIn } = useContext(SessionContext);
-  useEffect(() => {
-    (async () => {
+export default function Logout(): void {
+  const router: NextRouter = useRouter();
+  const { setIsLoggedIn } = useContext(SessionContext);
+  const { setIsAdmin } = useContext(AdminContext);
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
+        if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get("/auth/logout", config);
-        if (result.data.status === "success") {
-          localStorage.removeItem("token");
-          (setIsLoggedIn as any)(false);
-          router.push("/");
-        }
-      } catch (error) {
-        // console.log(error);
+        await API.get("/auth/logout", config);
+        localStorage.removeItem("_uob");
+        (setIsAdmin as any)(false);
+        (setIsLoggedIn as any)(false);
+      } catch (error: any) {
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
-  }, [router, setIsLoggedIn]);
+  }, [setIsAdmin, setIsLoggedIn]);
+
+  // router.reload();
+  router.push("/");
 }

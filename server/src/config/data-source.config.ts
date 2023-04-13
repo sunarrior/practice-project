@@ -10,7 +10,7 @@ import Order from "../entity/Order";
 import OrderItem from "../entity/OrderItem";
 import ProductImage from "../entity/ProductImage";
 
-export const dataSource = new DataSource({
+export const dataSource: DataSource = new DataSource({
   type: EnvConfig.DB_TYPE,
   host: EnvConfig.DB_HOST,
   port: EnvConfig.DB_PORT,

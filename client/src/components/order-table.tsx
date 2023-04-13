@@ -8,6 +8,9 @@ export default function OrderTable({ children }: { children: any | any[] }) {
               Order ID
             </th>
             <th scope="col" className="px-6 py-3">
+              Payment Method
+            </th>
+            <th scope="col" className="px-6 py-3">
               Order Day
             </th>
             <th scope="col" className="px-6 py-3">

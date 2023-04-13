@@ -1,75 +1,87 @@
 import { useState } from "react";
 import Link from "next/link";
-import Notify from "@/components/notify";
+import { AxiosResponse } from "axios";
 
+import { RegisterData } from "@/interface/UserData";
+import { NotifyData } from "@/interface/NotifyData";
+import { registerConstant } from "@/constant/register.constant";
+import Notify from "@/components/notify";
 import API from "../config/axios.config";
 
-const registerInfoDefault = {
+const registerInfoDefault: RegisterData = {
   fullName: "",
   username: "",
   email: "",
   password: "",
   repeatPassword: "",
 };
-const notifyDefault = { isFailed: false, msg: "" };
+const notifyDefault: NotifyData = { isFailed: false, msg: "" };
 
-export default function Register() {
+export default function Register(): React.ReactElement {
   const [registerInfo, setRegisterInfo] = useState(registerInfoDefault);
   const [notify, setNotify] = useState(notifyDefault);
 
-  function handleFullnameChange(e: any) {
+  function handleFullnameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, fullName: e.target.value });
   }
 
-  function handleUsernameChange(e: any) {
+  function handleUsernameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, username: e.target.value });
   }
 
-  function handleEmailChange(e: any) {
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, email: e.target.value });
   }
 
-  function handlePasswordChange(e: any) {
+  function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setRegisterInfo({ ...registerInfo, password: e.target.value });
   }
 
-  function handleRepeatPasswordChange(e: any) {
+  function handleRepeatPasswordChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setRegisterInfo({ ...registerInfo, repeatPassword: e.target.value });
   }
 
-  async function handleSubmit(e: any) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ): Promise<void> {
     e.preventDefault();
-    const data: { [index: string]: string } = { ...registerInfo };
+    try {
+      const registerInfoArray: string[] = Object.values(registerInfo);
+      for (let i = 0; i < registerInfoArray.length; i += 1) {
+        if (registerInfoArray[i].localeCompare("") === 0) {
+          setRegisterInfo({
+            ...registerInfo,
+            password: "",
+            repeatPassword: "",
+          });
+          return setNotify({
+            isFailed: true,
+            msg: registerConstant.PROVIDE_ALL_INFORMATION,
+          });
+        }
+      }
 
-    for (const index in data) {
-      if (data[index] === null) {
+      if (registerInfo.password !== registerInfo.repeatPassword) {
         setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
         return setNotify({
           isFailed: true,
-          msg: "Please provide all required information",
+          msg: registerConstant.REPEAT_PASSWORD_NOT_MATCH,
         });
       }
-    }
-
-    if (data.password !== data.repeatPassword) {
-      setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-      return setNotify({
-        isFailed: true,
-        msg: "Repeat password does not match the password",
-      });
-    }
-
-    try {
-      const result = await API.post("/auth/register", data);
-      if (result.data.status === "failed") {
-        setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-        return setNotify({ isFailed: true, msg: result.data.msg });
-      }
+      const result: AxiosResponse = await API.post(
+        "/auth/register",
+        registerInfo
+      );
       setRegisterInfo(registerInfoDefault);
       setNotify({ isFailed: false, msg: result.data.msg });
     } catch (error: any) {
       setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-      return setNotify({ isFailed: true, msg: error.message });
+      setNotify({
+        isFailed: true,
+        msg: error.response?.data?.msg || error.message,
+      });
     }
   }
 
@@ -91,7 +103,7 @@ export default function Register() {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <input
               className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
               id="inline-username"
@@ -101,6 +113,11 @@ export default function Register() {
               onChange={handleUsernameChange}
               required
             />
+          </div>
+          <div className="mb-4 italic">
+            <ul className="ml-5 list-disc text-neutral-700">
+              <li>Username must contain both characters and numbers</li>
+            </ul>
           </div>
           <div className="mb-6">
             <input

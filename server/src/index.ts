@@ -1,19 +1,19 @@
 import "reflect-metadata";
 import EnvConfig from "./config/env.config";
 import { dataSource } from "./config/data-source.config";
-import { redisClient } from "./config/redis-cache";
+import { redisClient } from "./config/redis-cache.config";
 import app from "./app";
 
-const PORT = EnvConfig.PORT || 4000;
+const PORT: number = EnvConfig.PORT || 4000;
 
-(async () => {
+(async (): Promise<void> => {
   try {
     await dataSource.initialize();
     await redisClient.connect();
-    app.listen(PORT, () => {
+    app.listen(PORT, (): void => {
       console.log(`listening at http://localhost:${PORT}`);
     });
-  } catch (err) {
-    console.log(err);
+  } catch (error: any) {
+    console.log(error);
   }
 })();

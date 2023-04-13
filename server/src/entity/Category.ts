@@ -34,8 +34,7 @@ export default class Category {
 
   @OneToMany(
     () => ProductCategory,
-    (productCategory) => productCategory.category,
-    { onDelete: "CASCADE", onUpdate: "NO ACTION" }
+    (productCategory) => productCategory.category
   )
   public productCategories: ProductCategory[];
 }

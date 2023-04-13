@@ -1,11 +1,26 @@
+import { Repository } from "typeorm";
+
 import Order from "../entity/Order";
 import OrderItem from "../entity/OrderItem";
 import { dataSource } from "../config/data-source.config";
 
-const orderRepos = dataSource.getRepository(Order);
-const orderItemRepos = dataSource.getRepository(OrderItem);
+const orderRepos: Repository<Order> = dataSource.getRepository(Order);
+const orderItemRepos: Repository<OrderItem> =
+  dataSource.getRepository(OrderItem);
 
-const getOrderList = async (userid: number): Promise<Order[]> => {
+const getAllOrders = async (): Promise<Order[]> => {
+  const result: Order[] = await orderRepos.find({
+    relations: {
+      user: true,
+      orderItems: {
+        product: true,
+      },
+    },
+  });
+  return result;
+};
+
+const getOrderListByUserId = async (userid: number): Promise<Order[]> => {
   const result: Order[] = await orderRepos.find({
     relations: {
       orderItems: {
@@ -24,6 +39,7 @@ const getOrderList = async (userid: number): Promise<Order[]> => {
 const getOrderById = async (orderid: number): Promise<Order | null> => {
   const result: Order | null = await orderRepos.findOne({
     relations: {
+      user: true,
       orderItems: true,
     },
     where: {
@@ -47,8 +63,29 @@ const getOrderItems = async (orderid: number): Promise<OrderItem[]> => {
   return result;
 };
 
+const createOrder = async (order: Order): Promise<void> => {
+  await orderRepos.save(order);
+};
+
+const addOrderItem = async (orderItems: OrderItem[]): Promise<void> => {
+  await orderItemRepos.save(orderItems);
+};
+
+const updateOrders = async (order: Order[]): Promise<void> => {
+  await orderRepos.save(order);
+};
+
+const removeOrders = async (order: Order[]): Promise<void> => {
+  await orderRepos.remove(order);
+};
+
 export default {
-  getOrderList,
+  getAllOrders,
+  getOrderListByUserId,
   getOrderById,
   getOrderItems,
+  createOrder,
+  addOrderItem,
+  updateOrders,
+  removeOrders,
 };

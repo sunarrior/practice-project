@@ -1,6 +1,6 @@
-/* eslint-disable consistent-return */
 import { Request, Response } from "express";
 
+import { authConstant, common } from "../constant/controller.constant";
 import userDB from "../db/user.db";
 import cartDB from "../db/cart.db";
 import User from "../entity/User";
@@ -9,51 +9,45 @@ import { crypto, mail, redis, jwt } from "../utils";
 
 const createUser = async (req: Request, res: Response) => {
   try {
-    const userData: { [index: string]: string } = { ...req.body };
+    const { fullName, username, email, password } = req.body;
 
     // check if username or email is already exists
-    const userUsername: User | null = await userDB.getUserByAttrb({
-      username: userData.username,
-    });
-    const userEmail: User | null = await userDB.getUserByAttrb({
-      email: userData.email,
-    });
+    const userUsername: User | null = await userDB.getUserByUsername(username);
+    const userEmail: User | null = await userDB.getUserByEmail(email);
     if (userUsername || userEmail) {
       return res
-        .status(200)
-        .json({ status: "failed", msg: "Username or email is already in use" });
+        .status(400)
+        .json({ msg: authConstant.REGISTER.USER_OR_EMAIL_ALREADY_EXIST });
     }
 
     // create confirm token
-    const token = await crypto.randomToken(128);
+    const token: string = await crypto.randomToken(128);
 
     // hash password and save user to database
-    const hashPassword = await crypto.encryptPassword(userData.password);
-    await userDB.createUser({
-      ...userData,
-      role: "user",
-      password: hashPassword,
-      tokenStore: token,
-    });
+    const hashPassword: string = await crypto.encryptPassword(password);
+    const user: User = new User();
+    user.fullName = fullName;
+    user.username = username;
+    user.email = email;
+    user.password = hashPassword;
+    user.role = "user";
+    user.tokenStore = token;
+    const newUser: User = await userDB.createUser(user);
 
     // create cart for user after create user
-    const user: User | null = await userDB.getUserByAttrb({
-      username: userData.username,
-    });
     const cart: Cart = new Cart();
-    cart.user.id = user?.id as number;
+    cart.user = newUser;
     await cartDB.createCart(cart);
 
     // save token to redis and send to user's email
-    await redis.setCache(token, userData.username, 300);
-    mail.sendVerifyMail(userData.email, token);
+    await redis.setCache(token, username, 300);
+    mail.sendVerifyMail(email, token);
     res.status(201).json({
-      status: "success",
-      msg: "Check your email and verify your account",
+      msg: authConstant.REGISTER.CHECK_MAIL,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -62,28 +56,28 @@ const verifyUser = async (req: Request, res: Response) => {
     const { token } = req.body;
 
     // check if token is exists on cache
-    const username = await redis.getCache(token);
+    const username: string | null = await redis.getCache(token);
     if (!username) {
-      return res
-        .status(200)
-        .json({ status: "failed", msg: "Token is invalid" });
+      return res.status(400).json({ msg: authConstant.VERIFY.TOKEN_INVALID });
     }
 
     // check if username is exists
-    const user = await userDB.getUserByAttrb({ username: username });
+    const user: User | null = await userDB.getUserByUsername(username);
     if (!user) {
-      return res.status(200).json({ status: "failed", msg: "User dont exist" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     // update user's verify status
     redis.clearCache(token);
-    await userDB.updateUserData(user.id, { isVerify: true, tokenStore: null });
-    res
-      .status(200)
-      .json({ status: "success", msg: "User verified successfully" });
-  } catch (error) {
+    await userDB.updateUserData(user.id, {
+      ...user,
+      isVerified: true,
+      tokenStore: null,
+    });
+    res.status(200).json({ msg: authConstant.VERIFY.SUCCESSFULLY });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -93,90 +87,87 @@ const loginUser = async (req: Request, res: Response) => {
 
     // check if user is exists
     const user: User | null = /@/.test(account)
-      ? await userDB.getUserByAttrb({ email: account })
-      : await userDB.getUserByAttrb({ username: account });
+      ? await userDB.getUserByEmail(account)
+      : await userDB.getUserByUsername(account);
     if (!user) {
       return res
-        .status(200)
-        .json({ status: "failed", msg: "Account or password incorrect" });
+        .status(400)
+        .json({ msg: authConstant.LOGIN.ACCOUNT_OR_PASSWORD_INCORRECT });
     }
 
     // check if user has verify account yet
-    if (!user.isVerify) {
+    if (!user.isVerified) {
       return res
-        .status(200)
-        .json({ status: "failed", msg: "User has not verify account yet" });
+        .status(400)
+        .json({ msg: authConstant.LOGIN.USER_NOT_VERIFIED });
     }
 
     // check passsword attempts
     // await rateLimit.loginAttemps.consume(req.ip);
 
     // validate password
-    const compareResult = await crypto.validatePassword(
+    const compareResult: boolean = await crypto.validatePassword(
       password,
       user.password
     );
     if (!compareResult) {
       return res
-        .status(200)
-        .json({ status: "failed", msg: "Account or password incorrect" });
+        .status(400)
+        .json({ msg: authConstant.LOGIN.ACCOUNT_OR_PASSWORD_INCORRECT });
     }
 
     // remove login attemps
     // await rateLimit.loginAttemps.delete(req.ip);
 
     // process jwt
-    const accessToken = jwt.generateAccessToken({ username: user.username });
-
-    // process session
-    req.session.username = user.username;
-    req.session.userip = req.ip;
-    req.session.useragent = req.get("User-Agent");
+    const accessToken: string = jwt.generateAccessToken({
+      id: user.id,
+      username: user.username,
+      userip: req.ip,
+      useragent: req.get("User-Agent"),
+      role: user.role,
+    });
 
     // process login
-    return res
-      .status(200)
-      .json({ status: "success", msg: "Login ok", token: accessToken });
-  } catch (error) {
+    return res.status(200).json({
+      msg: authConstant.LOGIN.SUCCESSFULLY,
+      user_obj: {
+        access_token: accessToken,
+      },
+    });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
 const sessionAuthentication = async (req: Request, res: Response) => {
   try {
-    const { username, userip, useragent } = req.session;
+    const id: number | undefined = req.id;
 
     // check if user exists
-    const user: User | null = await userDB.getUserByAttrb({
-      username: username as string,
-    });
+    const user: User | null = await userDB.getUserById(id as unknown as number);
     if (!user) {
       return res
-        .status(403)
-        .json({ status: "failed", msg: "User not exist-a", isLoggedIn: false });
+        .status(404)
+        .json({ msg: common.USER_NOT_EXIST, isLoggedIn: false });
     }
 
-    // check if user-agent and ip is valid with sesison
-    if (userip !== req.ip || useragent !== req.get("User-Agent")) {
-      return res.status(403).json({
-        status: "failed",
-        msg: "User session invalid-a",
-        isLoggedIn: false,
-      });
+    // get cart state
+    const cart: Cart | null = await cartDB.getCartState(user.id);
+    if (!cart) {
+      return res.status(404).json({ msg: authConstant.SESSION.CART_NOT_FOUND });
     }
 
     // return authentication successfully
     res.status(200).json({
-      status: "success",
-      msg: "Session authentication successfully",
+      msg: authConstant.SESSION.SUCCESSFULLY,
       isLoggedIn: true,
+      cartState: cart.cartItems.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    res
-      .status(500)
-      .json({ status: "failed", msg: "Server error", isLoggedIn: false });
+    res.status(500).json({ msg: common.SERVER_ERROR, isLoggedIn: false });
   }
 };
 
@@ -187,19 +178,19 @@ const changePassword = async (req: Request, res: Response) => {
 
       // check if user exists
       const user: User | null = /@/.test(account)
-        ? await userDB.getUserByAttrb({ email: account })
-        : await userDB.getUserByAttrb({ username: account });
+        ? await userDB.getUserByEmail(account)
+        : await userDB.getUserByUsername(account);
       if (!user) {
         return res
-          .status(200)
-          .json({ status: "failed", msg: "Account or email incorrect" });
+          .status(404)
+          .json({ msg: authConstant.LOGIN.ACCOUNT_OR_PASSWORD_INCORRECT });
       }
 
       // check if user has already verify
-      if (!user.isVerify) {
+      if (!user.isVerified) {
         return res
-          .status(200)
-          .json({ status: "failed", msg: "Account need to be verify first" });
+          .status(400)
+          .json({ msg: authConstant.LOGIN.USER_NOT_VERIFIED });
       }
 
       // check if user already have recovery token in db
@@ -210,25 +201,21 @@ const changePassword = async (req: Request, res: Response) => {
 
       // create token, save db and redis, send mail
       const token: string = await crypto.randomToken(128);
-      await userDB.updateUserData(user.id, {
-        tokenStore: token,
-      });
+      await userDB.updateUserData(user.id, { ...user, tokenStore: token });
       await redis.setCache(token, user.username, 180);
-      mail.sendRecoveryLink(user.username, user.email, token);
+      mail.sendRecoveryMail(user.username, user.email, token);
       res.status(200).json({
-        status: "success",
-        msg: "Check your email to get change passsword link",
+        msg: authConstant.CHANGE_PASSWORD.CHECK_EMAIL,
       });
     }
 
     if (req.query.checktoken) {
       // check if token exists in redis
       const { token } = req.body;
-      const result = await redis.getCache(token);
+      const result: string | null = await redis.getCache(token);
       if (!result) {
-        return res.status(200).json({
-          status: "failed",
-          msg: "Recovery link invalid",
+        return res.status(400).json({
+          msg: authConstant.CHANGE_PASSWORD.LINK_INVALID,
         });
       }
     }
@@ -236,51 +223,53 @@ const changePassword = async (req: Request, res: Response) => {
     if (req.query.changepass) {
       // check if token exists in redis
       const { token, password } = req.body;
-      const result = await redis.getCache(token);
+      const result: string | null = await redis.getCache(token);
       if (!result) {
-        return res.status(200).json({
-          status: "failed",
-          msg: "Recovery link invalid",
+        return res.status(400).json({
+          msg: authConstant.CHANGE_PASSWORD.LINK_INVALID,
         });
       }
 
       // check if user store in token exsist
-      const user: User | null = await userDB.getUserByAttrb({
-        username: result,
-      });
+      const user: User | null = await userDB.getUserByUsername(result);
       if (!user) {
-        return res
-          .status(200)
-          .json({ status: "failed", msg: "Account or password incorrect" });
+        return res.status(400).json({ msg: common.USER_NOT_EXIST });
       }
 
       // hash and change passowrd
-      const hashPassword = await crypto.encryptPassword(password);
+      const hashPassword: string = await crypto.encryptPassword(password);
       await userDB.updateUserData(user.id, {
+        ...user,
         password: hashPassword,
         tokenStore: null,
       });
       redis.clearCache(token);
       res.status(200).json({
-        status: "success",
-        msg: "Change password successfully",
+        msg: authConstant.CHANGE_PASSWORD.SUCCESSFULLY,
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
-const logoutUser = (req: Request, res: Response) => {
+const logoutUser = async (req: Request, res: Response) => {
   try {
-    req.session.destroy(() => {});
-    res.clearCookie("_rsi");
-    res.status(200).json({ status: "success", msg: "User logged out" });
-  } catch (error) {
+    const id: number | undefined = req.id;
+
+    // check if user exists
+    const user: User | null = await userDB.getUserById(id as unknown as number);
+    if (!user) {
+      return res
+        .status(400)
+        .json({ msg: authConstant.LOGIN.ACCOUNT_OR_PASSWORD_INCORRECT });
+    }
+
+    res.status(200).json({ msg: authConstant.LOGOUT.SUCCESSFULLY });
+  } catch (error: any) {
     console.log(error);
-    console.log(error);
-    res.status(500).json({ status: "failed", msg: "Server error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 

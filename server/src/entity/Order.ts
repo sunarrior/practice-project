@@ -29,10 +29,10 @@ export default class Order {
   public paymentMethod: string;
 
   @Column({ name: "payment_day", type: "timestamp", nullable: true })
-  public paymentDay: Date;
+  public paymentDay: Date | null;
 
   @Column({ name: "complete_day", type: "timestamp", nullable: true })
-  public completeDay: Date;
+  public completeDay: Date | null;
 
   @Column({ name: "delivery_address" })
   public deliveryAddress: string;
@@ -43,9 +43,6 @@ export default class Order {
   @ManyToOne(() => User, (user) => user.orders)
   public user: User;
 
-  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, {
-    onDelete: "CASCADE",
-    onUpdate: "NO ACTION",
-  })
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   public orderItems: OrderItem[];
 }

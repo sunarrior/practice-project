@@ -1,61 +1,144 @@
-import nodemailer from "nodemailer";
+import nodemailer, { Transporter } from "nodemailer";
+import SMTPTransport from "nodemailer/lib/smtp-transport";
+import ejs from "ejs";
+import path from "path";
+
+import { MailConfig, MailData, MailMessage } from "../interface/MailData";
+import { mailSubject } from "../constant/mail.constant";
+import { CartItemData, CartItemMail } from "../interface/CartData";
+import { PaymentOption } from "../interface/OrderData";
+
 import EnvConfig from "../config/env.config";
 
-const MAIL_CONFIG: any = {
+// Config mail server for sending mail
+const MAIL_CONFIG: MailConfig = {
   service: "gmail",
   auth: {
     user: EnvConfig.GMAIL_USER,
     pass: EnvConfig.GMAIL_PASSWORD,
   },
 };
-const transporter = nodemailer.createTransport(MAIL_CONFIG);
 
-const sendMailFromGmail = (mailData: any) => {
-  try {
-    const message = {
-      from: EnvConfig.GMAIL_USER,
-      to: mailData.to,
-      subject: mailData.subject,
-      html: mailData.htmlContent,
-    };
-    return transporter.sendMail(message);
-  } catch (err) {
-    console.log(err);
-  }
+// initialization transporter
+const transporter: Transporter<SMTPTransport.SentMessageInfo> =
+  nodemailer.createTransport(MAIL_CONFIG);
+
+// Start send mail with given data
+const sendMailFromGmail = (
+  mailData: MailData
+): Promise<SMTPTransport.SentMessageInfo> => {
+  const message: MailMessage = {
+    from: EnvConfig.GMAIL_USER,
+    to: mailData.to,
+    subject: mailData.subject,
+    html: mailData.htmlContent,
+  };
+  return transporter.sendMail(message);
 };
 
-const sendVerifyMail = (email: string, token: string) => {
+const sendVerifyMail = async (email: string, token: string): Promise<void> => {
   try {
-    const timeSended = new Date();
-    const mailData = {
+    const timeSended: Date = new Date();
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/VerifyMail.ejs"),
+      { token }
+    );
+    const mailData: MailData = {
       to: email,
-      subject: `Verify account ${timeSended.toLocaleTimeString()}`,
-      htmlContent: `<b>
-        Click <a href="http://localhost:3000/verify/${token}">here</a> 
-        to verify your account
-      </b>`,
+      subject: `${mailSubject.VERIFY_ACCOUNT} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
     };
     sendMailFromGmail(mailData);
-  } catch (err) {
-    console.log(err);
+  } catch (error: any) {
+    console.log(error);
   }
 };
 
-const sendRecoveryLink = (username: string, email: string, token: string) => {
+const sendRecoveryMail = async (
+  username: string,
+  email: string,
+  token: string
+): Promise<void> => {
   try {
-    const timeSended = new Date();
-    const mailData = {
+    const timeSended: Date = new Date();
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/RecoveryMail.ejs"),
+      { username, token }
+    );
+    const mailData: MailData = {
       to: email,
-      subject: `Recovery link ${timeSended.toLocaleTimeString()}`,
-      htmlContent: `<b>
-        Recovery link for account ${username}: 
-        <a href="http://localhost:3000/recovery/${token}">Recovery Link</a>
-      </b>`,
+      subject: `${mailSubject.RECOVERY_MAIL} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
     };
     sendMailFromGmail(mailData);
-  } catch (err) {
-    console.log(err);
+  } catch (error: any) {
+    console.log(error);
   }
 };
 
-export { sendVerifyMail, sendRecoveryLink };
+const sendPlaceOrderMail = async (
+  email: string,
+  orderItems: CartItemData[],
+  paymentOption: PaymentOption
+) => {
+  try {
+    const timeSended: Date = new Date();
+    const totalCost: number = orderItems.reduce(
+      (total, item) => total + item.product.price * item.quantity,
+      0
+    );
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/PlaceOrderMail.ejs"),
+      {
+        paymentMethod: paymentOption.paymentMethod,
+        deliveryAddress: paymentOption.deliveryAddress,
+        orderItems,
+        totalCost,
+      }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.PLACE_ORDER} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    sendMailFromGmail(mailData);
+  } catch (error: any) {
+    console.log(error);
+  }
+};
+
+const sendCartReminderMail = async (
+  email: string,
+  cartItems: CartItemMail[]
+): Promise<SMTPTransport.SentMessageInfo | undefined> => {
+  try {
+    const timeSended: Date = new Date();
+    const totalCost: number = cartItems.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+    const mailContent: string = await ejs.renderFile(
+      path.join(__dirname, "..", "content/ejs/CartReminderMail.ejs"),
+      {
+        cartItems,
+        totalCost,
+      }
+    );
+    const mailData: MailData = {
+      to: email,
+      subject: `${mailSubject.CART_REMINDER} ${timeSended.toLocaleString()}`,
+      htmlContent: mailContent,
+    };
+    const sender = await sendMailFromGmail(mailData);
+    return sender;
+  } catch (error: any) {
+    console.log(error);
+  }
+};
+
+export {
+  sendVerifyMail,
+  sendRecoveryMail,
+  sendPlaceOrderMail,
+  sendCartReminderMail,
+};

@@ -13,7 +13,10 @@ export default class OrderItem {
   @Column()
   public price: number;
 
-  @ManyToOne(() => Order, (order) => order.orderItems)
+  @ManyToOne(() => Order, (order) => order.orderItems, {
+    onDelete: "CASCADE",
+    onUpdate: "NO ACTION",
+  })
   public order: Order;
 
   @ManyToOne(() => Product, (product) => product.orderItems)

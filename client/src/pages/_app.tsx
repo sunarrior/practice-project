@@ -1,82 +1,99 @@
 import "@/styles/globals.css";
 import type { AppProps } from "next/app";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 import { useState, useEffect } from "react";
 import { NextRouter, useRouter } from "next/router";
+import { AxiosResponse } from "axios";
+import jwtDecode from "jwt-decode";
 
+import { SessionContext } from "@/context/session.context";
+import { AdminContext } from "@/context/admin.context";
+import { CartContext } from "@/context/cart.context";
+import { UserToken } from "@/interface/UserData";
 import NavBar from "@/components/navbar";
 import API from "@/config/axios.config";
-import { SessionContext } from "@/context/session.context";
 
-function routerCheck(
-  route: string,
-  loginState: boolean,
-  router: NextRouter
-): void {
+function routerCheck(route: string): string {
   const redirectIfLoggedIn: string[] = [
     "login",
     "register",
     "verify",
     "recovery",
   ];
-  const redirectIfNotLoggedIn: string[] = [
-    "profile",
-    "logout",
-    "order",
-    "recovery",
-  ];
+  const needLoggedIn: string[] = ["profile", "logout", "order", "recovery"];
   const routeName: string = route.split("/")[1];
-  if (loginState) {
-    if (redirectIfLoggedIn.includes(routeName)) {
-      router.push("/");
-    } else {
-      router.push(route);
-    }
-  } else if (!loginState) {
-    if (redirectIfNotLoggedIn.includes(routeName)) {
-      router.push("/login");
-    } else {
-      router.push(route);
-    }
+  if (needLoggedIn.includes(routeName)) {
+    return "need-login";
   }
+  return "no-need-login";
 }
 
 export default function App({ Component, pageProps }: AppProps) {
-  const router = useRouter();
+  const router: NextRouter = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  const url = router.asPath;
+  const [cartState, setCartState] = useState(0);
+  const [isAllowUrl, setIsAllowUrl] = useState(true);
 
   useEffect(() => {
-    (async () => {
+    const authCheck = async (): Promise<any> => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          routerCheck(url, isLoggedIn, router);
+        const url = router.asPath;
+        // if (routerCheck(url).localeCompare("no-need-login")) {
+        //   setIsAllowUrl(true);
+        //   return;
+        // }
+        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        if (!userObj) {
           return;
         }
         const config = {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get("/auth/session", config);
+        const result: AxiosResponse = await API.get("/auth/session", config);
         setIsLoggedIn(result.data.isLoggedIn);
-        // routerCheck(url, isLoggedIn, router);
+        setCartState(result.data.cartState);
+        const userObjDecode: UserToken = jwtDecode(userObj?.access_token);
+        if (userObjDecode?.data?.role.localeCompare("admin") === 0) {
+          setIsAdmin(true);
+        }
+        // router.push("/login");
       } catch (error: any) {
         // console.log(error);
         setIsLoggedIn(false);
-        // routerCheck(url, error.response.data.isLoggedIn, router);
       }
-    })();
-  }, [isLoggedIn, router, url]);
+    };
 
-  return (
+    authCheck();
+
+    // const preventAccess = () => setIsAllowUrl(false);
+
+    // router.events.on("routeChangeStart", preventAccess);
+    router.events.on("routeChangeComplete", authCheck);
+
+    return () => {
+      // router.events.off("routeChangeStart", preventAccess);
+      router.events.off("routeChangeComplete", authCheck);
+    };
+  }, [router, router.events]);
+
+  return isAllowUrl ? (
     <>
       <SessionContext.Provider value={{ isLoggedIn, setIsLoggedIn }}>
-        <NavBar>
-          <Component {...pageProps} />
-        </NavBar>
+        <AdminContext.Provider value={{ isAdmin, setIsAdmin }}>
+          <CartContext.Provider value={{ cartState, setCartState }}>
+            <NavBar>
+              <Component {...pageProps} />
+            </NavBar>
+          </CartContext.Provider>
+        </AdminContext.Provider>
       </SessionContext.Provider>
+      <ToastContainer />
     </>
+  ) : (
+    <h1>haha</h1>
   );
 }

@@ -30,10 +30,10 @@ module.exports = {
           "endOfLine": "auto"
         }
       ],
-      "import/no-anonymous-default-export": "off",
+      "@typescript-eslint/no-inferrable-types": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/default-param-last": "off",
-      "no-restricted-syntax": "off",
+      "import/prefer-default-export": "off",
       "consistent-return": "off",
 
     }
