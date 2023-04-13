@@ -8,6 +8,7 @@ import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
 import { CategoryData } from "@/interface/CategoryData";
 import { ProductData } from "@/interface/ProductData";
+import { productConstant } from "@/constant/product.constant";
 import CategoryBanner from "@/components/category-banner";
 import ProductCard from "@/components/product-card";
 import AdminCategoryModal from "@/components/admin-category-modal";
@@ -88,7 +89,10 @@ export default function CategoryDetail(): React.ReactElement {
         setCategoryInfo(category.data.categoryInfo);
         setProductList(sortProducts);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [sortOption, categoryid]);
@@ -127,7 +131,7 @@ export default function CategoryDetail(): React.ReactElement {
   async function handleDeleteProduct(): Promise<any> {
     try {
       if (selectedProducts.length === 0) {
-        return toast("Please select a product to delete by checkbox", {
+        return toast(productConstant.SELECT_FOR_DELETE, {
           type: "warning",
           autoClose: 3000,
         });
@@ -148,7 +152,10 @@ export default function CategoryDetail(): React.ReactElement {
       toast(result.data.msg, { type: "success", autoClose: 3000 });
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

@@ -51,8 +51,11 @@ export default function OrderHistory(): React.ReactElement {
         const result: AxiosResponse = await API.get("/orders", config);
         const sortOrderList: OrderData[] = result.data.orderList.sort(
           (o1: OrderData, o2: OrderData) => {
-            if (sortOption === "DesOrderDay") {
-              return (o2.orderDay as any) - (o1.orderDay as any);
+            if (sortOption === "DescOrderDay") {
+              return (
+                new Date(o2.orderDay).getTime() -
+                new Date(o1.orderDay).getTime()
+              );
             }
             if (sortOption === "AscCost") {
               return o1.cost - o2.cost;
@@ -60,12 +63,18 @@ export default function OrderHistory(): React.ReactElement {
             if (sortOption === "DescCost") {
               return o2.cost - o1.cost;
             }
-            return (o1.orderDay as any) - (o2.orderDay as any);
+            return (
+              new Date(o1.orderDay).getTime() - new Date(o2.orderDay).getTime()
+            );
           }
         );
+        // console.log(sortOrderList);
         setOrderList(sortOrderList);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [sortOption]);

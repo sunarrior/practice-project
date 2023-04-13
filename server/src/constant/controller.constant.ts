@@ -33,16 +33,39 @@ export const cartConstant = {
 };
 
 export const categoryConstant = {
-  CATEGORY_NOT_FOUND: "Category not found",
-  CATEGORY_ADD_SUSSESSFULLY: "Category added successfully",
-  CATEGORY_UPDATE_SUSSESSFULLY: "Category updated successfully",
+  NOT_FOUND: "Category not found",
+  ADD_SUSSESSFULLY: "Category added successfully",
+  UPDATE_SUSSESSFULLY: "Category updated successfully",
   STILL_HAVE_PRODUCT:
     "Some categories still have products, that cannot be removed.",
-  CATEGORY_DELETE_SUSSESSFULLY: "Category deleted successfully",
+  DELETE_SUSSESSFULLY: "Category deleted successfully",
 };
 
 export const orderConstant = {
   PLACE_ORDER_SUCCESSFULLY: "Place Order Successfully",
+  UPDATE_SUCCESSFULLY: "Order updated successfully.",
+  CANNOT_CANCEL_COMPLETED: "Cannot cancel completed order",
+  CANCEL_SUCCESSFULLY: "Order cancelled successfully",
+};
+
+export const productConstant = {
+  NOT_FOUND: "Product not found",
+  ADD_SUCCESSFULLY: "Product added successfully",
+  UPDATE_SUCCESSFULLY: "Product updated successfully",
+  DELETE: {
+    PRODUCT_IN_CART: "This product has in cart of users",
+    SUCCESSFULLY: "Product removed successfully",
+  },
+};
+
+export const userConstant = {
+  EMAIL_EXIST: "Email already exists",
+  UPDATE_PROFILE_SUCCESSFULLY: "Update profile successfully",
+  UPDATE_BLOCK_STATUS: "Update user block status successfully",
+  DELETE: {
+    ACTIVE_USER: "Cannot delete active user",
+    SUCCESSFULLY: "User deleted successfully",
+  },
 };
 
 export const common = {

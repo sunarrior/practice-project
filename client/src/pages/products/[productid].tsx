@@ -59,7 +59,10 @@ export default function ProductPage(): React.ReactElement {
           categories: result.data.productDetail.categories || [],
         });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [productid]);
@@ -114,7 +117,10 @@ export default function ProductPage(): React.ReactElement {
       }
       toast(result.data.msg, { autoClose: 3000, type: "success" });
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

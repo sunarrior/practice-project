@@ -33,7 +33,10 @@ export default function FindAccount(): React.ReactElement {
         );
         setNotify({ ...notifyDefault, msg: result.data.msg });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [recoveryToken]);
@@ -66,7 +69,10 @@ export default function FindAccount(): React.ReactElement {
         router.push("/");
       }, 1500);
     } catch (error: any) {
-      setNotify({ isFailed: true, msg: error.response.data.msg });
+      setNotify({
+        isFailed: true,
+        msg: error.response?.data?.msg || error.message,
+      });
     }
   }
 

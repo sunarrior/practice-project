@@ -47,7 +47,10 @@ export default function LoginForm(): React.ReactElement {
       localStorage.setItem("_uob", JSON.stringify(result.data.user_obj));
       router.push("/");
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
 
+import { common, userConstant } from "../constant/controller.constant";
 import userDB from "../db/user.db";
 import User from "../entity/User";
 import cloudinary from "../config/cloudinary.config";
@@ -23,7 +24,7 @@ const getAllUsers = async (req: Request, res: Response) => {
     res.status(200).json({ userList });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -34,13 +35,13 @@ const getUserProfileAdmin = async (req: Request, res: Response) => {
 
     // check if user exists
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
     // return user info as admin
     return res.status(200).json({ userData: user });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -54,11 +55,11 @@ const updateUserProfileAdmin = async (req: Request, res: Response) => {
     const userEmail: User | null = await userDB.getUserByEmail(email as string);
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     if (!userEmail) {
-      return res.status(400).json({ msg: "Email already exists" });
+      return res.status(400).json({ msg: userConstant.EMAIL_EXIST });
     }
 
     const updateUser: User = {
@@ -91,10 +92,10 @@ const updateUserProfileAdmin = async (req: Request, res: Response) => {
 
     // update user profile
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: "Update profile successfully" });
+    res.status(200).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -106,17 +107,17 @@ const changeBlockStatus = async (req: Request, res: Response) => {
     const user: User | null = await userDB.getUserById(id as unknown as number);
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     const updateUser: User = { ...user, isBlocked };
 
     // update user block status
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: "Update user block status successfully" });
+    res.status(200).json({ msg: userConstant.UPDATE_BLOCK_STATUS });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -129,18 +130,18 @@ const deleteUser = async (req: Request, res: Response) => {
       userid as unknown as number
     );
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ msg: "Cannot delete active user" });
+      return res.status(400).json({ msg: userConstant.DELETE.ACTIVE_USER });
     }
 
     await userDB.deleteUser(user);
-    res.status(200).json({ msg: "User deleted successfully" });
+    res.status(200).json({ msg: userConstant.DELETE.SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -152,7 +153,7 @@ const getUserProfile = async (req: Request, res: Response) => {
     const id: number | undefined = req.id;
     const user: User | null = await userDB.getUserById(id as unknown as number);
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     // option get only delivery address
@@ -174,7 +175,7 @@ const getUserProfile = async (req: Request, res: Response) => {
     res.status(200).json({ userData });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -188,11 +189,11 @@ const updateUserProfile = async (req: Request, res: Response) => {
     const userEmail: User | null = await userDB.getUserByEmail(email as string);
 
     if (!user) {
-      return res.status(404).json({ msg: "User not found" });
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
 
     if (!userEmail) {
-      return res.status(400).json({ msg: "Email already exists" });
+      return res.status(400).json({ msg: userConstant.EMAIL_EXIST });
     }
 
     const updateUser: User = {
@@ -225,10 +226,10 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     // update user profile
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: "Update profile successfully" });
+    res.status(200).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 

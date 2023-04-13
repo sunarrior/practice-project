@@ -57,7 +57,10 @@ export default function Profile(): React.ReactElement {
           avatarUrl: result.data.userData.avatarUrl || "",
         });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, []);
@@ -115,7 +118,7 @@ export default function Profile(): React.ReactElement {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
-        onUploadProgress: (progressEvent: any) => {
+        onUploadProgress: (progressEvent: any): void => {
           const { loaded, total } = progressEvent;
           const percent: number = Math.floor((loaded * 100) / total);
           setUploadProgess(percent);
@@ -129,7 +132,10 @@ export default function Profile(): React.ReactElement {
       setUploadProgess(0);
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

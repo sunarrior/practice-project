@@ -1,3 +1,5 @@
+import { PaymentOption } from "./OrderData";
+
 export interface CartItemData {
   id: number;
   product: {
@@ -12,4 +14,9 @@ export interface CartItemData {
 export interface AddCartData {
   productid: number;
   quantity: number;
+}
+
+export interface PlaceOrderData {
+  items: CartItemData[];
+  paymentOption: PaymentOption;
 }

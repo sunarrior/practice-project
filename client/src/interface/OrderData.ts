@@ -31,3 +31,7 @@ export interface PaymentOption {
   paymentMethod: string;
   deliveryAddress: string;
 }
+
+export interface SelectedOrder {
+  selectedOrder: number[];
+}

@@ -4,6 +4,7 @@ import { AxiosResponse } from "axios";
 
 import { RegisterData } from "@/interface/UserData";
 import { NotifyData } from "@/interface/NotifyData";
+import { registerConstant } from "@/constant/register.constant";
 import Notify from "@/components/notify";
 import API from "../config/axios.config";
 
@@ -47,8 +48,9 @@ export default function Register(): React.ReactElement {
   ): Promise<void> {
     e.preventDefault();
     try {
-      Object.values(registerInfo).forEach((value: string) => {
-        if (value === null) {
+      const registerInfoArray: string[] = Object.values(registerInfo);
+      for (let i = 0; i < registerInfoArray.length; i += 1) {
+        if (registerInfoArray[i].localeCompare("") === 0) {
           setRegisterInfo({
             ...registerInfo,
             password: "",
@@ -56,16 +58,16 @@ export default function Register(): React.ReactElement {
           });
           return setNotify({
             isFailed: true,
-            msg: "Please provide all required information",
+            msg: registerConstant.PROVIDE_ALL_INFORMATION,
           });
         }
-      });
+      }
 
       if (registerInfo.password !== registerInfo.repeatPassword) {
         setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
         return setNotify({
           isFailed: true,
-          msg: "Repeat password does not match the password",
+          msg: registerConstant.REPEAT_PASSWORD_NOT_MATCH,
         });
       }
       const result: AxiosResponse = await API.post(
@@ -76,7 +78,10 @@ export default function Register(): React.ReactElement {
       setNotify({ isFailed: false, msg: result.data.msg });
     } catch (error: any) {
       setRegisterInfo({ ...registerInfo, password: "", repeatPassword: "" });
-      setNotify({ isFailed: true, msg: error.response.data.msg });
+      setNotify({
+        isFailed: true,
+        msg: error.response?.data?.msg || error.message,
+      });
     }
   }
 
@@ -98,7 +103,7 @@ export default function Register(): React.ReactElement {
               required
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <input
               className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
               id="inline-username"
@@ -108,6 +113,11 @@ export default function Register(): React.ReactElement {
               onChange={handleUsernameChange}
               required
             />
+          </div>
+          <div className="mb-4 italic">
+            <ul className="ml-5 list-disc text-neutral-700">
+              <li>Username must contain both characters and numbers</li>
+            </ul>
           </div>
           <div className="mb-6">
             <input

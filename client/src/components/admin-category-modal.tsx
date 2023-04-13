@@ -3,11 +3,14 @@ import Image from "next/image";
 import { toast } from "react-toastify";
 
 import { NotifyData } from "@/interface/NotifyData";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
+import { categoryConstant } from "@/constant/category.constant";
 import { AddCategoryData } from "@/interface/CategoryData";
 import API from "@/config/axios.config";
 
 const categoryDataDefault: AddCategoryData = {
-  categoryName: "",
+  name: "",
   description: "",
 };
 
@@ -39,22 +42,26 @@ export default function CategoryModal({
   const [isImageChange, setIsImageChange] = useState(false);
   const [uploadProgess, setUploadProgess] = useState(0);
 
-  useEffect(() => {
+  useEffect((): void => {
     if (!currentData) {
       return;
     }
     setCategoryData({
-      categoryName: currentData.categoryName,
+      name: currentData.categoryName,
       description: currentData.description,
     });
     setImagePreview(currentData.imagePreview);
   }, [currentData]);
 
-  function handleCategoryNameChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setCategoryData({ ...categoryData, categoryName: e.target.value });
+  function handleCategoryNameChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
+    setCategoryData({ ...categoryData, name: e.target.value });
   }
 
-  function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+  function handleDescriptionChange(
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ): void {
     setCategoryData({ ...categoryData, description: e.target.value });
   }
 
@@ -63,51 +70,53 @@ export default function CategoryModal({
     if (e.target.files === null) {
       return;
     }
-    const reader = new FileReader();
+    const reader: FileReader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
-    reader.onloadend = () => {
+    reader.onloadend = (): void => {
       setImagePreview(reader.result as string);
       setIsImageChange(true);
     };
     e.target.value = "";
   }
 
-  async function handleCategoryAction() {
+  async function handleCategoryAction(): Promise<void> {
     try {
       setNotify({ ...notify, isFailed: false });
       if (
-        categoryData.categoryName.localeCompare("") === 0 ||
+        categoryData.name.localeCompare("") === 0 ||
         categoryData.description.localeCompare("") === 0
       ) {
         return setNotify({
           isFailed: true,
-          msg: "Please provide all required information",
+          msg: categoryConstant.PROVIDE_ALL_INFORMATION,
         });
       }
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
-        onUploadProgress: (progressEvent: any) => {
+        onUploadProgress: (progressEvent: any): void => {
           const { loaded, total } = progressEvent;
           const percent: number = Math.floor((loaded * 100) / total);
           setUploadProgess(percent);
         },
       };
       if (!isEdit) {
-        const data = {
-          name: categoryData.categoryName,
+        const data: AddCategoryData = {
+          name: categoryData.name,
           description: categoryData.description,
           filePath: imagePreview,
         };
         await API.post("/categories", data, config);
       } else {
-        const data = {
-          name: categoryData.categoryName,
+        const data: AddCategoryData = {
+          name: categoryData.name,
           description: categoryData.description,
           filePath: isImageChange ? imagePreview : "",
         };
@@ -116,7 +125,10 @@ export default function CategoryModal({
       setIsImageChange(false);
       onCategoryAction();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 
@@ -158,7 +170,7 @@ export default function CategoryModal({
                   <input
                     type="text"
                     className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
-                    value={categoryData.categoryName}
+                    value={categoryData.name}
                     placeholder="Category name"
                     onChange={handleCategoryNameChange}
                     required

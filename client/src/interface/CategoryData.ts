@@ -7,6 +7,7 @@ export interface CategoryData {
 }
 
 export interface AddCategoryData {
-  categoryName: string;
+  name: string;
   description: string;
+  filePath?: string;
 }

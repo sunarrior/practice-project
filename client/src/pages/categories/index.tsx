@@ -7,6 +7,7 @@ import { AdminContext } from "@/context/admin.context";
 import { CategoryData } from "@/interface/CategoryData";
 import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
+import { categoryConstant } from "@/constant/category.constant";
 import CategoryCard from "@/components/category-card";
 import AdminCategoryModal from "@/components/admin-category-modal";
 import API from "@/config/axios.config";
@@ -68,7 +69,10 @@ export default function CategoryPage() {
         );
         setCategoryInfo(sortCategoryList);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [sortOption]);
@@ -97,7 +101,7 @@ export default function CategoryPage() {
   async function handleDeleteCategory(): Promise<any> {
     try {
       if (checkedItems.length === 0) {
-        return toast("Please select a category to delete by checkbox", {
+        return toast(categoryConstant.SELECT_FOR_DELETE, {
           type: "warning",
           autoClose: 3000,
         });
@@ -118,7 +122,10 @@ export default function CategoryPage() {
       toast(result.data.msg, { type: "success", autoClose: 3000 });
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

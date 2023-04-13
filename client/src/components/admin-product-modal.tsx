@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { TbCircleCheckFilled } from "react-icons/tb";
+import { AxiosResponse } from "axios";
+import { toast } from "react-toastify";
 
 import { NotifyData } from "@/interface/NotifyData";
-import { AddProductData } from "@/interface/ProductData";
+import { CategoryData } from "@/interface/CategoryData";
+import {
+  AddProductData,
+  ProductDataModal,
+  ProductCategoryData,
+  ProductImageData,
+} from "@/interface/ProductData";
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
+import { productConstant } from "@/constant/product.constant";
 import SelectedCategoryTag from "@/components/selected-category-tag";
 import API from "@/config/axios.config";
-import { toast } from "react-toastify";
 
 const productDataDefault: AddProductData = {
   productName: "",
@@ -29,9 +39,9 @@ export default function ProductModal({
   isEdit?: boolean;
   currentData?: {
     productId: number;
-    imagesPreview: any[];
+    imagesPreview: (ProductImageData | undefined)[];
     productName: string;
-    categories: any[];
+    categories: (ProductCategoryData | undefined)[];
     quantity: number;
     price: number;
     description: string;
@@ -40,20 +50,26 @@ export default function ProductModal({
   onProductAction: () => void;
 }): React.ReactElement {
   const [productData, setProductData] = useState(productDataDefault);
-  const [categoryList, setCategoryList] = useState<any[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<any[]>([]);
-  const [newCategories, setNewCategories] = useState<any[]>([]);
-  const [removeCategories, setRemoveCategories] = useState<any[]>([]);
+  const [categoryList, setCategoryList] = useState<CategoryData[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<
+    (ProductCategoryData | undefined)[]
+  >([]);
+  const [newCategories, setNewCategories] = useState<CategoryData[]>([]);
+  const [removeCategories, setRemoveCategories] = useState<
+    ProductCategoryData[]
+  >([]);
   const [defaultThumbnail, setDefaultThumbnail] = useState(0);
-  const [imagesPreview, setImagesPreview] = useState<any[]>([]);
-  const [imagesUpload, setImagesUpload] = useState<any[]>([]);
-  const [imagesUpdate, setImagesUpdate] = useState<any[]>([]);
-  const [imagesRemove, setImagesRemove] = useState<any[]>([]);
+  const [imagesPreview, setImagesPreview] = useState<
+    (ProductImageData | undefined)[]
+  >([]);
+  const [imagesUpload, setImagesUpload] = useState<ProductImageData[]>([]);
+  const [imagesUpdate, setImagesUpdate] = useState<ProductImageData[]>([]);
+  const [imagesRemove, setImagesRemove] = useState<ProductImageData[]>([]);
   const [uploadProgess, setUploadProgess] = useState(0);
   const [notify, setNotify] = useState(notifyDefault);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
         if (currentData) {
           setImagesPreview([...currentData.imagesPreview]);
@@ -64,83 +80,100 @@ export default function ProductModal({
             price: currentData.price,
             description: currentData.description,
           });
-          const defaultThumb = currentData.imagesPreview?.find(
-            (image: any) => image.isDefault
-          );
-          setDefaultThumbnail(defaultThumb?.id);
+          const defaultThumb: ProductImageData | undefined =
+            currentData.imagesPreview?.find(
+              (image: ProductImageData | undefined) => image?.isDefault
+            );
+          setDefaultThumbnail(defaultThumb?.id as number);
         }
-        const categories = await API.get("/categories");
-        const sortCategories = categories.data.categoryList.sort(
-          (c1: any, c2: any) => c1.name.localeCompare(c2.name)
-        );
+        const categories: AxiosResponse = await API.get("/categories");
+        const sortCategories: CategoryData[] =
+          categories.data.categoryList.sort(
+            (c1: CategoryData, c2: CategoryData) =>
+              c1.name.localeCompare(c2.name)
+          );
         setCategoryList([...sortCategories]);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [currentData]);
 
-  function handleProductNameChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleProductNameChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setProductData({ ...productData, productName: e.target.value });
   }
 
-  function handleSelectedCategory(e: React.ChangeEvent<HTMLSelectElement>) {
-    const isRemoveCategory = removeCategories.find(
-      (category: any) => category.name === e.target.value
-    );
+  function handleSelectedCategory(
+    e: React.ChangeEvent<HTMLSelectElement>
+  ): void {
+    const isRemoveCategory: ProductCategoryData | undefined =
+      removeCategories.find(
+        (category: any) => category.name === e.target.value
+      );
     if (isRemoveCategory) {
-      const tmpRemoveCategory = removeCategories.filter(
-        (category: any) => category.name !== e.target.value
+      const tmpRemoveCategory: ProductCategoryData[] = removeCategories.filter(
+        (category: ProductCategoryData) => category.name !== e.target.value
       );
       setRemoveCategories(tmpRemoveCategory);
       return setSelectedCategories([...selectedCategories, isRemoveCategory]);
     }
-    const isExistOldCategory = selectedCategories.find(
-      (category: any) => category.name === e.target.value
-    );
-    const isExistNewCategory = newCategories.find(
-      (category: any) => category.name === e.target.value
+    const isExistOldCategory: ProductCategoryData | undefined =
+      selectedCategories.find(
+        (category: ProductCategoryData | undefined) =>
+          category?.name === e.target.value
+      );
+    const isExistNewCategory: CategoryData | undefined = newCategories.find(
+      (category: CategoryData | undefined) => category?.name === e.target.value
     );
     if (isExistOldCategory || isExistNewCategory) {
       e.target.options[0].selected = true;
       return;
     }
-    const newCategory = categoryList.find(
-      (category: any) => category.name === e.target.value
+    const newCategory: CategoryData | undefined = categoryList.find(
+      (category: CategoryData | undefined) => category?.name === e.target.value
     );
-    setNewCategories([...newCategories, newCategory]);
+    setNewCategories([...newCategories, newCategory as CategoryData]);
     e.target.options[0].selected = true;
   }
 
-  function handleDeleteCategoryTag(name: string) {
-    const removeCategory = selectedCategories.find(
-      (category: any) => category.name === name
-    );
-    if (removeCategory) {
-      const filterCategory = selectedCategories.filter(
-        (category: any) => category.name !== name
+  function handleDeleteCategoryTag(name: string): void {
+    const removeCategory: ProductCategoryData | undefined =
+      selectedCategories.find(
+        (category: ProductCategoryData | undefined) => category?.name === name
       );
+    if (removeCategory) {
+      const filterCategory: (ProductCategoryData | undefined)[] =
+        selectedCategories.filter(
+          (category: ProductCategoryData | undefined) => category?.name !== name
+        );
       setRemoveCategories([...removeCategories, removeCategory]);
       return setSelectedCategories(filterCategory);
     }
-    const filterCategory = newCategories.filter(
-      (category: any) => category.name !== name
+    const filterCategory: CategoryData[] = newCategories.filter(
+      (category: CategoryData) => category.name !== name
     );
     setNewCategories(filterCategory);
   }
 
-  function handleDescriptionChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+  function handleDescriptionChange(
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ): void {
     setProductData({ ...productData, description: e.target.value });
   }
 
-  function handleQuantityChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleQuantityChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setProductData({
       ...productData,
       quantity: e.target.value as unknown as number,
     });
   }
 
-  function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePriceChange(e: React.ChangeEvent<HTMLInputElement>): void {
     setProductData({
       ...productData,
       price: e.target.value as unknown as number,
@@ -148,22 +181,25 @@ export default function ProductModal({
   }
 
   function handleImageChange(e: React.ChangeEvent<HTMLInputElement>): void {
-    // e.preventDefault();
-    const largestId =
+    const largestId: number =
       imagesPreview.length > 0
-        ? Math.max(...imagesPreview.map((image: any) => image.id))
+        ? Math.max(
+            ...imagesPreview.map(
+              (image: ProductImageData | undefined) => image?.id as number
+            )
+          )
         : 0;
     if (e.target.files === null) {
       return;
     }
-    let images: any[] = [];
+    let images: ProductImageData[] = [];
     for (let i = 0; i < e.target.files.length; i += 1) {
-      const reader = new FileReader();
+      const reader: FileReader = new FileReader();
       reader.readAsDataURL(e.target.files[i]);
       // eslint-disable-next-line @typescript-eslint/no-loop-func
       reader.onloadend = () => {
-        const isExistImage = imagesUpload.find(
-          (image: any) => image.url === (reader.result as string)
+        const isExistImage: ProductImageData | undefined = imagesUpload.find(
+          (image: ProductImageData) => image.url === (reader.result as string)
         );
         if (isExistImage) {
           return;
@@ -176,8 +212,8 @@ export default function ProductModal({
             isDefault: false,
           },
         ];
-        const isHaveDefault = imagesPreview.find(
-          (image: any) => image.isDefault
+        const isHaveDefault: ProductImageData | undefined = imagesPreview.find(
+          (image: ProductImageData | undefined) => image?.isDefault
         );
         if (!isHaveDefault) {
           images[0].isDefault = true;
@@ -189,100 +225,132 @@ export default function ProductModal({
     e.target.value = "";
   }
 
-  function handleSelectDefaultThumbnail(pid: number) {
-    let tmpImagesUpdate: any[] = [];
-    const tmpImagesPreview = currentData?.imagesPreview.map((image: any) => {
-      const inImagePreview = imagesPreview.find(
-        (img: any) => img.id === image.id
-      );
-      if (!inImagePreview) {
-        return;
-      }
-      if (image.id === pid) {
-        if (!image.isDefault) {
-          tmpImagesUpdate = [...tmpImagesUpdate, { ...image, isDefault: true }];
+  function handleSelectDefaultThumbnail(pid: number): void {
+    let tmpImagesUpdate: ProductImageData[] = [];
+    const tmpImagesPreview: (ProductImageData | undefined)[] | undefined =
+      currentData?.imagesPreview.map((image: ProductImageData | undefined) => {
+        const inImagePreview: ProductImageData | undefined = imagesPreview.find(
+          (img: ProductImageData | undefined) => img?.id === image?.id
+        );
+        if (!inImagePreview) {
+          return;
         }
-        return { ...image, isDefault: true };
-      }
-      if (image.isDefault) {
-        tmpImagesUpdate = [...tmpImagesUpdate, { ...image, isDefault: false }];
-      }
-      return { ...image, isDefault: false };
-    });
-    const tmpImagesPreviewFilter = tmpImagesPreview?.filter(
-      (image: any) => image
-    );
+        if (image?.id === pid) {
+          if (!image?.isDefault) {
+            tmpImagesUpdate = [
+              ...tmpImagesUpdate,
+              { ...image, isDefault: true },
+            ];
+          }
+          return { ...image, isDefault: true } as ProductImageData;
+        }
+        if (image?.isDefault) {
+          tmpImagesUpdate = [
+            ...tmpImagesUpdate,
+            { ...image, isDefault: false },
+          ];
+        }
+        return { ...image, isDefault: false } as ProductImageData;
+      });
+    const tmpImagesPreviewFilter: (ProductImageData | undefined)[] | undefined =
+      tmpImagesPreview?.filter((image: ProductImageData | undefined) => image);
 
-    const tmpImagesUpload = imagesUpload.map((image: any) => {
-      if (image.id === pid) {
-        return { ...image, isDefault: true };
+    const tmpImagesUpload: ProductImageData[] = imagesUpload.map(
+      (image: ProductImageData) => {
+        if (image.id === pid) {
+          return { ...image, isDefault: true };
+        }
+        return { ...image, isDefault: false };
       }
-      return { ...image, isDefault: false };
-    });
+    );
     setDefaultThumbnail(pid);
     setImagesUpdate(tmpImagesUpdate);
-    setImagesPreview(tmpImagesPreviewFilter as any);
+    setImagesPreview(
+      tmpImagesPreviewFilter as (ProductImageData | undefined)[]
+    );
     setImagesUpload(tmpImagesUpload);
   }
 
-  function handleRemoveUploadImage(pid: number) {
-    const isOldImage = imagesPreview.find((image: any) => image.id === pid);
+  function handleRemoveUploadImage(pid: number): void {
+    const isOldImage: ProductImageData | undefined = imagesPreview.find(
+      (image: ProductImageData | undefined) => image?.id === pid
+    );
     if (isOldImage) {
-      const newImagesPreview = imagesPreview
-        .filter((image: any) => image.id !== pid)
-        .map((image: any) => {
-          return { ...image };
+      const newImagesPreview: (ProductImageData | undefined)[] = imagesPreview
+        .filter((image: ProductImageData | undefined) => image?.id !== pid)
+        .map((image: ProductImageData | undefined) => {
+          return { ...image } as ProductImageData;
         });
 
       // check if update image contain image has been removed
-      const inImagesUpdate = imagesUpdate.find(
-        (image: any) => image.id === isOldImage.id
+      const inImagesUpdate: ProductImageData | undefined = imagesUpdate.find(
+        (image: ProductImageData) => image.id === isOldImage.id
       );
       if (inImagesUpdate) {
-        const tmpImagesUpdate = imagesUpdate.filter(
-          (image: any) => image.id !== isOldImage.id
+        const tmpImagesUpdate: ProductImageData[] = imagesUpdate.filter(
+          (image: ProductImageData) => image.id !== isOldImage.id
         );
         setImagesUpdate(tmpImagesUpdate);
       }
 
-      const isHaveDefaultPreview = newImagesPreview.find(
-        (image: any) => image.isDefault
-      );
-      const isHaveDefaultUpload = imagesUpload.find(
-        (image: any) => image.isDefault
-      );
+      const isHaveDefaultPreview: ProductImageData | undefined =
+        newImagesPreview.find((image: ProductImageData | undefined) => {
+          return image?.isDefault;
+        });
+      const isHaveDefaultUpload: ProductImageData | undefined =
+        imagesUpload.find((image: ProductImageData) => image.isDefault);
       if (!isHaveDefaultPreview && !isHaveDefaultUpload) {
-        newImagesPreview[0].isDefault = true;
-        setImagesUpdate([{ ...newImagesPreview[0], isDefault: true }]);
-        setDefaultThumbnail(newImagesPreview[0].id);
+        if (newImagesPreview.length > 0) {
+          (newImagesPreview[0] as ProductImageData).isDefault = true;
+          setImagesUpdate([
+            { ...newImagesPreview[0], isDefault: true } as ProductImageData,
+          ]);
+          setDefaultThumbnail(newImagesPreview[0]?.id as number);
+        } else if (imagesUpload.length > 0) {
+          const newImagesUpload = [...imagesUpload];
+          newImagesUpload[0] = { ...newImagesUpload[0], isDefault: true };
+          setImagesUpload(newImagesUpload);
+          setDefaultThumbnail(imagesUpload[0]?.id as number);
+        } else {
+          setDefaultThumbnail(0);
+        }
       }
       setImagesRemove([...imagesRemove, isOldImage]);
       return setImagesPreview(newImagesPreview);
     }
-    const newImagesUpload = imagesUpload.filter(
-      (image: any) => image.id !== pid
+    const newImagesUpload: ProductImageData[] = imagesUpload.filter(
+      (image: ProductImageData) => image.id !== pid
     );
-    const isHaveDefaultUpload = newImagesUpload.find(
-      (image: any) => image.isDefault
-    );
-    const isHaveDefaultPreview = imagesPreview.find(
-      (image: any) => image.isDefault
-    );
+    const isHaveDefaultUpload: ProductImageData | undefined =
+      newImagesUpload.find((image: ProductImageData) => image.isDefault);
+    const isHaveDefaultPreview: ProductImageData | undefined =
+      imagesPreview.find(
+        (image: ProductImageData | undefined) => image?.isDefault
+      );
     if (!isHaveDefaultUpload && !isHaveDefaultPreview) {
       if (imagesPreview.length > 0) {
         if (imagesUpdate.length > 0) {
           setImagesUpdate([]);
           setDefaultThumbnail(imagesUpdate[0].id);
         } else {
-          setImagesUpdate([{ ...imagesPreview[0], isDefault: true }]);
-          setDefaultThumbnail(imagesPreview[0].id);
+          setImagesUpdate([
+            { ...imagesPreview[0], isDefault: true } as ProductImageData,
+          ]);
+          setDefaultThumbnail(imagesPreview[0]?.id as number);
         }
+      } else if (newImagesUpload.length > 0) {
+        const tmpNewImagesUpload = [...newImagesUpload];
+        tmpNewImagesUpload[0] = { ...tmpNewImagesUpload[0], isDefault: true };
+        setImagesUpload(tmpNewImagesUpload);
+        setDefaultThumbnail(tmpNewImagesUpload[0]?.id as number);
+      } else {
+        setDefaultThumbnail(0);
       }
     }
     return setImagesUpload(newImagesUpload);
   }
 
-  async function handleProductAction() {
+  async function handleProductAction(): Promise<void> {
     try {
       setNotify({ ...notify, isFailed: false });
       if (
@@ -292,35 +360,38 @@ export default function ProductModal({
       ) {
         return setNotify({
           isFailed: true,
-          msg: "Please provide all required information",
+          msg: productConstant.PROVIDE_ALL_INFORMATION,
         });
       }
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
-        onUploadProgress: (progressEvent: any) => {
+        onUploadProgress: (progressEvent: any): void => {
           const { loaded, total } = progressEvent;
           const percent: number = Math.floor((loaded * 100) / total);
           setUploadProgess(percent);
         },
       };
       if (!isEdit) {
-        const data = {
+        const data: ProductDataModal = {
           name: productData.productName,
-          newCategories: selectedCategories,
+          newCategories,
           description: productData.description,
           quantity: productData.quantity,
           price: productData.price,
           filesPath: imagesUpload,
         };
+        // console.log(data);
         await API.post("/products", data, config);
       } else {
-        const data = {
+        const data: ProductDataModal = {
           name: productData.productName,
           removeCategories,
           newCategories,
@@ -337,7 +408,10 @@ export default function ProductModal({
       setImagesUpload([]);
       onProductAction();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 
@@ -385,6 +459,7 @@ export default function ProductModal({
               </div>
               <div>
                 <div className="mb-4">
+                  <p className="font-bold">- Product Name -</p>
                   <input
                     type="text"
                     className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
@@ -431,6 +506,7 @@ export default function ProductModal({
                   })}
                 </div>
                 <div className="mb-2">
+                  <p className="font-bold">- Description -</p>
                   <textarea
                     rows={4}
                     className="w-full border-2 px-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
@@ -441,6 +517,7 @@ export default function ProductModal({
                   />
                 </div>
                 <div className="mb-4">
+                  <p className="font-bold">- Product Quantity -</p>
                   <input
                     type="text"
                     className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"
@@ -450,6 +527,7 @@ export default function ProductModal({
                   />
                 </div>
                 <div className="mb-4">
+                  <p className="font-bold">- Price -</p>
                   <input
                     type="text"
                     className="w-full border-2 px-2 py-2 outline-none bg-slate-200 focus:bg-slate-50 rounded-md"

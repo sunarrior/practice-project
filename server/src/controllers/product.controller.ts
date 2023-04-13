@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
 
 import cloudinary from "../config/cloudinary.config";
+import { common, productConstant } from "../constant/controller.constant";
 import productDB from "../db/product.db";
 import categoryDB from "../db/category.db";
 import cartDB from "../db/cart.db";
@@ -41,7 +42,7 @@ const getAllProducts = async (req: Request, res: Response) => {
     res.status(200).json({ productList: productListFilter });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -53,7 +54,7 @@ const getProductDetail = async (req: Request, res: Response) => {
       true
     );
     if (!product) {
-      return res.status(404).json({ msg: "Product not found" });
+      return res.status(404).json({ msg: productConstant.NOT_FOUND });
     }
     const productDetail: ProductDetail = {
       name: product.name,
@@ -79,7 +80,7 @@ const getProductDetail = async (req: Request, res: Response) => {
     res.status(200).json({ productDetail });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -130,10 +131,10 @@ const addProduct = async (req: Request, res: Response) => {
       })
     );
     await productDB.addProductImage(imageList);
-    res.status(200).json({ msg: "Added product successfully" });
+    res.status(200).json({ msg: productConstant.ADD_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -157,7 +158,7 @@ const updateProductDetail = async (req: Request, res: Response) => {
       id as unknown as number
     );
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ message: productConstant.NOT_FOUND });
     }
 
     // remove image if have some
@@ -171,7 +172,9 @@ const updateProductDetail = async (req: Request, res: Response) => {
     const imageRemoveListFilter: ProductImage[] = await Promise.all(
       imageRemoveList.filter(async (image: ProductImage) => {
         if (image) {
-          const imagePID = image.url.split("/")[8].split(".")[0];
+          const imagePID =
+            image.url.split("/")[8]?.split(".")[0] ||
+            image.url.split("/")[7]?.split(".")[0];
           await cloudinary.uploader.destroy(`product_img/${imagePID}`);
           return true;
         }
@@ -186,11 +189,11 @@ const updateProductDetail = async (req: Request, res: Response) => {
         await productDB.getProductImagesByProductId(product.id);
       const imageUpdateList: (ProductImage | undefined)[] = productImages.map(
         (image: ProductImage) => {
-          imagesUpdate.forEach((imageUpdate: ProductImageData) => {
-            if (image.id === imageUpdate.id) {
-              return { ...image, isDefault: imageUpdate.isDefault };
+          for (let i = 0; i < imagesUpdate.length; i += 1) {
+            if (image.id === imagesUpdate[i].id) {
+              return { ...image, isDefault: imagesUpdate[i].isDefault };
             }
-          });
+          }
           return undefined;
         }
       );
@@ -266,10 +269,10 @@ const updateProductDetail = async (req: Request, res: Response) => {
     tmpProduct.quantity = quantity;
     tmpProduct.price = price;
     await productDB.updateProduct(product.id, tmpProduct);
-    res.status(200).json({ msg: "Updated product successfully" });
-  } catch (error) {
+    res.status(200).json({ msg: productConstant.UPDATE_SUCCESSFULLY });
+  } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -290,24 +293,23 @@ const remmoveProducts = async (req: Request, res: Response) => {
     );
 
     // check if product live in some cart
-    productsFilter.forEach(async (product: Product | undefined) => {
+    for (let i = 0; i < productsFilter.length; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       const cartItems: CartItem[] = await cartDB.getCartItemsByProductId(
-        product?.id as number
+        productsFilter[i]?.id as number
       );
       if (cartItems.length > 0) {
         return res.status(400).json({
-          status: "failed",
-          msg: "This product has in cart of users",
+          msg: productConstant.DELETE.PRODUCT_IN_CART,
         });
       }
-    });
+    }
 
     await productDB.removeProducts(productsFilter as Product[]);
-    res.status(200).json({ msg: "Removed products successfully" });
+    res.status(200).json({ msg: productConstant.DELETE.SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 

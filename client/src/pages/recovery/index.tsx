@@ -30,7 +30,10 @@ export default function FindAccount(): React.ReactElement {
       setAccount(accountInfoDefault);
       setNotify({ ...notifyDefault, msg: result.data.msg });
     } catch (error: any) {
-      setNotify({ isFailed: true, msg: error.response.data.msg });
+      setNotify({
+        isFailed: true,
+        msg: error.response?.data?.msg || error.message,
+      });
     }
   }
 

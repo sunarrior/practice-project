@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useRouter, NextRouter } from "next/router";
 import { AxiosResponse } from "axios";
 
-import { OrderData } from "@/interface/OrderData";
+import { OrderData, SelectedOrder } from "@/interface/OrderData";
 import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
+import { orderConstant } from "@/constant/order.constant";
 import AdminOrderRow from "@/components/admin-order-row";
 import AdminOrderTable from "@/components/admin-order-table";
 import API from "@/config/axios.config";
@@ -66,8 +67,11 @@ export default function OrderHistory(): React.ReactElement {
         const result: AxiosResponse = await API.get("/orders/all", config);
         const sortOrderList: OrderData[] = result.data.orderList.sort(
           (o1: OrderData, o2: OrderData) => {
-            if (sortOption === "DesOrderDay") {
-              return (o2.orderDay as any) - (o1.orderDay as any);
+            if (sortOption === "DescOrderDay") {
+              return (
+                new Date(o2.orderDay).getTime() -
+                new Date(o1.orderDay).getTime()
+              );
             }
             if (sortOption === "AscCost") {
               return o1.cost - o2.cost;
@@ -75,12 +79,17 @@ export default function OrderHistory(): React.ReactElement {
             if (sortOption === "DescCost") {
               return o2.cost - o1.cost;
             }
-            return (o1.orderDay as any) - (o2.orderDay as any);
+            return (
+              new Date(o1.orderDay).getTime() - new Date(o2.orderDay).getTime()
+            );
           }
         );
         setOrderList(sortOrderList);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [sortOption]);
@@ -101,8 +110,14 @@ export default function OrderHistory(): React.ReactElement {
     setSelectedOrder([...selectedOrder, orderid]);
   }
 
-  async function handleChangeOrderStatus(): Promise<void> {
+  async function handleChangeOrderStatus(): Promise<any> {
     try {
+      if (selectedOrder.length === 0) {
+        return toast(orderConstant.SELECT_FOR_CHANGE_STATUS, {
+          type: "warning",
+          autoClose: 3000,
+        });
+      }
       setIsPerformAction(true);
       const userObj: UserObjectLS = JSON.parse(
         localStorage.getItem("_uob") as any
@@ -115,10 +130,16 @@ export default function OrderHistory(): React.ReactElement {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
-      await API.put("/order", selectedOrder, config);
+      const data: SelectedOrder = {
+        selectedOrder,
+      };
+      await API.put("/orders", data, config);
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
       setIsPerformAction(false);
     }
   }
@@ -126,7 +147,7 @@ export default function OrderHistory(): React.ReactElement {
   async function handleCancelOrder(): Promise<any> {
     try {
       if (selectedOrder.length === 0) {
-        return toast("Please select atleast one order to cancel", {
+        return toast(orderConstant.SELECT_FOR_DELETE, {
           type: "warning",
           autoClose: 3000,
         });
@@ -147,7 +168,10 @@ export default function OrderHistory(): React.ReactElement {
       await API.delete("/orders", config);
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
       setIsPerformAction(false);
     }
   }

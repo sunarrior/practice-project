@@ -31,7 +31,10 @@ export default function Logout(): void {
         (setIsAdmin as any)(false);
         (setIsLoggedIn as any)(false);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [setIsAdmin, setIsLoggedIn]);

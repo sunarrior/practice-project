@@ -7,6 +7,7 @@ import categoryDB from "../db/category.db";
 import productDB from "../db/product.db";
 import Category from "../entity/Category";
 import Product from "../entity/Product";
+import ProductCategory from "../entity/ProductCategory";
 import ProductImage from "../entity/ProductImage";
 import { CategoryData } from "../interface/CategoryData";
 import { ProductData } from "../interface/ProductData";
@@ -16,10 +17,15 @@ const getAllCategories = async (req: Request, res: Response) => {
     const categories: Category[] = await categoryDB.getAllCategories();
     const categoryList: CategoryData[] = categories.map(
       (category: Category) => {
+        const productCategoriesFilter: ProductCategory[] =
+          category.productCategories.filter(
+            (productCategory: ProductCategory) =>
+              productCategory.product.isDelete === false
+          );
         return {
           id: category.id,
           name: category.name,
-          productQuantity: category.productCategories?.length,
+          productQuantity: productCategoriesFilter.length,
           url: category.thumbnailUrl,
         };
       }
@@ -38,12 +44,18 @@ const getCategoryById = async (req: Request, res: Response) => {
       categoryid as unknown as number
     );
     if (!category) {
-      return res.status(404).json({ msg: categoryConstant.CATEGORY_NOT_FOUND });
+      return res.status(404).json({ msg: categoryConstant.NOT_FOUND });
     }
+
+    const productCategoriesFilter: ProductCategory[] =
+      category.productCategories.filter(
+        (productCategory: ProductCategory) =>
+          productCategory.product.isDelete === false
+      );
     const categoryInfo: CategoryData = {
       url: category.thumbnailUrl,
       name: category.name,
-      productQuantity: category.productCategories?.length,
+      productQuantity: productCategoriesFilter.length,
       description: category.description,
     };
     res.status(200).json({ categoryInfo });
@@ -102,7 +114,7 @@ const addNewCategory = async (req: Request, res: Response) => {
       );
     }
     await categoryDB.addCategory(category);
-    res.status(200).json({ msg: categoryConstant.CATEGORY_ADD_SUSSESSFULLY });
+    res.status(200).json({ msg: categoryConstant.ADD_SUSSESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
@@ -118,7 +130,7 @@ const updateCategory = async (req: Request, res: Response) => {
       id as unknown as number
     );
     if (!category) {
-      return res.status(404).json({ msg: categoryConstant.CATEGORY_NOT_FOUND });
+      return res.status(404).json({ msg: categoryConstant.NOT_FOUND });
     }
     category.name = name;
     category.description = description;
@@ -139,9 +151,7 @@ const updateCategory = async (req: Request, res: Response) => {
       );
     }
     await categoryDB.addCategory(category);
-    res
-      .status(200)
-      .json({ msg: categoryConstant.CATEGORY_UPDATE_SUSSESSFULLY });
+    res.status(200).json({ msg: categoryConstant.UPDATE_SUSSESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
@@ -160,15 +170,15 @@ const deleteCategory = async (req: Request, res: Response) => {
       })
     );
 
-    categories.forEach((category: Category | undefined) => {
-      if (category) {
-        if (category.productCategories.length > 0) {
+    for (let i = 0; i < categories.length; i += 1) {
+      if (categories[i]) {
+        if ((categories[i] as Category).productCategories.length > 0) {
           return res.status(400).json({
             msg: categoryConstant.STILL_HAVE_PRODUCT,
           });
         }
       }
-    });
+    }
 
     const filterCategories: (Category | undefined)[] = categories.filter(
       (category: Category | undefined) =>
@@ -183,9 +193,7 @@ const deleteCategory = async (req: Request, res: Response) => {
       })
     );
     await categoryDB.deleteCategory(filterCategories as Category[]);
-    res
-      .status(200)
-      .json({ msg: categoryConstant.CATEGORY_DELETE_SUSSESSFULLY });
+    res.status(200).json({ msg: categoryConstant.DELETE_SUSSESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });

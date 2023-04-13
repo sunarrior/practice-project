@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useEffect } from "react";
 import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
@@ -66,7 +65,10 @@ export default function UserListManager(): React.ReactElement {
         );
         setUserList(sortUserList);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [sortOption]);
@@ -100,7 +102,10 @@ export default function UserListManager(): React.ReactElement {
       toast(result.data.msg, { autoClose: 3000, type: "success" });
       setUserList(newUserList);
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 
@@ -137,7 +142,10 @@ export default function UserListManager(): React.ReactElement {
       toast(result.data.msg, { autoClose: 3000, type: "success" });
       setUserList(newUserList);
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import React, { useState, useEffect, useContext } from "react";
 import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
@@ -64,7 +63,10 @@ export default function Cart(): React.ReactElement {
         const products: AxiosResponse = await API.get("/cart", config);
         setCartItemList(products.data.cartItems);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, []);
@@ -124,7 +126,10 @@ export default function Cart(): React.ReactElement {
       );
       setCheckedItems([]);
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

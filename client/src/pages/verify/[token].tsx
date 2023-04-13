@@ -25,7 +25,10 @@ export default function Verify(): React.ReactElement {
         });
         setNotify({ isFailed: false, msg: result.data.msg });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [token]);

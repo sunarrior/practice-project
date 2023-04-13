@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
+import { AxiosResponse } from "axios";
 import { FaCcVisa } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
 
+import { UserObjectLS } from "@/interface/LocalStorageData";
+import { ApiConfig } from "@/interface/ApiConfig";
+import { CartItemData, PlaceOrderData } from "@/interface/CartData";
+import { PaymentOption } from "@/interface/OrderData";
 import CheckoutItem from "@/components/checkout-item";
 import API from "@/config/axios.config";
 import { toast } from "react-toastify";
 
-function CheckoutItemList({ data }: { data: any }) {
-  const checkoutItemList = data.map((item: any) => {
+function CheckoutItemList({
+  data,
+}: {
+  data: CartItemData[];
+}): React.ReactElement {
+  const checkoutItemList = data.map((item: CartItemData) => {
     return (
       <CheckoutItem
         key={item.id}
@@ -21,7 +30,7 @@ function CheckoutItemList({ data }: { data: any }) {
   return <>{checkoutItemList}</>;
 }
 
-const paymentOptionDefault = {
+const paymentOptionDefault: PaymentOption = {
   deliveryAddress: "",
   paymentMethod: "visa",
 };
@@ -31,34 +40,42 @@ export default function CheckoutModal({
   handleShowModal,
   onPlaceOrder,
 }: {
-  data: any;
+  data: CartItemData[];
   handleShowModal: (isShow: boolean) => void;
   onPlaceOrder: (msg: string) => void;
 }): React.ReactElement {
   const [paymentOption, setPaymentOption] = useState(paymentOptionDefault);
   const [warning, setWarning] = useState(false);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
         if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get("/user?option=delivery-address", config);
-        setPaymentOption((curPaymentOption: any) => {
+        const result: AxiosResponse = await API.get(
+          "/user?option=delivery-address",
+          config
+        );
+        setPaymentOption((curPaymentOption: PaymentOption) => {
           return {
             ...curPaymentOption,
             deliveryAddress: result.data.deliveryAddress || "",
           };
         });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, []);
@@ -76,23 +93,32 @@ export default function CheckoutModal({
       if (paymentOption.deliveryAddress.localeCompare("") === 0) {
         return setWarning(true);
       }
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
-      const config = {
+      const config: ApiConfig = {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
       };
-      const orderData = {
+      const orderData: PlaceOrderData = {
         items: data,
         paymentOption,
       };
-      const result = await API.post("/orders", orderData, config);
+      const result: AxiosResponse = await API.post(
+        "/orders",
+        orderData,
+        config
+      );
       onPlaceOrder(result.data.msg);
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

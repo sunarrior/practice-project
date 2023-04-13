@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useRouter, NextRouter } from "next/router";
 import Image from "next/image";
+import { AxiosResponse } from "axios";
 import { toast } from "react-toastify";
 
-import { UserData } from "@/interface/UserData";
+import { UserData, UserDataUpdate } from "@/interface/UserData";
+import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
 import API from "@/config/axios.config";
 import { getYYYYMMDDString } from "@/utils/format.util";
@@ -11,7 +13,7 @@ import { getYYYYMMDDString } from "@/utils/format.util";
 const profileDefault: UserData = {
   username: "",
   email: "",
-  createdAt: getYYYYMMDDString(),
+  createdAt: new Date().toLocaleString(),
   role: "",
   status: "",
   fullName: "",
@@ -29,19 +31,24 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [uploadProgess, setUploadProgess] = useState(0);
 
-  useEffect(() => {
-    (async () => {
+  useEffect((): void => {
+    (async (): Promise<void> => {
       try {
-        const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+        const userObj: UserObjectLS = JSON.parse(
+          localStorage.getItem("_uob") as any
+        );
         if (!userObj) {
           return;
         }
-        const config = {
+        const config: ApiConfig = {
           headers: {
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result = await API.get(`/user/admin/${id}`, config);
+        const result: AxiosResponse = await API.get(
+          `/user/admin/${id}`,
+          config
+        );
         setProfile({
           username: result.data?.userData?.username || "",
           email: result.data?.userData?.email || "",
@@ -52,7 +59,7 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
           fullName: result.data?.userData?.fullName || "",
           phone: result.data?.userData?.phone || "",
           dob:
-            result.data?.userData?.dob.substring(0, 10) || getYYYYMMDDString(),
+            result.data?.userData?.dob?.substring(0, 10) || getYYYYMMDDString(),
           gender:
             result.data?.userData?.gender !== undefined
               ? result.data?.userData?.gender
@@ -61,7 +68,10 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
           avatarUrl: result.data?.userData?.avatarUrl || "",
         });
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [id]);
@@ -107,7 +117,7 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
     if (e.target.files === null) {
       return;
     }
-    const reader = new FileReader();
+    const reader: FileReader = new FileReader();
     reader.readAsDataURL(e.target.files[0]);
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
@@ -126,7 +136,9 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
       delete userData.role;
       delete userData.status;
 
-      const userObj = JSON.parse(localStorage.getItem("_uob") as any);
+      const userObj: UserObjectLS = JSON.parse(
+        localStorage.getItem("_uob") as any
+      );
       if (!userObj) {
         return;
       }
@@ -134,13 +146,13 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
         headers: {
           Authorization: `Bearer ${userObj?.access_token}`,
         },
-        onUploadProgress: (progressEvent: any) => {
+        onUploadProgress: (progressEvent: any): void => {
           const { loaded, total } = progressEvent;
           const percent: number = Math.floor((loaded * 100) / total);
           setUploadProgess(percent);
         },
       };
-      const data = { ...userData, filePath: avatarPreview };
+      const data: UserDataUpdate = { ...userData, filePath: avatarPreview };
 
       await API.put(`/user/admin/${id}`, data, config);
       setProfile({ ...profile, avatarUrl: avatarPreview });
@@ -149,7 +161,10 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
       setUploadProgess(0);
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

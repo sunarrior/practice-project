@@ -1,3 +1,5 @@
+import { CategoryData } from "./CategoryData";
+
 export interface ProductData {
   id: number;
   name: string;
@@ -18,7 +20,7 @@ export interface ProductCategoryData {
 }
 
 export interface ProductDetailData {
-  productId?: number;
+  productId: number;
   productName: string;
   productQuantity: number;
   price: number;
@@ -34,15 +36,15 @@ export interface AddProductData {
   description: string;
 }
 
-export interface ProductDataForm {
+export interface ProductDataModal {
   id?: number;
   name: string;
-  removeCategories?: [];
-  newCategories: [];
+  removeCategories?: ProductCategoryData[];
+  newCategories: CategoryData[];
   description: string;
   quantity: number;
   price: number;
-  filesPath: [];
-  imagesUpdate?: [];
-  imagesRemove?: [];
+  filesPath: ProductImageData[];
+  imagesUpdate?: ProductImageData[];
+  imagesRemove?: ProductImageData[];
 }

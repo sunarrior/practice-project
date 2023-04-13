@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import { AdminContext } from "@/context/admin.context";
 import { CategoryData } from "@/interface/CategoryData";
 import { ProductData } from "@/interface/ProductData";
+import { productConstant } from "@/constant/product.constant";
 import ProductCard from "@/components/product-card";
 import AdminProductModal from "@/components/admin-product-modal";
 import CategoryCheckbox from "@/components/category-checkbox";
@@ -81,6 +82,7 @@ export default function Index(): React.ReactElement {
       try {
         const categories: AxiosResponse = await API.get("/categories");
         const products: AxiosResponse = await API.get("/products");
+        // console.log(products.data.productList);
         const sortCategories: CategoryData[] =
           categories.data.categoryList.sort(
             (c1: CategoryData, c2: CategoryData) =>
@@ -92,11 +94,11 @@ export default function Index(): React.ReactElement {
               return product;
             }
 
-            filterOption.forEach((option: string) => {
-              if (product.categories?.includes(option)) {
+            for (let i = 0; i < filterOption.length; i += 1) {
+              if (product.categories?.includes(filterOption[i])) {
                 return product;
               }
-            });
+            }
             return undefined;
           }
         );
@@ -120,7 +122,10 @@ export default function Index(): React.ReactElement {
         setCategoryList(sortCategories);
         setProductList(sortProducts);
       } catch (error: any) {
-        toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+        toast(error.response?.data?.msg || error.message, {
+          type: "error",
+          autoClose: 3000,
+        });
       }
     })();
   }, [filterOption, isAdmin, sortOption]);
@@ -165,13 +170,10 @@ export default function Index(): React.ReactElement {
   async function handleDeleteProduct(): Promise<any> {
     try {
       if (selectedProducts.length === 0) {
-        return toast(
-          "Please select atleast one product to delete by checkbox",
-          {
-            type: "warning",
-            autoClose: 3000,
-          }
-        );
+        return toast(productConstant.SELECT_FOR_DELETE, {
+          type: "warning",
+          autoClose: 3000,
+        });
       }
       const userObj: UserObjectLS = JSON.parse(
         localStorage.getItem("_uob") as any
@@ -189,7 +191,10 @@ export default function Index(): React.ReactElement {
       toast(result.data.msg, { type: "success", autoClose: 3000 });
       router.reload();
     } catch (error: any) {
-      toast(error.response.data.msg, { type: "error", autoClose: 3000 });
+      toast(error.response?.data?.msg || error.message, {
+        type: "error",
+        autoClose: 3000,
+      });
     }
   }
 

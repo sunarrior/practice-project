@@ -188,11 +188,11 @@ const createOrder = async (req: Request, res: Response) => {
 
     // remove item in cart
     const cartItemsCheckout: CartItem[] = cartItems.filter((item: CartItem) => {
-      items.forEach((i: CartItemData) => {
-        if (i.id === item.id) {
+      for (let i = 0; i < items.length; i += 1) {
+        if (item.id === items[i].id) {
           return true;
         }
-      });
+      }
       return false;
     });
     await cartDB.removeItem(cartItemsCheckout);
@@ -209,7 +209,7 @@ const createOrder = async (req: Request, res: Response) => {
 
 const updateOrders = async (req: Request, res: Response) => {
   try {
-    const orderids: number[] = req.body.data;
+    const orderids: number[] = req.body.selectedOrder;
     const updateOrderList: (Order | undefined)[] = await Promise.all(
       orderids.map(async (id: number) => {
         const order: Order | null = await orderDB.getOrderById(id);
@@ -250,10 +250,10 @@ const updateOrders = async (req: Request, res: Response) => {
       (order: Order | undefined) => order
     );
     await orderDB.updateOrders(updateOrderListFilter as Order[]);
-    res.status(200).json({ msg: "Order updated successfully." });
+    res.status(200).json({ msg: orderConstant.UPDATE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
@@ -278,18 +278,18 @@ const cancelOrders = async (req: Request, res: Response) => {
     const cancelOrderListFilter: (Order | undefined)[] = cancelOrderList.filter(
       (order: Order | undefined) => order
     );
-    cancelOrderListFilter.forEach((order: Order | undefined) => {
-      if (order?.completeDay) {
+    for (let i = 0; i < cancelOrderListFilter.length; i += 1) {
+      if (cancelOrderListFilter[i]?.completeDay) {
         return res.status(400).json({
-          msg: "Cannot cancel completed order",
+          msg: orderConstant.CANNOT_CANCEL_COMPLETED,
         });
       }
-    });
+    }
     await orderDB.removeOrders(cancelOrderListFilter as Order[]);
-    res.status(200).json({ msg: "Order cancel successfully." });
+    res.status(200).json({ msg: orderConstant.CANCEL_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
-    res.status(500).json({ msg: "Server Error" });
+    res.status(500).json({ msg: common.SERVER_ERROR });
   }
 };
 
