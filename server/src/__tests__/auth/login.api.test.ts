@@ -197,7 +197,7 @@ describe("POST /auth/login", () => {
     expect(response.body.msg).toMatch(authConstant.LOGIN.SUCCESSFULLY);
   });
 
-  // case 5: login with email successfully
+  // case 6: login with email successfully
   const loginEmail: LoginData = {
     account: "palodu@tutuapp.bid",
     password: "123qwe!@#QWE",

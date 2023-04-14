@@ -181,9 +181,7 @@ const changePassword = async (req: Request, res: Response) => {
         ? await userDB.getUserByEmail(account)
         : await userDB.getUserByUsername(account);
       if (!user) {
-        return res
-          .status(404)
-          .json({ msg: authConstant.LOGIN.ACCOUNT_OR_PASSWORD_INCORRECT });
+        return res.status(404).json({ msg: common.USER_NOT_EXIST });
       }
 
       // check if user has already verify
