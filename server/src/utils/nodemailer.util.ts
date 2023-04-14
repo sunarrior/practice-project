@@ -41,7 +41,7 @@ const sendVerifyMail = async (email: string, token: string): Promise<void> => {
     const timeSended: Date = new Date();
     const mailContent: string = await ejs.renderFile(
       path.join(__dirname, "..", "content/ejs/VerifyMail.ejs"),
-      { token }
+      { token, CLIENT_BASE_URL: EnvConfig.CLIENT_BASE_URL }
     );
     const mailData: MailData = {
       to: email,
@@ -63,7 +63,7 @@ const sendRecoveryMail = async (
     const timeSended: Date = new Date();
     const mailContent: string = await ejs.renderFile(
       path.join(__dirname, "..", "content/ejs/RecoveryMail.ejs"),
-      { username, token }
+      { username, token, CLIENT_BASE_URL: EnvConfig.CLIENT_BASE_URL }
     );
     const mailData: MailData = {
       to: email,
@@ -94,6 +94,7 @@ const sendPlaceOrderMail = async (
         deliveryAddress: paymentOption.deliveryAddress,
         orderItems,
         totalCost,
+        CLIENT_BASE_URL: EnvConfig.CLIENT_BASE_URL,
       }
     );
     const mailData: MailData = {

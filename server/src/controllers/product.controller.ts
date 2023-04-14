@@ -269,7 +269,7 @@ const updateProductDetail = async (req: Request, res: Response) => {
     tmpProduct.quantity = quantity;
     tmpProduct.price = price;
     await productDB.updateProduct(product.id, tmpProduct);
-    res.status(200).json({ msg: productConstant.UPDATE_SUCCESSFULLY });
+    res.status(201).json({ msg: productConstant.UPDATE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });

@@ -250,7 +250,7 @@ const updateOrders = async (req: Request, res: Response) => {
       (order: Order | undefined) => order
     );
     await orderDB.updateOrders(updateOrderListFilter as Order[]);
-    res.status(200).json({ msg: orderConstant.UPDATE_SUCCESSFULLY });
+    res.status(201).json({ msg: orderConstant.UPDATE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
