@@ -36,7 +36,7 @@ function OrderList({
       firstItem={order.firstItem}
       totalItem={order.totalItems}
       cost={order.cost}
-      url={`http://localhost:3000/admin/orders/${order.id}`}
+      url={`${process.env.NEXT_PUBLIC_WEB_BASE_URL}/admin/orders/${order.id}`}
       onOrderSelection={onOrderSelection}
     />
   ));

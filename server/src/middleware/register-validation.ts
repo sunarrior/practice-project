@@ -18,9 +18,9 @@ export const registerValidation = async (
     };
 
     const validateSchema: ObjectSchema<RegisterData> = Joi.object({
-      fullName: Joi.string(),
+      fullName: Joi.string().pattern(/^(?=.*[a-zA-Z])([a-zA-Z ]+)$/),
       username: Joi.string().pattern(
-        /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/
+        /^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+).{6,}$/
       ),
       email: Joi.string().email(),
       password: Joi.string().pattern(

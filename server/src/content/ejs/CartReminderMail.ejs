@@ -2,7 +2,7 @@
   Your cart currently contains <%- cartItems.length %>
   <% cartItems.length > 1 ? "items" : "item" %>
 </p>
-  <b><a href="http://localhost:3000/cart">Checkout</a> now today so you won't miss any items!</b>
+  <b><a href="<%- CLIENT_BASE_URL %>/cart">Checkout</a> now today so you won't miss any items!</b>
   <table style="width:700px; border:1px solid black; text-align:center; word-wrap: break-word; table-layout: fixed;">
       <tr>
         <th style="border: 1px solid black;">Item Name</th>

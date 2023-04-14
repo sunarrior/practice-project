@@ -92,7 +92,7 @@ const updateUserProfileAdmin = async (req: Request, res: Response) => {
 
     // update user profile
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
+    res.status(201).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
@@ -114,7 +114,7 @@ const changeBlockStatus = async (req: Request, res: Response) => {
 
     // update user block status
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: userConstant.UPDATE_BLOCK_STATUS });
+    res.status(201).json({ msg: userConstant.UPDATE_BLOCK_STATUS });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
@@ -226,7 +226,7 @@ const updateUserProfile = async (req: Request, res: Response) => {
 
     // update user profile
     await userDB.updateUserData(user.id, updateUser);
-    res.status(200).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
+    res.status(201).json({ msg: userConstant.UPDATE_PROFILE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });

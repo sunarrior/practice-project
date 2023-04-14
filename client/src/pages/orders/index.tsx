@@ -24,7 +24,7 @@ function OrderList({ data }: { data: OrderData[] }): React.ReactElement {
       firstItem={order.firstItem as string}
       totalItem={order.totalItems as number}
       cost={order.cost}
-      url={`http://localhost:3000/orders/${order.id}`}
+      url={`${process.env.NEXT_PUBLIC_WEB_BASE_URL}/orders/${order.id}`}
     />
   ));
   return <>{orderList}</>;
