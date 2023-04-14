@@ -1,3 +1,5 @@
+import { Repository } from "typeorm";
+
 import { dataSource } from "./src/config/data-source.config";
 import { redisClient } from "./src/config/redis-cache.config";
 import User from "./src/entity/User";
@@ -9,15 +11,24 @@ beforeAll(async () => {
   await dataSource.dropDatabase();
   await dataSource.synchronize();
 
-  const userRepository = dataSource.getRepository(User);
+  const userRepository: Repository<User> = dataSource.getRepository(User);
   const firstUser: User = new User();
   firstUser.role = "admin";
-  firstUser.username = "hahaha01";
+  firstUser.username = "test001";
   firstUser.email = "palodu@tutuapp.bid";
-  const hashPassword: string = await crypto.encryptPassword("123qwe!@#QWE");
-  firstUser.password = hashPassword;
-  firstUser.fullName = "haha";
-  userRepository.save(firstUser);
+  const hashPassword1: string = await crypto.encryptPassword("123qwe!@#QWE");
+  firstUser.password = hashPassword1;
+  firstUser.fullName = "tester one";
+  firstUser.isVerified = true;
+
+  const secondUser: User = new User();
+  secondUser.role = "user";
+  secondUser.username = "test002";
+  secondUser.email = "pineve@finews.biz";
+  const hashPassword2: string = await crypto.encryptPassword("123qwe!@#QWE");
+  secondUser.password = hashPassword2;
+  secondUser.fullName = "tester two";
+  userRepository.save([firstUser, secondUser]);
 });
 
 afterAll(async () => {

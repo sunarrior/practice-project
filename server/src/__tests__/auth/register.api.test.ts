@@ -1,35 +1,19 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import request, { Response } from "supertest";
 
-import { dataSource } from "../../config/data-source.config";
-import User from "../../entity/User";
 import { RegisterData } from "../../interface/UserData";
 import { validation } from "../../constant/middleware.constant";
 import { authConstant } from "../../constant/controller.constant";
 import app from "../../app";
-import { crypto } from "../../utils";
 
 const baseUrl: string = "/api/v1";
 
 describe("POST /auth/register", () => {
-  beforeAll(async () => {
-    // add inital add user
-    const userRepository = dataSource.getRepository(User);
-    const firstUser: User = new User();
-    firstUser.role = "admin";
-    firstUser.username = "hahaha01";
-    firstUser.email = "palodu@tutuapp.bid";
-    const hashPassword: string = await crypto.encryptPassword("123qwe!@#QWE");
-    firstUser.password = hashPassword;
-    firstUser.fullName = "haha";
-    userRepository.save(firstUser);
-  });
-
   describe("fullname test", () => {
     // case 1.1: fullname invalid with number
     const containNumber: RegisterData = {
       fullName: "001",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123qwe!@#QWE",
     };
@@ -44,7 +28,7 @@ describe("POST /auth/register", () => {
     // case 1.2: fullname invalid with xss payload
     const containXssPayload: RegisterData = {
       fullName: "<image/src/onerror=prompt(8)>",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123qwe!@#QWE",
     };
@@ -59,7 +43,7 @@ describe("POST /auth/register", () => {
     // case 1.3: fullname invalid with sql injection payload
     const containSqliPayload: RegisterData = {
       fullName: "' UNION SELECT sum(columnname) from tablename --",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123qwe!@#QWE",
     };
@@ -152,7 +136,7 @@ describe("POST /auth/register", () => {
   // case 3: email invalid with missing @
   const missingEmailSymbol: RegisterData = {
     fullName: "test",
-    username: "test001",
+    username: "test003",
     email: "mityfarimailo.icu",
     password: "123qwe!@#QWE",
   };
@@ -168,7 +152,7 @@ describe("POST /auth/register", () => {
     // case 4.1: password invalid with only number
     const containOnlyNumber: RegisterData = {
       fullName: "test",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "12345678",
     };
@@ -183,7 +167,7 @@ describe("POST /auth/register", () => {
     // case 4.2: password invalid with only text
     const containOnlyText: RegisterData = {
       fullName: "test",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "abcdefgh",
     };
@@ -198,7 +182,7 @@ describe("POST /auth/register", () => {
     // case 4.3: password invalid becasue without uppercase character
     const notContainUppercase: RegisterData = {
       fullName: "test",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123456a!",
     };
@@ -213,7 +197,7 @@ describe("POST /auth/register", () => {
     // case 4.4: password invalid becasue without special character
     const notContainSpecialChar: RegisterData = {
       fullName: "test",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123456aA",
     };
@@ -228,7 +212,7 @@ describe("POST /auth/register", () => {
     // case 4.5: password invalid becasue without special character
     const NotEnoughLength: RegisterData = {
       fullName: "test",
-      username: "test001",
+      username: "test003",
       email: "mityfari@mailo.icu",
       password: "123aA!",
     };
@@ -244,7 +228,7 @@ describe("POST /auth/register", () => {
   // case 5: username exist
   const usernameExist: RegisterData = {
     fullName: "haha",
-    username: "hahaha01",
+    username: "test002",
     email: "mityfari@mailo.icu",
     password: "123qwe!@#QWE",
   };
@@ -261,7 +245,7 @@ describe("POST /auth/register", () => {
   // case 6: email exist
   const emailExist: RegisterData = {
     fullName: "haha",
-    username: "test001",
+    username: "test003",
     email: "palodu@tutuapp.bid",
     password: "123qwe!@#QWE",
   };
@@ -278,7 +262,7 @@ describe("POST /auth/register", () => {
   // case 7: register successfully
   const newUserData: RegisterData = {
     fullName: "haha",
-    username: "test001",
+    username: "test003",
     email: "mityfari@mailo.icu",
     password: "123qwe!@#QWE",
   };
