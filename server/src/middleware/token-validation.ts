@@ -12,7 +12,7 @@ export const tokenValidation = async (
     const { token } = req.body;
 
     const validateSchema: ObjectSchema<string> = Joi.object({
-      token: Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/),
+      token: Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-fA-F])([a-fA-F0-9]+)$/),
     });
     await validateSchema.validateAsync({ token });
     next();

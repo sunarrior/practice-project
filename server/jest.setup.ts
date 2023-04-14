@@ -3,7 +3,7 @@ import { Repository } from "typeorm";
 import { dataSource } from "./src/config/data-source.config";
 import { redisClient } from "./src/config/redis-cache.config";
 import User from "./src/entity/User";
-import { crypto } from "./src/utils";
+import { crypto, redis } from "./src/utils";
 
 beforeAll(async () => {
   await dataSource.initialize();
@@ -28,7 +28,20 @@ beforeAll(async () => {
   const hashPassword2: string = await crypto.encryptPassword("123qwe!@#QWE");
   secondUser.password = hashPassword2;
   secondUser.fullName = "tester two";
-  userRepository.save([firstUser, secondUser]);
+
+  const thirdUser: User = new User();
+  thirdUser.role = "user";
+  thirdUser.username = "test010";
+  thirdUser.email = "pineve@finews.biz3";
+  const hashPassword3: string = await crypto.encryptPassword("123qwe!@#QWE");
+  thirdUser.password = hashPassword3;
+  const verifyToken: string = "123456789abcdefabc";
+  await redis.setCache(verifyToken, "test010", 120);
+  thirdUser.fullName = "tester ten";
+  userRepository.save([firstUser, secondUser, thirdUser]);
+
+  const fakeVerifyToken: string = "123456789abcdefabb";
+  await redis.setCache(fakeVerifyToken, "test011", 120);
 });
 
 afterAll(async () => {
