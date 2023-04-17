@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import request, { Response } from "supertest";
 
 import { LoginData } from "../../interface/UserData";

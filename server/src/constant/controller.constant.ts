@@ -42,6 +42,7 @@ export const categoryConstant = {
 };
 
 export const orderConstant = {
+  MISSING_INFOMATIONS: "Missing infomations",
   PLACE_ORDER_SUCCESSFULLY: "Place Order Successfully",
   UPDATE_SUCCESSFULLY: "Order updated successfully.",
   CANNOT_CANCEL_COMPLETED: "Cannot cancel completed order",
