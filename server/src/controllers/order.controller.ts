@@ -11,7 +11,7 @@ import OrderItem from "../entity/OrderItem";
 import ProductImage from "../entity/ProductImage";
 import Product from "../entity/Product";
 import CartItem from "../entity/CartItem";
-import { CartItemData } from "../interface/CartData";
+import { CartItemData, isInstanceOfCartItemData } from "../interface/CartData";
 import { OrderData, OrderItemData } from "../interface/OrderData";
 import { mail } from "../utils";
 
@@ -121,8 +121,12 @@ const createOrder = async (req: Request, res: Response) => {
     const id: number | undefined = req.id;
     const { items, paymentOption } = req.body;
 
+    if (!id) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
     // check if user exists
-    const user: User | null = await userDB.getUserById(id as unknown as number);
+    const user: User | null = await userDB.getUserById(id);
     if (!user) {
       return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
@@ -131,6 +135,16 @@ const createOrder = async (req: Request, res: Response) => {
       return res.status(400).json({
         msg: common.USER_BLOCKED,
       });
+    }
+
+    if (!paymentOption.paymentMethod || !paymentOption.deliveryAddress) {
+      return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+    }
+
+    for (let i = 0; i < items.length; i += 1) {
+      if (!isInstanceOfCartItemData(items[i])) {
+        return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+      }
     }
 
     // check item in cart
@@ -146,7 +160,7 @@ const createOrder = async (req: Request, res: Response) => {
     order.deliveryAddress = paymentOption.deliveryAddress;
     order.status = "pending";
     order.user = user;
-    orderDB.createOrder(order);
+    await orderDB.createOrder(order);
 
     // add order item
     const orderItems: OrderItem[] = await Promise.all(
