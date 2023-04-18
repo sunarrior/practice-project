@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { AxiosResponse } from "axios";
 import { FaCcVisa } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
+import { loadStripe, Stripe } from "@stripe/stripe-js";
 
 import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
@@ -108,6 +109,26 @@ export default function CheckoutModal({
         items: data,
         paymentOption,
       };
+
+      // if visa, redirect to stripe checkout page
+      if (paymentOption.paymentMethod.localeCompare("visa") === 0) {
+        const sessionCheckout: AxiosResponse = await API.post(
+          "/orders/checkout",
+          orderData,
+          config
+        );
+
+        const stripe: Stripe | null = await loadStripe(
+          process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string
+        );
+        const { error } = await (stripe as Stripe).redirectToCheckout({
+          sessionId: sessionCheckout.data.id,
+        });
+        if (!error) {
+          await API.post("/orders", orderData, config);
+        }
+      }
+
       const result: AxiosResponse = await API.post(
         "/orders",
         orderData,

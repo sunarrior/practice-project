@@ -118,7 +118,7 @@ describe("POST /orders", () => {
     // case 4.3: missing delivery address
     it("should return 404 if missing delivery address", async () => {
       const paymentOption: any = {
-        paymentMethod: "visa",
+        paymentMethod: "cash",
         deliveryAddress: undefined,
       };
       const response: Response = await request(app)
@@ -134,7 +134,7 @@ describe("POST /orders", () => {
     // case 5.1: missing cart item id
     it("should return 404 if missing cart item id", async () => {
       const paymentOption: PaymentOption = {
-        paymentMethod: "visa",
+        paymentMethod: "cash",
         deliveryAddress: "100 delivery address",
       };
 
@@ -160,7 +160,7 @@ describe("POST /orders", () => {
     // case 5.2: missing product id
     it("should return 404 if missing product id", async () => {
       const paymentOption: PaymentOption = {
-        paymentMethod: "visa",
+        paymentMethod: "cash",
         deliveryAddress: "100 delivery address",
       };
 
@@ -187,7 +187,7 @@ describe("POST /orders", () => {
   // case 6: place order successfully
   it("should return 200 if place order successfully", async () => {
     const paymentOption: PaymentOption = {
-      paymentMethod: "visa",
+      paymentMethod: "cash",
       deliveryAddress: "100 delivery address",
     };
 

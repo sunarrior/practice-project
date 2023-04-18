@@ -8,6 +8,7 @@ const router: Router = Router();
 router.get("/all", isAdmin, order.getAllOrders);
 router.get("/", order.getOrderListByUserId);
 router.get("/:id", order.getOrderItems);
+router.post("/checkout", order.createCheckoutSession);
 router.post("/", order.createOrder);
 router.put("/", isAdmin, order.updateOrders);
 router.delete("/", isAdmin, order.cancelOrders);
