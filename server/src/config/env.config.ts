@@ -10,6 +10,7 @@ interface ENV {
   DB_USERNAME: string | undefined;
   DB_PASSWORD: string | undefined;
   DB_DATABASE: string | undefined;
+  SERVER_BASE_URL: string | undefined;
   PORT: number | undefined;
   CLIENT_BASE_URL: string | undefined;
   GMAIL_USER: string | undefined;
@@ -19,6 +20,8 @@ interface ENV {
   CLOUD_NAME: string | undefined;
   API_KEY: string | undefined;
   API_SECRET: string | undefined;
+  STRIPE_SECRET_KEY: string | undefined;
+  STRIPE_WEBHOOK_SECRET: string | undefined;
 }
 
 interface Config {
@@ -28,6 +31,7 @@ interface Config {
   DB_USERNAME: string;
   DB_PASSWORD: string;
   DB_DATABASE: string;
+  SERVER_BASE_URL: string;
   PORT: number;
   CLIENT_BASE_URL: string;
   GMAIL_USER: string;
@@ -37,6 +41,8 @@ interface Config {
   CLOUD_NAME: string;
   API_KEY: string;
   API_SECRET: string;
+  STRIPE_SECRET_KEY: string;
+  STRIPE_WEBHOOK_SECRET: string;
 }
 
 const getEnvConfig = (): ENV => {
@@ -50,6 +56,7 @@ const getEnvConfig = (): ENV => {
       process.env.NODE_ENV?.localeCompare("test") === 0
         ? process.env.DB_TEST_DATABASE
         : process.env.DB_DATABASE,
+    SERVER_BASE_URL: process.env.SERVER_BASE_URL,
     PORT: process.env.PORT ? Number(process.env.PORT) : 4000,
     CLIENT_BASE_URL: process.env.CLIENT_BASE_URL,
     GMAIL_USER: process.env.GMAIL_USER,
@@ -59,6 +66,8 @@ const getEnvConfig = (): ENV => {
     CLOUD_NAME: process.env.CLOUD_NAME,
     API_KEY: process.env.API_KEY,
     API_SECRET: process.env.API_SECRET,
+    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
   };
 };
 
