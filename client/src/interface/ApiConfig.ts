@@ -1,6 +1,6 @@
 import { UserData } from "./UserData";
-import { AddCartData, PlaceOrderData } from "./CartData";
-import { SelectedOrder } from "./OrderData";
+import { AddCartData } from "./CartData";
+import { PlaceOrderData, SelectedOrder, PaymentInfo } from "./OrderData";
 import { AddCategoryData } from "./CategoryData";
 import { ProductDataModal } from "./ProductData";
 
@@ -13,6 +13,7 @@ export interface ApiConfig {
     | AddCartData
     | PlaceOrderData
     | SelectedOrder
+    | PaymentInfo
     | AddCategoryData
     | ProductDataModal
     | number[];

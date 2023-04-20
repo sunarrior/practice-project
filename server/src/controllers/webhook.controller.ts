@@ -103,17 +103,38 @@ const webhookStripe = (req: Request, res: Response) => {
       sig as any,
       endPointSecret
     );
-
-    // Handle the checkout.session.completed event
-    if (event.type === "checkout.session.completed") {
-      const session: any = event.data.object;
-      const id: number = Number(session.metadata.userid);
-      const items: CartItemData[] = JSON.parse(session.metadata.items);
-      const paymentOption: PaymentOption = JSON.parse(
-        session.metadata.paymentOption
-      );
-      fulfillOrder(id, items, paymentOption);
+    switch (event.type) {
+      case "payment_intent.requires_action":
+        break;
+      case "payment_intent.payment_failed":
+        break;
+      case "payment_intent.succeeded": {
+        const paymentIntent: any = event.data.object;
+        if (!paymentIntent.metadata?.items) {
+          return res.status(200).end();
+        }
+        const id: number = Number(paymentIntent.metadata.userid);
+        const items: CartItemData[] = JSON.parse(paymentIntent.metadata.items);
+        const paymentOption: PaymentOption = JSON.parse(
+          paymentIntent.metadata.paymentOption
+        );
+        fulfillOrder(id, items, paymentOption);
+        break;
+      }
+      case "checkout.session.completed": {
+        const session: any = event.data.object;
+        const id: number = Number(session.metadata.userid);
+        const items: CartItemData[] = JSON.parse(session.metadata.items);
+        const paymentOption: PaymentOption = JSON.parse(
+          session.metadata.paymentOption
+        );
+        fulfillOrder(id, items, paymentOption);
+        break;
+      }
+      default:
+        break;
     }
+
     res.status(200).end();
   } catch (error: any) {
     console.log(error);

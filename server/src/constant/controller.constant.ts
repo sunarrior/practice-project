@@ -61,6 +61,7 @@ export const productConstant = {
 
 export const userConstant = {
   EMAIL_EXIST: "Email already exists",
+  ADD_CARD_SUCCESSFULLY: "Payment method added successfully",
   UPDATE_PROFILE_SUCCESSFULLY: "Update profile successfully",
   UPDATE_BLOCK_STATUS: "Update user block status successfully",
   DELETE: {

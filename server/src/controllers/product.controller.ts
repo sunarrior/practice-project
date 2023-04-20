@@ -276,7 +276,7 @@ const updateProductDetail = async (req: Request, res: Response) => {
   }
 };
 
-const remmoveProducts = async (req: Request, res: Response) => {
+const removeProducts = async (req: Request, res: Response) => {
   try {
     const ids: number[] = req.body;
     const products: (Product | undefined)[] = await Promise.all(
@@ -318,5 +318,5 @@ export default {
   getProductDetail,
   addProduct,
   updateProductDetail,
-  remmoveProducts,
+  removeProducts,
 };

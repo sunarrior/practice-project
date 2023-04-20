@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { UploadApiErrorResponse, UploadApiResponse } from "cloudinary";
+import { Stripe } from "stripe";
 
 import { common, userConstant } from "../constant/controller.constant";
 import userDB from "../db/user.db";
 import User from "../entity/User";
 import cloudinary from "../config/cloudinary.config";
+import stripe from "../config/stripe.config";
 import { UserData } from "../interface/UserData";
 
 const getAllUsers = async (req: Request, res: Response) => {
@@ -233,6 +235,82 @@ const updateUserProfile = async (req: Request, res: Response) => {
   }
 };
 
+const getAllPaymentMethods = async (req: Request, res: Response) => {
+  try {
+    const id: number | undefined = req.id;
+
+    // check if user is exist
+    const user: User | null = await userDB.getUserById(id as number);
+    if (!user) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    if (!user.stripeCusId) {
+      return res.status(200).json({ paymentMethodInfo: [] });
+    }
+
+    const paymentMethods: Stripe.Response<
+      Stripe.ApiList<Stripe.PaymentMethod>
+    > = await stripe.customers.listPaymentMethods(user.stripeCusId, {
+      type: "card",
+    });
+    const paymentMethodInfo = paymentMethods.data.map(
+      (paymentMethod: Stripe.PaymentMethod) => {
+        return {
+          id: paymentMethod.id,
+          brand: paymentMethod.card?.brand,
+          last4: paymentMethod.card?.last4,
+          expMonth: paymentMethod.card?.exp_month,
+          expYear: paymentMethod.card?.exp_year,
+        };
+      }
+    );
+    res.status(200).json({ paymentMethodInfo });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: common.SERVER_ERROR });
+  }
+};
+
+const addCardPayment = async (req: Request, res: Response) => {
+  try {
+    const id: number | undefined = req.id;
+
+    // check if user is exist
+    const user: User | null = await userDB.getUserById(id as number);
+    if (!user) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    if (!user.stripeCusId) {
+      const customer: Stripe.Customer = await stripe.customers.create({
+        email: user.email,
+        name: user.fullName,
+      });
+
+      await userDB.updateUserData(user.id, {
+        ...user,
+        stripeCusId: customer.id,
+      });
+
+      const setupIntent = await stripe.setupIntents.create({
+        payment_method_types: ["card"],
+        customer: customer.id,
+      });
+      return res.status(200).json({ clientSecret: setupIntent.client_secret });
+    }
+
+    const setupIntent = await stripe.setupIntents.create({
+      payment_method_types: ["card"],
+      customer: user.stripeCusId,
+    });
+    res.status(200).json({ clientSecret: setupIntent.client_secret });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: common.SERVER_ERROR });
+  }
+};
+
 export default {
   getAllUsers,
   getUserProfileAdmin,
@@ -241,4 +319,6 @@ export default {
   deleteUser,
   getUserProfile,
   updateUserProfile,
+  getAllPaymentMethods,
+  addCardPayment,
 };

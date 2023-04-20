@@ -10,6 +10,6 @@ router.get("/", product.getAllProducts);
 router.get("/:id", product.getProductDetail);
 router.post("/", [jwtValidation, isAdmin], product.addProduct);
 router.put("/:id", [jwtValidation, isAdmin], product.updateProductDetail);
-router.delete("/", [jwtValidation, isAdmin], product.remmoveProducts);
+router.delete("/", [jwtValidation, isAdmin], product.removeProducts);
 
 export default router;

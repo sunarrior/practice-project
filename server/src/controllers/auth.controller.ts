@@ -216,6 +216,7 @@ const changePassword = async (req: Request, res: Response) => {
           msg: authConstant.CHANGE_PASSWORD.LINK_INVALID,
         });
       }
+      res.status(200).end();
     }
 
     if (req.query.changepass) {
