@@ -21,7 +21,7 @@ export const recoveryValidation = async (
         Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/),
         Joi.string().email(),
       ],
-      token: Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/),
+      token: Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-fA-F])([a-fA-F0-9]+)$/),
       password: Joi.string().pattern(
         /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&]).{8,}$/m
       ),

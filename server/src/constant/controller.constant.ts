@@ -42,6 +42,7 @@ export const categoryConstant = {
 };
 
 export const orderConstant = {
+  MISSING_INFOMATIONS: "Missing infomations",
   PLACE_ORDER_SUCCESSFULLY: "Place Order Successfully",
   UPDATE_SUCCESSFULLY: "Order updated successfully.",
   CANNOT_CANCEL_COMPLETED: "Cannot cancel completed order",
@@ -60,6 +61,7 @@ export const productConstant = {
 
 export const userConstant = {
   EMAIL_EXIST: "Email already exists",
+  ADD_CARD_SUCCESSFULLY: "Payment method added successfully",
   UPDATE_PROFILE_SUCCESSFULLY: "Update profile successfully",
   UPDATE_BLOCK_STATUS: "Update user block status successfully",
   DELETE: {

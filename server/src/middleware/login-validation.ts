@@ -17,7 +17,7 @@ export const loginValidation = async (
 
     const validateSchema: ObjectSchema<LoginData> = Joi.object({
       account: [
-        Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+)$/),
+        Joi.string().pattern(/^(?=.*[0-9])(?=.*[a-zA-Z])([a-zA-Z0-9]+).{6,}$/),
         Joi.string().email(),
       ],
       password: Joi.string().pattern(

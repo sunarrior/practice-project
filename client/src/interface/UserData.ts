@@ -1,3 +1,5 @@
+import { StripeCardElement } from "@stripe/stripe-js";
+
 export interface LoginData {
   account: string;
   password: string;
@@ -45,4 +47,12 @@ export interface UserToken {
     userAgent: string;
     userIp: string;
   };
+}
+
+export interface PaymentMethodInfo {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: string;
+  expYear: string;
 }

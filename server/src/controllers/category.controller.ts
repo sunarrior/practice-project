@@ -100,7 +100,7 @@ const addNewCategory = async (req: Request, res: Response) => {
     category.name = name;
     category.description = description;
 
-    if (filePath.localeCompare("") !== 0) {
+    if (filePath?.localeCompare("") !== 0) {
       // upload the new category image to cloudinary
       await cloudinary.uploader.upload(
         filePath,
@@ -151,7 +151,7 @@ const updateCategory = async (req: Request, res: Response) => {
       );
     }
     await categoryDB.addCategory(category);
-    res.status(200).json({ msg: categoryConstant.UPDATE_SUSSESSFULLY });
+    res.status(201).json({ msg: categoryConstant.UPDATE_SUSSESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });

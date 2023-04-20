@@ -25,13 +25,9 @@ export default function FindAccount(): React.ReactElement {
           return;
         }
 
-        const result: AxiosResponse = await API.post(
-          "/auth/recovery?checktoken=1",
-          {
-            token: recoveryToken,
-          }
-        );
-        setNotify({ ...notifyDefault, msg: result.data.msg });
+        await API.post("/auth/recovery?checktoken=1", {
+          token: recoveryToken,
+        });
       } catch (error: any) {
         toast(error.response?.data?.msg || error.message, {
           type: "error",

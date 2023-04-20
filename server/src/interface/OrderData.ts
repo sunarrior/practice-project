@@ -22,3 +22,16 @@ export interface PaymentOption {
   paymentMethod: string;
   deliveryAddress: string;
 }
+
+export interface LineItem {
+  price_data: {
+    currency: string;
+    product_data: {
+      name: string;
+      images?: string[];
+      description?: string;
+    };
+    unit_amount: number;
+  };
+  quantity: number;
+}

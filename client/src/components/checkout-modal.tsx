@@ -2,32 +2,76 @@ import React, { useEffect, useState } from "react";
 import { AxiosResponse } from "axios";
 import { FaCcVisa } from "react-icons/fa";
 import { BsCash } from "react-icons/bs";
+import { loadStripe, Stripe } from "@stripe/stripe-js";
 
 import { UserObjectLS } from "@/interface/LocalStorageData";
 import { ApiConfig } from "@/interface/ApiConfig";
-import { CartItemData, PlaceOrderData } from "@/interface/CartData";
-import { PaymentOption } from "@/interface/OrderData";
+import { PaymentMethodInfo } from "@/interface/UserData";
+import { CartItemData } from "@/interface/CartData";
+import {
+  PlaceOrderData,
+  PaymentOption,
+  PaymentInfo,
+} from "@/interface/OrderData";
 import CheckoutItem from "@/components/checkout-item";
+import PaymentMethod from "@/components/payment-method";
 import API from "@/config/axios.config";
 import { toast } from "react-toastify";
+
+const stripe: Promise<Stripe | null> = loadStripe(
+  process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY as string
+);
 
 function CheckoutItemList({
   data,
 }: {
   data: CartItemData[];
 }): React.ReactElement {
-  const checkoutItemList = data.map((item: CartItemData) => {
-    return (
-      <CheckoutItem
-        key={item.id}
-        url={item.url || "/blank-image.jpg"}
-        productName={item.product.name}
-        quantity={item.quantity}
-        price={item.product.price}
-      />
-    );
-  });
+  const checkoutItemList: React.ReactElement[] = data.map(
+    (item: CartItemData) => {
+      return (
+        <CheckoutItem
+          key={item.id}
+          url={item.url || "/blank-image.jpg"}
+          productName={item.product.name}
+          quantity={item.quantity}
+          price={item.product.price}
+        />
+      );
+    }
+  );
   return <>{checkoutItemList}</>;
+}
+
+function PaymentMethodList({
+  data,
+  selectedPaymentMethod,
+  onPaymentMethodTypeChange,
+  onPaymentMethodTypeClick,
+}: {
+  data: PaymentMethodInfo[];
+  selectedPaymentMethod: string;
+  onPaymentMethodTypeChange: (pmId: string) => void;
+  onPaymentMethodTypeClick: (pmId: string) => void;
+}): React.ReactElement {
+  const paymentMethodList: React.ReactElement[] = data.map(
+    (paymentMethod: PaymentMethodInfo) => {
+      return (
+        <PaymentMethod
+          key={paymentMethod.id}
+          id={paymentMethod.id}
+          bankType={paymentMethod.brand}
+          last4={paymentMethod.last4}
+          expMonth={paymentMethod.expMonth}
+          expYear={paymentMethod.expYear}
+          checked={paymentMethod.id === selectedPaymentMethod}
+          onPaymentMethodTypeChange={onPaymentMethodTypeChange}
+          onPaymentMethodTypeClick={onPaymentMethodTypeClick}
+        />
+      );
+    }
+  );
+  return <>{paymentMethodList}</>;
 }
 
 const paymentOptionDefault: PaymentOption = {
@@ -45,6 +89,11 @@ export default function CheckoutModal({
   onPlaceOrder: (msg: string) => void;
 }): React.ReactElement {
   const [paymentOption, setPaymentOption] = useState(paymentOptionDefault);
+  const [paymentMethodList, setPaymentMethodList] = useState<
+    PaymentMethodInfo[]
+  >([]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] =
+    useState<string>("new");
   const [warning, setWarning] = useState(false);
 
   useEffect((): void => {
@@ -61,16 +110,21 @@ export default function CheckoutModal({
             Authorization: `Bearer ${userObj?.access_token}`,
           },
         };
-        const result: AxiosResponse = await API.get(
+        const deliveryAddress: AxiosResponse = await API.get(
           "/user?option=delivery-address",
+          config
+        );
+        const paymentList: AxiosResponse = await API.get(
+          "/user/payment",
           config
         );
         setPaymentOption((curPaymentOption: PaymentOption) => {
           return {
             ...curPaymentOption,
-            deliveryAddress: result.data.deliveryAddress || "",
+            deliveryAddress: deliveryAddress.data.deliveryAddress || "",
           };
         });
+        setPaymentMethodList(paymentList.data.paymentMethodInfo);
       } catch (error: any) {
         toast(error.response?.data?.msg || error.message, {
           type: "error",
@@ -80,12 +134,24 @@ export default function CheckoutModal({
     })();
   }, []);
 
-  function handleDeliveryAddressChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleDeliveryAddressChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setPaymentOption({ ...paymentOption, deliveryAddress: e.target.value });
   }
 
-  function handlePaymentMethodChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handlePaymentMethodChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void {
     setPaymentOption({ ...paymentOption, paymentMethod: e.target.value });
+  }
+
+  function handlePaymentMethodTypeChange(pmId: string): void {
+    setSelectedPaymentMethod(pmId);
+  }
+
+  function handlePaymentMethodTypeClick(pmId: string): void {
+    setSelectedPaymentMethod(pmId);
   }
 
   async function handlePlaceOrder() {
@@ -108,6 +174,34 @@ export default function CheckoutModal({
         items: data,
         paymentOption,
       };
+
+      // if visa and new payment method select, redirect to stripe checkout page
+      if (paymentOption.paymentMethod.localeCompare("visa") === 0) {
+        if (selectedPaymentMethod.localeCompare("new") === 0) {
+          const sessionCheckout: AxiosResponse = await API.post(
+            "/orders/checkout",
+            orderData,
+            config
+          );
+
+          ((await stripe) as Stripe).redirectToCheckout({
+            sessionId: sessionCheckout.data.id,
+          });
+        } else {
+          const paymentInfo: PaymentInfo = {
+            orderData,
+            selectedPaymentMethod,
+          };
+          const result: AxiosResponse = await API.post(
+            "/orders/payment",
+            paymentInfo,
+            config
+          );
+          onPlaceOrder(result.data.msg);
+        }
+        return;
+      }
+
       const result: AxiosResponse = await API.post(
         "/orders",
         orderData,
@@ -198,6 +292,40 @@ export default function CheckoutModal({
                     </label>
                   </div>
                 </div>
+                {paymentOption.paymentMethod.localeCompare("visa") === 0 && (
+                  <>
+                    <PaymentMethodList
+                      data={paymentMethodList}
+                      selectedPaymentMethod={selectedPaymentMethod}
+                      onPaymentMethodTypeChange={handlePaymentMethodTypeChange}
+                      onPaymentMethodTypeClick={handlePaymentMethodTypeClick}
+                    />
+                    <div
+                      className="w-full border border-black h-10 bg-slate-300 hover:bg-slate-400 rounded-md relative mb-2 py-2 hover:cursor-pointer"
+                      onClick={() => handlePaymentMethodTypeClick("new")}
+                    >
+                      <div className="absolute left-4 flex">
+                        <input
+                          id="new"
+                          type="radio"
+                          value="new"
+                          name="payment-method-type"
+                          className="hover:cursor-pointer"
+                          onChange={() => handlePaymentMethodTypeChange("new")}
+                          checked={
+                            selectedPaymentMethod.localeCompare("new") === 0
+                          }
+                        />
+                        <label
+                          htmlFor="new"
+                          className="ml-2 hover:cursor-pointer uppercase font-bold"
+                        >
+                          new
+                        </label>
+                      </div>
+                    </div>
+                  </>
+                )}
                 {warning && (
                   <div
                     className="bg-orange-100 border border-orange-500 text-orange-700 p-3"

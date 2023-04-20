@@ -28,7 +28,7 @@ function UserList({
       role={user.role}
       status={user.status ? "active" : "inactive"}
       isBlocked={user.isBlocked}
-      url={`http://localhost:3000/admin/users/${user.id}`}
+      url={`${process.env.NEXT_PUBLIC_WEB_BASE_URL}/admin/users/${user.id}`}
       handleDeleteUser={handleDeleteUser}
       handleBlockUser={handleBlockUser}
     />

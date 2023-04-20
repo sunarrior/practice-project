@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Stripe } from "stripe";
 
 import { common, orderConstant } from "../constant/controller.constant";
 import Order from "../entity/Order";
@@ -11,9 +12,11 @@ import OrderItem from "../entity/OrderItem";
 import ProductImage from "../entity/ProductImage";
 import Product from "../entity/Product";
 import CartItem from "../entity/CartItem";
-import { CartItemData } from "../interface/CartData";
-import { OrderData, OrderItemData } from "../interface/OrderData";
+import { CartItemData, isInstanceOfCartItemData } from "../interface/CartData";
+import { OrderData, OrderItemData, LineItem } from "../interface/OrderData";
+import EnvConfig from "../config/env.config";
 import { mail } from "../utils";
+import stripe from "../config/stripe.config";
 
 const getAllOrders = async (req: Request, res: Response) => {
   try {
@@ -116,13 +119,17 @@ const getOrderItems = async (req: Request, res: Response) => {
   }
 };
 
-const createOrder = async (req: Request, res: Response) => {
+const createCheckoutSession = async (req: Request, res: Response) => {
   try {
     const id: number | undefined = req.id;
     const { items, paymentOption } = req.body;
 
+    if (!id) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
     // check if user exists
-    const user: User | null = await userDB.getUserById(id as unknown as number);
+    const user: User | null = await userDB.getUserById(id);
     if (!user) {
       return res.status(404).json({ msg: common.USER_NOT_EXIST });
     }
@@ -133,6 +140,134 @@ const createOrder = async (req: Request, res: Response) => {
       });
     }
 
+    if (!paymentOption.paymentMethod || !paymentOption.deliveryAddress) {
+      return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+    }
+
+    for (let i = 0; i < items.length; i += 1) {
+      if (!isInstanceOfCartItemData(items[i])) {
+        return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+      }
+    }
+
+    const lineItems: LineItem[] = items.map((item: CartItemData) => {
+      const lineData: LineItem = {
+        price_data: {
+          currency: "vnd",
+          product_data: {
+            name: item.product.name,
+            images: [item.url],
+          },
+          unit_amount: item.product.price,
+        },
+        quantity: item.quantity,
+      };
+      return lineData;
+    });
+    const sessionCheckout = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      mode: "payment",
+      metadata: {
+        userid: id?.toString() as string,
+        items: JSON.stringify(items),
+        paymentOption: JSON.stringify(paymentOption),
+      },
+      success_url: `${EnvConfig.CLIENT_BASE_URL}/cart/payment-success`,
+      cancel_url: `${EnvConfig.CLIENT_BASE_URL}/cart`,
+    });
+    res.status(200).json({ id: sessionCheckout.id });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: common.SERVER_ERROR });
+  }
+};
+
+const createPaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const id: number | undefined = req.id;
+    const { orderData, selectedPaymentMethod } = req.body;
+    const { items, paymentOption } = orderData;
+
+    if (!id) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    // check if user exists
+    const user: User | null = await userDB.getUserById(id);
+    if (!user) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    if (user.isBlocked) {
+      return res.status(400).json({
+        msg: common.USER_BLOCKED,
+      });
+    }
+
+    if (!paymentOption.paymentMethod || !paymentOption.deliveryAddress) {
+      return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+    }
+
+    const totalCost: number = items.reduce(
+      (cost: number, item: CartItemData) =>
+        cost + item.quantity * item.product.price,
+      0
+    );
+
+    const paymentIntent: Stripe.Response<Stripe.PaymentIntent> =
+      await stripe.paymentIntents.create({
+        amount: totalCost,
+        currency: "vnd",
+        customer: user.stripeCusId,
+        payment_method: selectedPaymentMethod,
+        metadata: {
+          userid: id?.toString() as string,
+          items: JSON.stringify(items),
+          paymentOption: JSON.stringify(paymentOption),
+        },
+      });
+
+    await stripe.paymentIntents.confirm(paymentIntent.id);
+
+    res.status(200).json({ msg: orderConstant.PLACE_ORDER_SUCCESSFULLY });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({ msg: common.SERVER_ERROR });
+  }
+};
+
+const createOrder = async (req: Request, res: Response) => {
+  try {
+    const id: number | undefined = req.id;
+    const { items, paymentOption } = req.body;
+
+    if (!id) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    // check if user exists
+    const user: User | null = await userDB.getUserById(id);
+    if (!user) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    if (user.isBlocked) {
+      return res.status(400).json({
+        msg: common.USER_BLOCKED,
+      });
+    }
+
+    if (!paymentOption.paymentMethod || !paymentOption.deliveryAddress) {
+      return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+    }
+
+    for (let i = 0; i < items.length; i += 1) {
+      if (!isInstanceOfCartItemData(items[i])) {
+        return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+      }
+    }
+
     // check item in cart
     const cartItems: CartItem[] = await cartDB.getAllCartItems(user.id);
     const cartItemIds: number[] = cartItems.map((item: CartItem) => item.id);
@@ -140,13 +275,10 @@ const createOrder = async (req: Request, res: Response) => {
     // create order
     const order: Order = new Order();
     order.paymentMethod = paymentOption.paymentMethod;
-    if (paymentOption.paymentMethod.localeCompare("visa") === 0) {
-      order.paymentDay = new Date();
-    }
     order.deliveryAddress = paymentOption.deliveryAddress;
     order.status = "pending";
     order.user = user;
-    orderDB.createOrder(order);
+    await orderDB.createOrder(order);
 
     // add order item
     const orderItems: OrderItem[] = await Promise.all(
@@ -250,7 +382,7 @@ const updateOrders = async (req: Request, res: Response) => {
       (order: Order | undefined) => order
     );
     await orderDB.updateOrders(updateOrderListFilter as Order[]);
-    res.status(200).json({ msg: orderConstant.UPDATE_SUCCESSFULLY });
+    res.status(201).json({ msg: orderConstant.UPDATE_SUCCESSFULLY });
   } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
@@ -297,6 +429,8 @@ export default {
   getAllOrders,
   getOrderListByUserId,
   getOrderItems,
+  createCheckoutSession,
+  createPaymentIntent,
   createOrder,
   updateOrders,
   cancelOrders,

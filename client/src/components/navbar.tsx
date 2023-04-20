@@ -17,6 +17,7 @@ function IsLoggedIn({
 }): React.ReactElement {
   const userMenus = [
     { name: "Profile", url: "/profile" },
+    { name: "Payment Method", url: "/payment" },
     { name: "Order History", url: "/orders" },
     { name: "Logout", url: "/logout" },
   ];
@@ -39,7 +40,7 @@ function IsLoggedIn({
             <Menu.Button className="hover:text-indigo-500">
               <HiOutlineUserCircle size={30} />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 w-28 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 w-36 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
               {userMenus.map((item: any) => (
                 <Menu.Item key={item.name}>
                   <Link href={item.url}>
