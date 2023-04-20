@@ -1,5 +1,3 @@
-import { StripeCardElement } from "@stripe/stripe-js";
-
 export interface LoginData {
   account: string;
   password: string;
@@ -23,7 +21,7 @@ export interface UserData {
   id?: number;
   username?: string;
   email?: string;
-  createdAt?: string;
+  createdAt?: Date;
   role?: string;
   status?: string;
   fullName?: string;

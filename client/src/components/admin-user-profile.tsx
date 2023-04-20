@@ -13,7 +13,7 @@ import { getYYYYMMDDString } from "@/utils/format.util";
 const profileDefault: UserData = {
   username: "",
   email: "",
-  createdAt: new Date().toLocaleString(),
+  createdAt: new Date(),
   role: "",
   status: "",
   fullName: "",
@@ -52,8 +52,7 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
         setProfile({
           username: result.data?.userData?.username || "",
           email: result.data?.userData?.email || "",
-          createdAt:
-            new Date(result.data?.userData?.createdAt).toLocaleString() || "",
+          createdAt: new Date(result.data?.userData?.createdAt) || new Date(),
           role: result.data?.userData?.role || "",
           status: result.data?.userData?.isVerified ? "active" : "inactive",
           fullName: result.data?.userData?.fullName || "",
@@ -294,7 +293,7 @@ export default function Profile({ id }: { id: number }): React.ReactElement {
                     id="inline-email"
                     type="text"
                     placeholder="created at"
-                    value={profile.createdAt}
+                    value={profile.createdAt?.toLocaleString()}
                     required
                     disabled={true}
                   />

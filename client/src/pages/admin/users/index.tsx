@@ -57,10 +57,16 @@ export default function UserListManager(): React.ReactElement {
         const result: AxiosResponse = await API.get("/user/admin", config);
         const sortUserList: UserData[] = result.data.userList.sort(
           (o1: UserData, o2: UserData) => {
-            if (sortOption === "DesCreatedDay") {
-              return (o2.createdAt as any) - (o1.createdAt as any);
+            if (sortOption === "DescCreatedDay") {
+              return (
+                new Date(o2.createdAt as Date).getTime() -
+                new Date(o1.createdAt as Date).getTime()
+              );
             }
-            return (o1.createdAt as any) - (o2.createdAt as any);
+            return (
+              new Date(o1.createdAt as Date).getTime() -
+              new Date(o2.createdAt as Date).getTime()
+            );
           }
         );
         setUserList(sortUserList);
@@ -158,10 +164,10 @@ export default function UserListManager(): React.ReactElement {
             className="bg-gray-300 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
             onChange={handleSortOptionChange}
           >
-            <option value="AscOrderDay" defaultValue="AscOrderDay">
+            <option value="AscOrderDay" defaultValue="AscCreatedDay">
               Ascending by created day
             </option>
-            <option value="DescOrderDay">Descending by created day</option>
+            <option value="DescCreatedDay">Descending by created day</option>
           </select>
         </div>
         <UserTable>
