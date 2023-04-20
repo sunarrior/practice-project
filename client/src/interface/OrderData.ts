@@ -1,3 +1,5 @@
+import { CartItemData } from "./CartData";
+
 export interface OrderData {
   id?: number;
   username?: string;
@@ -30,6 +32,15 @@ export interface OrderItemData {
 export interface PaymentOption {
   paymentMethod: string;
   deliveryAddress: string;
+}
+
+export interface PlaceOrderData {
+  items: CartItemData[];
+  paymentOption: PaymentOption;
+}
+export interface PaymentInfo {
+  orderData: PlaceOrderData;
+  selectedPaymentMethod: string;
 }
 
 export interface SelectedOrder {

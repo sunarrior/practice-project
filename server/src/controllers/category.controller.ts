@@ -100,7 +100,7 @@ const addNewCategory = async (req: Request, res: Response) => {
     category.name = name;
     category.description = description;
 
-    if (filePath.localeCompare("") !== 0) {
+    if (filePath?.localeCompare("") !== 0) {
       // upload the new category image to cloudinary
       await cloudinary.uploader.upload(
         filePath,

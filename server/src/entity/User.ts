@@ -53,6 +53,9 @@ export default class User {
   @Column({ name: "avatar_url", nullable: true })
   public avatarUrl: string;
 
+  @Column({ name: "stripe_cus_id", nullable: true })
+  public stripeCusId: string;
+
   @Column({ name: "is_verified", default: false })
   public isVerified: boolean;
 

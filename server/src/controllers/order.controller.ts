@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { Stripe } from "stripe";
 
 import { common, orderConstant } from "../constant/controller.constant";
 import Order from "../entity/Order";
@@ -177,6 +178,60 @@ const createCheckoutSession = async (req: Request, res: Response) => {
     });
     res.status(200).json({ id: sessionCheckout.id });
   } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: common.SERVER_ERROR });
+  }
+};
+
+const createPaymentIntent = async (req: Request, res: Response) => {
+  try {
+    const id: number | undefined = req.id;
+    const { orderData, selectedPaymentMethod } = req.body;
+    const { items, paymentOption } = orderData;
+
+    if (!id) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    // check if user exists
+    const user: User | null = await userDB.getUserById(id);
+    if (!user) {
+      return res.status(404).json({ msg: common.USER_NOT_EXIST });
+    }
+
+    if (user.isBlocked) {
+      return res.status(400).json({
+        msg: common.USER_BLOCKED,
+      });
+    }
+
+    if (!paymentOption.paymentMethod || !paymentOption.deliveryAddress) {
+      return res.status(400).json({ msg: orderConstant.MISSING_INFOMATIONS });
+    }
+
+    const totalCost: number = items.reduce(
+      (cost: number, item: CartItemData) =>
+        cost + item.quantity * item.product.price,
+      0
+    );
+
+    const paymentIntent: Stripe.Response<Stripe.PaymentIntent> =
+      await stripe.paymentIntents.create({
+        amount: totalCost,
+        currency: "vnd",
+        customer: user.stripeCusId,
+        payment_method: selectedPaymentMethod,
+        metadata: {
+          userid: id?.toString() as string,
+          items: JSON.stringify(items),
+          paymentOption: JSON.stringify(paymentOption),
+        },
+      });
+
+    await stripe.paymentIntents.confirm(paymentIntent.id);
+
+    res.status(200).json({ msg: orderConstant.PLACE_ORDER_SUCCESSFULLY });
+  } catch (error: any) {
     console.log(error);
     res.status(500).json({ msg: common.SERVER_ERROR });
   }
@@ -375,6 +430,7 @@ export default {
   getOrderListByUserId,
   getOrderItems,
   createCheckoutSession,
+  createPaymentIntent,
   createOrder,
   updateOrders,
   cancelOrders,
